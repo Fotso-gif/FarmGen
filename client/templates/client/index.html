@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>FarmGen - Marketplace Agricole au Cameroun</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Typographie Chapza ou Ubuntu -->
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-green: #228B22;
+            --primary-yellow: #FFD700;
+            --primary-white: #F8F8F8;
+            --text-dark: #2d3e50;
+            --text-light: #6c757d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Ubuntu', sans-serif;
+        }
+        
+        body {
+            background-color: var(--primary-white);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+        
+        /* Navigation */
+        .navbar {
+            background-color: var(--primary-white);
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+            transition: var(--transition);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-green) !important;
+            font-size: 1.5rem;
+        }
+        
+        .nav-link {
+            color: var(--text-dark) !important;
+            font-weight: 500;
+            margin: 0 10px;
+            position: relative;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-green) !important;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--primary-green);
+            transition: var(--transition);
+        }
+        
+        .nav-link:hover:after, .nav-link.active:after {
+            width: 100%;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-green);
+            border-color: var(--primary-green);
+            border-radius:20px;
+            color: white;
+            font-weight: 500;
+            padding: 8px 10px;
+            transition: var(--transition);
+        }
+        
+        .btn-primary:hover {
+            background-color: #1e7a1e;
+            border-color: #1e7a1e;
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-green);
+            border-radius:20px;
+            color: var(--primary-green);
+            font-weight: 500;
+            padding: 8px 10px;
+            transition: var(--transition);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary-green);
+            color: white;
+        }
+        
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(rgba(34, 139, 34, 0.8), rgba(34, 139, 34, 0.6)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80');
+            background-size: cover;
+            background-position: center;
+            min-height: 80vh;
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 100px 0;
+        }
+        
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            background-color: rgba(255, 215, 0, 0.9);
+            color: var(--text-dark);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+        
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+        
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--primary-green);
+            text-align: center;
+        }
+        
+        .section-subtitle {
+            display: block;
+            color: var(--primary-yellow);
+            font-weight: 500;
+            margin-bottom: 1rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .section-description {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 3rem;
+        }
+        
+        /* Value Proposition */
+        .value-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            height: 100%;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .value-icon {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(34, 139, 34, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: var(--primary-green);
+        }
+        
+        .value-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+        
+        /* Product Cards */
+        .product-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            background-color: white;
+            height: 100%;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .product-image {
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+        
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+        
+        .product-info {
+            padding: 20px;
+        }
+        
+        .product-category {
+            color: var(--primary-yellow);
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .product-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .product-description {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+        
+        .product-seller {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .seller-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: var(--primary-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* Video Section */
+        .video-section {
+            background-color: rgba(34, 139, 34, 0.05);
+            position: relative;
+        }
+        
+        .video-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Stats Section */
+        .stats-section {
+            background: linear-gradient(rgba(34, 139, 34, 0.9), rgba(34, 139, 34, 0.8)), url('https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .stat-card {
+            padding: 30px;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--primary-yellow);
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Blog Section */
+        .blog-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            background-color: white;
+            height: 100%;
+        }
+        
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .blog-image {
+            height: 200px;
+            overflow: hidden;
+        }
+        
+        .blog-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+        
+        .blog-card:hover .blog-image img {
+            transform: scale(1.05);
+        }
+        
+        .blog-info {
+            padding: 20px;
+        }
+        
+        .blog-category {
+            color: var(--primary-yellow);
+            font-weight: 500;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .blog-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .blog-excerpt {
+            color: var(--text-light);
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+        
+        .blog-meta {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .blog-meta i {
+            margin-right: 5px;
+            color: var(--primary-green);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--text-dark);
+            color: white;
+            padding: 60px 0 20px;
+        }
+        
+        .footer-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary-yellow);
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary-yellow);
+            padding-left: 5px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            color: white;
+            transition: var(--transition);
+        }
+        
+        .social-links a:hover {
+            background-color: var(--primary-green);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+            
+            .section {
+                padding: 60px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-seedling me-2"></i>FarmGen
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% comment %} {% if(user.is_authenticated) %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="#marketplace">Marketplace</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="#blog">Blog</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">Contact</a>
+                        </li>
+                    {% endif %} {% endcomment %}
+                </ul>
+                <div class="ms-lg-3 mt-3 mt-lg-0">
+                    <a href="#" class="btn btn-outline me-2">Connexion</a>
+                    <a href="#" class="btn btn-primary">Inscription</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <span class="hero-badge">
+                        <i class="fas fa-leaf me-2"></i>La première marketplace agricole du Cameroun
+                    </span>
+                    <h1 class="hero-title">FarmGen: Votre marché agricole en ligne</h1>
+                    <p class="hero-subtitle">Connectons directement agriculteurs et consommateurs pour une alimentation saine, traçable et de qualité.</p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="#marketplace" class="btn btn-primary">Explorer le marché</a>
+                        <a href="#vendeurs" class="btn btn-outline" style="background-color: white; color: var(--primary-green);">Devenir vendeur</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Value Proposition -->
+    <section class="section">
+        <div class="container">
+            <span class="section-subtitle">Pourquoi choisir FarmGen</span>
+            <h2 class="section-title">Votre plateforme agricole complète</h2>
+            <p class="section-description">FarmGen révolutionne l'achat et la vente de produits agricoles au Cameroun avec des outils modernes et efficaces.</p>
+            
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="value-card">
+                        <div class="value-icon">
+                            <i class="fas fa-tractor"></i>
+                        </div>
+                        <h3>Producteurs locaux</h3>
+                        <p>Connectez-vous directement avec des agriculteurs et coopératives locales pour des produits frais et authentiques.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="value-card">
+                        <div class="value-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>Traçabilité complète</h3>
+                        <p>Suivez l'origine de vos produits, des semences à votre assiette, pour une consommation en toute confiance.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="value-card">
+                        <div class="value-icon">
+                            <i class="fas fa-shopping-basket"></i>
+                        </div>
+                        <h3>Marketplace intuitive</h3>
+                        <p>Une plateforme simple d'utilisation pour découvrir, comparer et acheter les meilleurs produits agricoles.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="value-card">
+                        <div class="value-icon">
+                            <i class="fas fa-mobile-alt"></i>
+                        </div>
+                        <h3>Paiements sécurisés</h3>
+                        <p>Payez facilement via Mobile Money, Orange Money ou cartes bancaires avec des transactions sécurisées.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="section bg-light" id="marketplace">
+        <div class="container">
+            <span class="section-subtitle">Découvrez nos produits</span>
+            <h2 class="section-title">Produits phares du marché</h2>
+            <p class="section-description">Une sélection des meilleurs produits agricoles disponibles sur notre marketplace.</p>
+            
+            <div class="row g-4">
+                <!-- Product 1 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1574856344991-aaa31b6f4ce3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" alt="Tomates fraîches">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">Légumes</div>
+                            <h3 class="product-name">Tomates fraîches</h3>
+                            <p class="product-description">Tomates rouges et juteuses cultivées localement sans pesticides.</p>
+                            <div class="product-price">1 500 FCFA/kg</div>
+                            <div class="product-seller">
+                                <div class="seller-avatar">FM</div>
+                                <span>Ferme Mboué</span>
+                            </div>
+                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product 2 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1015&q=80" alt="Bananes plantains">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">Fruits</div>
+                            <h3 class="product-name">Bananes plantains</h3>
+                            <p class="product-description">Bananes plantains mûres, parfaites pour la cuisson ou la friture.</p>
+                            <div class="product-price">800 FCFA/kg</div>
+                            <div class="product-seller">
+                                <div class="seller-avatar">CP</div>
+                                <span>Coopérative Plantain</span>
+                            </div>
+                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product 3 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" alt="Piments frais">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">Épices</div>
+                            <h3 class="product-name">Piments frais</h3>
+                            <p class="product-description">Piments locaux frais, parfaits pour relever vos plats traditionnels.</p>
+                            <div class="product-price">1 200 FCFA/kg</div>
+                            <div class="product-seller">
+                                <div class="seller-avatar">EP</div>
+                                <span>Épicerie Paysanne</span>
+                            </div>
+                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Product 4 -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="product-card">
+                        <div class="product-image">
+                            <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Huile de palme">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category">Huiles</div>
+                            <h3 class="product-name">Huile de palme rouge</h3>
+                            <p class="product-description">Huile de palme rouge traditionnelle, pressée à froid et 100% naturelle.</p>
+                            <div class="product-price">2 500 FCFA/L</div>
+                            <div class="product-seller">
+                                <div class="seller-avatar">HP</div>
+                                <span>Huilerie Palm</span>
+                            </div>
+                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="#" class="btn btn-primary">Voir tous les produits</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section class="section video-section">
+        <div class="container">
+            <span class="section-subtitle">Découvrez FarmGen</span>
+            <h2 class="section-title">Comment fonctionne notre plateforme</h2>
+            <p class="section-description">Regardez notre vidéo de présentation pour comprendre comment FarmGen révolutionne le marché agricole camerounais.</p>
+            
+            <div class="video-container">
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/TNugLK3Ffgs" title="Présentation FarmGen" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="section stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" data-count="500">0</div>
+                        <div class="stat-label">Agriculteurs</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" data-count="2500">0</div>
+                        <div class="stat-label">Clients satisfaits</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" data-count="150">0</div>
+                        <div class="stat-label">Produits différents</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <div class="stat-number" data-count="10000">0</div>
+                        <div class="stat-label">Transactions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section class="section" id="blog">
+        <div class="container">
+            <span class="section-subtitle">Conseils et actualités</span>
+            <h2 class="section-title">Blog agricole FarmGen</h2>
+            <p class="section-description">Découvrez nos articles, podcasts et affiches sur l'agriculture, les techniques modernes et les tendances du marché.</p>
+            
+            <div class="row g-4">
+                <!-- Blog Post 1 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="blog-card">
+                        <div class="blog-image">
+                            <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Agriculture durable">
+                        </div>
+                        <div class="blog-info">
+                            <div class="blog-category">Agriculture durable</div>
+                            <h3 class="blog-title">5 techniques d'agriculture durable pour petits producteurs</h3>
+                            <p class="blog-excerpt">Découvrez des méthodes simples et efficaces pour améliorer votre rendement tout en préservant l'environnement.</p>
+                            <div class="blog-meta">
+                                <span><i class="far fa-calendar"></i> 15 Mai 2023</span>
+                                <span class="ms-3"><i class="far fa-clock"></i> 5 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Blog Post 2 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="blog-card">
+                        <div class="blog-image">
+                            <img src="https://images.unsplash.com/photo-1595341888016-a392ef81b7de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1179&q=80" alt="Marché agricole">
+                        </div>
+                        <div class="blog-info">
+                            <div class="blog-category">Marché</div>
+                            <h3 class="blog-title">Les tendances du marché agricole au Cameroun en 2023</h3>
+                            <p class="blog-excerpt">Analyse des tendances actuelles et perspectives pour les producteurs et consommateurs camerounais.</p>
+                            <div class="blog-meta">
+                                <span><i class="far fa-calendar"></i> 2 Mai 2023</span>
+                                <span class="ms-3"><i class="far fa-clock"></i> 7 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Blog Post 3 -->
+                <div class="col-md-6 col-lg-4">
+                    <div class="blog-card">
+                        <div class="blog-image">
+                            <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Technologie agricole">
+                        </div>
+                        <div class="blog-info">
+                            <div class="blog-category">Technologie</div>
+                            <h3 class="blog-title">Comment la technologie transforme l'agriculture africaine</h3>
+                            <p class="blog-excerpt">Exploration des innovations technologiques qui révolutionnent le secteur agricole en Afrique.</p>
+                            <div class="blog-meta">
+                                <span><i class="far fa-calendar"></i> 20 Avril 2023</span>
+                                <span class="ms-3"><i class="far fa-clock"></i> 6 min</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-5">
+                <a href="#" class="btn btn-primary">Voir tous les articles</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h3 class="footer-title">
+                        <i class="fas fa-seedling me-2"></i>FarmGen
+                    </h3>
+                    <p>La première marketplace agricole du Cameroun, connectant directement producteurs et consommateurs pour une alimentation saine et traçable.</p>
+                    <div class="social-links mt-4">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h3 class="footer-title">Liens rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Accueil</a></li>
+                        <li><a href="#marketplace">Marketplace</a></li>
+                        <li><a href="#vendeurs">Devenir vendeur</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h3 class="footer-title">Catégories</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Légumes</a></li>
+                        <li><a href="#">Fruits</a></li>
+                        <li><a href="#">Céréales</a></li>
+                        <li><a href="#">Épices</a></li>
+                        <li><a href="#">Produits transformés</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h3 class="footer-title">Contact</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Yaoundé, Cameroun</li>
+                        <li><i class="fas fa-phone me-2"></i> +237 6XX XX XX XX</li>
+                        <li><i class="fas fa-envelope me-2"></i> contact@farmgen.cm</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 FarmGen. Tous droits réservés.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Animation des statistiques
+        document.addEventListener('DOMContentLoaded', function() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            
+            function animateStats() {
+                statNumbers.forEach(stat => {
+                    const target = parseInt(stat.getAttribute('data-count'));
+                    const duration = 2000;
+                    const step = target / (duration / 16);
+                    let current = 0;
+                    
+                    const counter = setInterval(() => {
+                        current += step;
+                        if (current >= target) {
+                            clearInterval(counter);
+                            current = target;
+                        }
+                        stat.textContent = Math.floor(current).toLocaleString();
+                    }, 16);
+                });
+            }
+            
+            // Observer pour déclencher l'animation quand la section est visible
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        animateStats();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                observer.observe(statsSection);
+            }
+            
+            // Navigation fixe au scroll
+            window.addEventListener('scroll', function() {
+                const navbar = document.querySelector('.navbar');
+                if (window.scrollY > 50) {
+                    navbar.classList.add('shadow');
+                } else {
+                    navbar.classList.remove('shadow');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
