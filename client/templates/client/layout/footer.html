@@ -1,0 +1,116 @@
+    <style>
+            /* Footer */
+            footer {
+                background-color: var(--text-dark);
+                color: white;
+                padding: 60px 0 20px;
+            }
+            
+            .footer-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: var(--primary-yellow);
+            }
+            
+            .footer-links {
+                list-style: none;
+                padding: 0;
+            }
+            
+            .footer-links li {
+                margin-bottom: 10px;
+            }
+            
+            .footer-links a {
+                color: rgba(255, 255, 255, 0.7);
+                text-decoration: none;
+                transition: var(--transition);
+            }
+            
+            .footer-links a:hover {
+                color: var(--primary-yellow);
+                padding-left: 5px;
+            }
+            
+            .social-links {
+                display: flex;
+                gap: 15px;
+            }
+            
+            .social-links a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 50%;
+                color: white;
+                transition: var(--transition);
+            }
+            
+            .social-links a:hover {
+                background-color: var(--primary-green);
+                transform: translateY(-3px);
+            }
+            
+            .copyright {
+                text-align: center;
+                padding-top: 30px;
+                margin-top: 30px;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.5);
+                font-size: 0.9rem;
+            }
+    </style>
+<!-- Footer -->
+    <footer id="contact">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h3 class="footer-title">
+                        <i class="fas fa-seedling me-2"></i>FarmGen
+                    </h3>
+                    <p>La première marketplace agricole du Cameroun, connectant directement producteurs et consommateurs pour une alimentation saine et traçable.</p>
+                    <div class="social-links mt-4">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-4">
+                    <h3 class="footer-title">Liens rapides</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Accueil</a></li>
+                        <li><a href="#marketplace">Marketplace</a></li>
+                        <li><a href="#vendeurs">Devenir vendeur</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h3 class="footer-title">Catégories</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Légumes</a></li>
+                        <li><a href="#">Fruits</a></li>
+                        <li><a href="#">Céréales</a></li>
+                        <li><a href="#">Épices</a></li>
+                        <li><a href="#">Produits transformés</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-4">
+                    <h3 class="footer-title">Contact</h3>
+                    <ul class="footer-links">
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Yaoundé, Cameroun</li>
+                        <li><i class="fas fa-phone me-2"></i> +237 6XX XX XX XX</li>
+                        <li><i class="fas fa-envelope me-2"></i> contact@farmgen.cm</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                &copy; 2023 FarmGen. Tous droits réservés.
+            </div>
+        </div>
+    </footer>
