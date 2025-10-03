@@ -1,0 +1,1130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Inscription | FarmGen</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="Plateforme de vente de produits agricoles au Cameroun" />
+    <meta name="keywords" content="agriculture, marketplace, produits agricoles, Cameroun" />
+    <meta name="author" content="FarmGen" />
+    <!-- CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.min.css">
+    <style>
+        :root {
+            --primary-green: #228B22;
+            --primary-yellow: #FFD700;
+            --primary-white: #F8F8F8;
+            --text-dark: #2d3e50;
+            --text-light: #6c757d;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+            --glass: rgba(255, 255, 255, 0.15);
+            --border-color: #e0e0e0;
+            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background-color: var(--primary-white);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .auth-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Cercles animés en fond */
+        .auth-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .auth-bg span {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.1;
+            animation: float 15s infinite linear;
+        }
+
+        .auth-bg span:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            background: var(--primary-green);
+            top: -100px;
+            left: -100px;
+        }
+
+        .auth-bg span:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            background: var(--text-dark);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 3s;
+        }
+
+        .auth-bg span:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            background: var(--primary-yellow);
+            top: 30%;
+            right: 20%;
+            animation-delay: 6s;
+        }
+
+        .form-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 2.5rem;
+            transform: translateY(0);
+            transition: var(--transition);
+        }
+
+        .auth-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .auth-logo {
+            font-size: 3rem;
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+        }
+
+        .auth-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--primary-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 2rem;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--primary-green);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .step-indicators {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .step-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: var(--transition);
+            z-index: 2;
+        }
+
+        .step-indicator.active {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .step-indicator.completed {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        /* Steps */
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .step h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .step .subtitle {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Account Type Selection */
+        .account-type {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .account-type-btn {
+            flex: 1;
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            background: white;
+        }
+
+        .account-type-btn:hover {
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        .account-type-btn.selected {
+            border-color: var(--primary-green);
+            background: linear-gradient(135deg, rgba(34, 139, 34, 0.1), rgba(34, 139, 34, 0.05));
+        }
+
+        .account-type-btn i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary-green);
+        }
+
+        .account-type-btn h3 {
+            font-size: 1rem;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .account-type-btn p {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .input-container {
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            font-family: 'Ubuntu', sans-serif;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
+            outline: none;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .password-toggle {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-green);
+        }
+
+        .date-input-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .date-input-group .form-group {
+            flex: 1;
+        }
+
+        /* Form Buttons */
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'Ubuntu', sans-serif;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1e7a1e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(34, 139, 34, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #f8f9fa;
+            color: var(--text-dark);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        .btn-success {
+            background-color: var(--primary-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #1e7a1e;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(34, 139, 34, 0.3);
+        }
+
+        /* Password Feedback */
+        .password-feedback {
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .feedback-message {
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .feedback-message.success {
+            background-color: rgba(34, 139, 34, 0.1);
+            color: var(--primary-green);
+        }
+
+        .feedback-message.error {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .strength-feedback {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .strength-feedback.weak {
+            color: #dc3545;
+        }
+
+        .strength-feedback.medium {
+            color: #fd7e14;
+        }
+
+        .strength-feedback.strong {
+            color: var(--primary-green);
+        }
+
+        .password-criteria {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .password-criteria li {
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .password-criteria li.valid {
+            color: var(--primary-green);
+        }
+
+        .password-criteria li.invalid {
+            color: var(--text-light);
+        }
+
+        /* Checkbox */
+        .form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-check input {
+            margin-top: 0.25rem;
+        }
+
+        .form-check label {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .form-check a {
+            color: var(--primary-green);
+            text-decoration: none;
+        }
+
+        .form-check a:hover {
+            text-decoration: underline;
+        }
+
+        /* Image Section */
+        .image-section {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(34, 139, 34, 0.9), rgba(45, 62, 80, 0.9));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-content {
+            text-align: center;
+            color: white;
+            position: relative;
+            z-index: 2;
+            max-width: 500px;
+        }
+
+        .official-stamp {
+            margin-bottom: 2rem;
+        }
+
+        .official-stamp img {
+            max-width: 150px;
+            height: auto;
+        }
+
+        .image-content h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .image-content p {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.9;
+        }
+
+        .image-content a {
+            color: var(--primary-yellow);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .image-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(5px, 5px) rotate(2deg);
+            }
+            50% {
+                transform: translate(10px, 0) rotate(0deg);
+            }
+            75% {
+                transform: translate(5px, -5px) rotate(-2deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .auth-container {
+                flex-direction: column;
+            }
+
+            .auth-card {
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+
+            .auth-bg span {
+                display: none;
+            }
+
+            .image-section {
+                display: none;
+            }
+
+            .account-type {
+                flex-direction: column;
+            }
+
+            .date-input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-container">
+        <!-- Cercles animés en fond -->
+        <div class="auth-bg">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="form-section">
+            <div class="auth-card animate__animated animate__fadeIn">
+                <div class="auth-header">
+                    <i class="fas fa-seedling auth-logo"></i>
+                    <h1 class="auth-title">Rejoignez FarmGen</h1>
+                    <p class="auth-subtitle">Votre marketplace agricole au Cameroun</p>
+                </div>
+
+                <form id="registerForm" method="POST" action="{% url 'register' %}" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <div class="step-indicators">
+                            <div class="step-indicator active">1</div>
+                            <div class="step-indicator">2</div>
+                            <div class="step-indicator">3</div>
+                            <div class="step-indicator">4</div>
+                        </div>
+                    </div>
+
+                    <!-- Étape 1 - Type de compte -->
+                    <div class="step active" data-step="1">
+                        <h2>Type de compte</h2>
+                        <p class="subtitle">Choisissez votre profil sur FarmGen</p>
+
+                        <div class="account-type">
+                            <div class="account-type-btn" data-type="seller">
+                                <i class="fas fa-tractor"></i>
+                                <h3>Agriculteur / Vendeur</h3>
+                                <p>Vendez vos produits agricoles et gérez votre boutique en ligne</p>
+                            </div>
+                            <div class="account-type-btn" data-type="client">
+                                <i class="fas fa-shopping-basket"></i>
+                                <h3>Client / Utilisateur</h3>
+                                <p>Achetez des produits agricoles frais et de qualité</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="account_type" name="account_type" value="">
+
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                Suivant <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Étape 2 - Informations de base -->
+                    <div class="step" data-step="2">
+                        <h2 id="step2-title">Informations Personnelles</h2>
+                        <p class="subtitle" id="step2-subtitle">Renseignez vos informations de base</p>
+
+                        <div class="form-group">
+                            <label for="first_name">Prénom</label>
+                            <div class="input-container">
+                                <input type="text" id="first_name" class="form-control" name="first_name" placeholder="Entrez votre prénom" required>
+                                <i class="input-icon fas fa-user"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="last_name">Nom</label>
+                            <div class="input-container">
+                                <input type="text" id="last_name" class="form-control" name="last_name" placeholder="Entrez votre nom" required>
+                                <i class="input-icon fas fa-user"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Adresse Email</label>
+                            <div class="input-container">
+                                <input type="email" id="email" class="form-control" name="email" placeholder="exemple@domaine.com" required>
+                                <i class="input-icon fas fa-envelope"></i>
+                            </div>
+                        </div>
+
+                        <!-- Champs spécifiques aux vendeurs -->
+                        <div id="seller-fields" class="org-fields" style="display: none;">
+                            <div class="form-group">
+                                <label for="farm_name">Nom de la ferme/entreprise</label>
+                                <div class="input-container">
+                                    <input type="text" id="farm_name" class="form-control" name="farm_name" placeholder="Nom de votre exploitation">
+                                    <i class="input-icon fas fa-tractor"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="specialty">Spécialité agricole</label>
+                                <div class="input-container">
+                                    <select id="specialty" name="specialty" class="form-control">
+                                        <option value="">Sélectionnez votre spécialité</option>
+                                        <option value="legumes">Légumes</option>
+                                        <option value="fruits">Fruits</option>
+                                        <option value="cereales">Céréales</option>
+                                        <option value="tubercules">Tubercules</option>
+                                        <option value="elevage">Élevage</option>
+                                        <option value="autres">Autres</option>
+                                    </select>
+                                    <i class="input-icon fas fa-seedling"></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="farm_size">Superficie (hectares)</label>
+                                <div class="input-container">
+                                    <input type="number" id="farm_size" class="form-control" name="farm_size" placeholder="Superficie en hectares" step="0.01" min="0">
+                                    <i class="input-icon fas fa-ruler"></i>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="production_capacity">Capacité de production</label>
+                                <div class="input-container">
+                                    <input type="text" id="production_capacity" class="form-control" name="production_capacity" placeholder="Ex: 100kg/mois, 50L/jour">
+                                    <i class="input-icon fas fa-chart-line"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                Suivant <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Étape 3 - Coordonnées -->
+                    <div class="step" data-step="3">
+                        <h2>Coordonnées</h2>
+                        <p class="subtitle">Où pouvons-nous vous trouver ?</p>
+
+                        <div class="form-group">
+                            <label for="phone">Téléphone</label>
+                            <div class="input-container">
+                                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Votre numéro de téléphone" required>
+                                <i class="input-icon fas fa-phone"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Adresse</label>
+                            <div class="input-container">
+                                <input type="text" id="address" class="form-control" name="address" placeholder="Votre adresse complète" required>
+                                <i class="input-icon fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="city">Ville</label>
+                            <div class="input-container">
+                                <input type="text" id="city" class="form-control" name="city" placeholder="Votre ville" required>
+                                <i class="input-icon fas fa-city"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="region">Région</label>
+                            <div class="input-container">
+                                <select id="region" name="region" class="form-control" required>
+                                    <option value="">Sélectionnez votre région</option>
+                                    <option value="adamaoua">Adamaoua</option>
+                                    <option value="centre">Centre</option>
+                                    <option value="est">Est</option>
+                                    <option value="extreme-nord">Extrême-Nord</option>
+                                    <option value="littoral">Littoral</option>
+                                    <option value="nord">Nord</option>
+                                    <option value="nord-ouest">Nord-Ouest</option>
+                                    <option value="ouest">Ouest</option>
+                                    <option value="sud">Sud</option>
+                                    <option value="sud-ouest">Sud-Ouest</option>
+                                </select>
+                                <i class="input-icon fas fa-globe-africa"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="nextStep()">
+                                Suivant <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Étape 4 - Sécurité du compte -->
+                    <div class="step" data-step="4">
+                        <h2>Sécurité du compte</h2>
+                        <p class="subtitle">Protégez votre compte FarmGen</p>
+
+                        <div class="form-group">
+                            <label for="password">Mot de passe</label>
+                            <div class="input-container">
+                                <input type="password" id="password" class="form-control" name="password" placeholder="Créez un mot de passe sécurisé" required>
+                                <i class="input-icon fas fa-lock"></i>
+                                <i class="fas fa-eye password-toggle input-icon" onclick="togglePassword('password', this)" style="right: 35px;"></i>
+                            </div>
+                            <div class="password-feedback">
+                                <div id="passwordMatchMessage"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password_confirmation">Confirmation du mot de passe</label>
+                            <div class="input-container">
+                                <input type="password" id="password_confirmation" class="form-control" name="password_confirmation" placeholder="Confirmez votre mot de passe" required>
+                                <i class="input-icon fas fa-lock"></i>
+                                <i class="fas fa-eye password-toggle input-icon" onclick="togglePassword('password_confirmation', this)" style="right: 35px;"></i>
+                            </div>
+                            <div class="password-feedback">
+                                <div id="passwordMatch"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-check">
+                            <input type="checkbox" id="terms" name="terms" required>
+                            <label for="terms">J'accepte les <a href="#">conditions générales</a> et la <a href="#">politique de confidentialité</a> de FarmGen</label>
+                        </div>
+
+                        <div class="form-buttons">
+                            <button type="button" class="btn btn-secondary" onclick="prevStep()">
+                                <i class="fas fa-arrow-left"></i> Retour
+                            </button>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="fas fa-user-plus"></i> Créer mon compte
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="image-section">
+            <div class="auth-bg">
+                <span style="background: white;"></span>
+                <span style="background: white;"></span>
+                <span style="background: white;"></span>
+            </div>
+
+            <div class="image-content">
+                <div class="official-stamp">
+                    <i class="fas fa-seedling" style="font-size: 5rem; color: var(--primary-yellow);"></i>
+                </div>
+                <h2>Votre Marketplace Agricole</h2>
+                <p>Rejoignez la communauté FarmGen et connectez-vous directement avec les producteurs et consommateurs de produits agricoles camerounais.</p>
+                <p>Déjà membre ? <a href="{% url 'login_view' %}">Connectez-vous ici</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Variables globales
+        let currentStep = 1;
+        const totalSteps = 4;
+        const form = document.querySelector('#registerForm');
+        let accountType = '';
+
+        // Gestion du choix du type de compte
+        document.querySelectorAll('.account-type-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.account-type-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                accountType = this.dataset.type;
+                document.getElementById('account_type').value = accountType;
+                
+                // Mise à jour des titres et champs selon le type de compte
+                updateStep2Content();
+            });
+        });
+
+        // Mise à jour du contenu de l'étape 2 selon le type de compte
+        function updateStep2Content() {
+            const title = document.getElementById('step2-title');
+            const subtitle = document.getElementById('step2-subtitle');
+            const sellerFields = document.getElementById('seller-fields');
+            
+            if (accountType === 'seller') {
+                title.textContent = 'Informations Professionnelles';
+                subtitle.textContent = 'Renseignez vos informations en tant qu\'agriculteur/vendeur';
+                if (sellerFields) sellerFields.style.display = 'block';
+            } else {
+                title.textContent = 'Informations Personnelles';
+                subtitle.textContent = 'Renseignez vos informations personnelles';
+                if (sellerFields) sellerFields.style.display = 'none';
+            }
+        }
+
+        // Fonctions de navigation
+        window.nextStep = function() {
+            if (currentStep === 1 && !accountType) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Type de compte requis',
+                    text: 'Veuillez sélectionner un type de compte',
+                    confirmButtonColor: '#228B22'
+                });
+                return;
+            }
+
+            if (currentStep < totalSteps && validateCurrentStep()) {
+                document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+                currentStep++;
+                document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
+                updateProgressBar();
+                updateStepIndicators();
+            }
+        };
+
+        window.prevStep = function() {
+            if (currentStep > 1) {
+                document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+                currentStep--;
+                document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
+                updateProgressBar();
+                updateStepIndicators();
+            }
+        };
+
+        // Validation des étapes
+        function validateCurrentStep() {
+            const currentStepDiv = document.querySelector(`[data-step="${currentStep}"]`);
+            const requiredFields = currentStepDiv.querySelectorAll('[required]');
+            
+            let allValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    allValid = false;
+                    field.classList.add('invalid');
+                    field.classList.remove('valid');
+
+                    // Animation pour indiquer l'erreur
+                    field.animate([
+                        { transform: 'translateX(0)' },
+                        { transform: 'translateX(-5px)' },
+                        { transform: 'translateX(5px)' },
+                        { transform: 'translateX(0)' }
+                    ], {
+                        duration: 300,
+                        iterations: 2
+                    });
+                } else {
+                    field.classList.remove('invalid');
+                    field.classList.add('valid');
+                }
+            });
+
+            if (!allValid) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Champs requis',
+                    text: 'Veuillez remplir tous les champs obligatoires',
+                    confirmButtonColor: '#228B22'
+                });
+            }
+
+            return allValid;
+        }
+
+        // Mise à jour de la progression
+        function updateProgressBar() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+        }
+
+        function updateStepIndicators() {
+            document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                const stepNum = index + 1;
+                indicator.classList.remove('active', 'completed');
+                indicator.innerHTML = stepNum;
+
+                if (stepNum < currentStep) {
+                    indicator.classList.add('completed');
+                    indicator.innerHTML = '<i class="fas fa-check"></i>';
+                } else if (stepNum === currentStep) {
+                    indicator.classList.add('active');
+                }
+            });
+        }
+
+        // Toggle password visibility
+        function togglePassword(fieldId, icon) {
+            const input = document.getElementById(fieldId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Validation du mot de passe
+        function validatePasswordStrength(password) {
+            const criteria = {
+                length: password.length >= 8,
+                uppercase: /[A-Z]/.test(password),
+                lowercase: /[a-z]/.test(password),
+                number: /[0-9]/.test(password),
+                specialChar: /[\W_]/.test(password)
+            };
+
+            const strengthHtml = `
+                <ul class="password-criteria">
+                    <li class="${criteria.length ? 'valid' : 'invalid'}">• Minimum 8 caractères</li>
+                    <li class="${criteria.uppercase ? 'valid' : 'invalid'}">• Une majuscule</li>
+                    <li class="${criteria.lowercase ? 'valid' : 'invalid'}">• Une minuscule</li>
+                    <li class="${criteria.number ? 'valid' : 'invalid'}">• Un chiffre</li>
+                    <li class="${criteria.specialChar ? 'valid' : 'invalid'}">• Un caractère spécial</li>
+                </ul>
+            `;
+
+            const strength = Object.values(criteria).filter(Boolean).length;
+            let strengthText = '';
+
+            if (strength < 3) {
+                strengthText = 'Faible';
+            } else if (strength < 5) {
+                strengthText = 'Moyen';
+            } else {
+                strengthText = 'Fort';
+            }
+
+            document.getElementById('passwordMatchMessage').innerHTML = `
+                <div class="strength-feedback ${strength < 3 ? 'weak' : strength < 5 ? 'medium' : 'strong'}">
+                    Force du mot de passe: ${strengthText}
+                </div>
+                ${strengthHtml}
+            `;
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('password_confirmation').value;
+            const messageDiv = document.getElementById('passwordMatch');
+
+            if (!confirmPassword) {
+                messageDiv.style.display = 'none';
+                return;
+            }
+
+            messageDiv.style.display = 'block';
+
+            if (password === confirmPassword) {
+                messageDiv.className = 'feedback-message success';
+                messageDiv.innerHTML = '<i class="fas fa-check-circle"></i> Les mots de passe correspondent';
+            } else {
+                messageDiv.className = 'feedback-message error';
+                messageDiv.innerHTML = '<i class="fas fa-times-circle"></i> Les mots de passe ne correspondent pas';
+            }
+        }
+
+        // Écouteurs d'événements
+        document.getElementById('password').addEventListener('input', function() {
+            validatePasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+
+        document.getElementById('password_confirmation').addEventListener('input', checkPasswordMatch);
+
+        // Soumission du formulaire
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // Validation finale
+            if (!validateCurrentStep() || document.getElementById('password').value !==
+                document.getElementById('password_confirmation').value) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur de validation',
+                    text: 'Veuillez corriger les erreurs dans le formulaire',
+                    confirmButtonColor: '#228B22'
+                });
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création du compte...';
+
+            try {
+                const formData = new FormData(form);
+                
+                // Envoi de la requête AJAX
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token }}',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw data;
+                }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Inscription réussie !',
+                    text: data.message || 'Votre compte FarmGen a été créé avec succès',
+                    confirmButtonColor: '#228B22'
+                });
+
+                // Redirection vers la page appropriée
+                window.location.href = data.redirect_url || "{% url 'home' %}";
+                
+            } catch (error) {
+                let errorMessage = 'Une erreur est survenue lors de la création du compte';
+                let errorList = '';
+
+                if (error.errors) {
+                    errorMessage = 'Erreurs de validation';
+                    for (const key in error.errors) {
+                        errorList += `<li>${error.errors[key][0]}</li>`;
+                    }
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+
+                Swal.fire({
+                    icon: 'error',
+                    title: errorMessage,
+                    html: errorList ? `<ul style="text-align: left; margin: 10px 0;">${errorList}</ul>` : errorMessage,
+                    confirmButtonColor: '#228B22'
+                });
+
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-user-plus"></i> Créer mon compte';
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgressBar();
+            updateStep2Content();
+        });
+    </script>
+</body>
+</html>
