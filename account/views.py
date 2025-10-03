@@ -6,8 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
-from .models import User, SellerProfile, ClientProfile
-
+from .models import User, SellerProfile, ClientProfile, PasswordResetToken
+from django.core.mail import send_mail
+from django.utils import timezone
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from FarmGen import settings
+import uuid
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -114,7 +119,7 @@ def login_api(request):
             }, status=400)
         
         # Authentification
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=email, password=password)
         
         if user is not None:
             if user.is_active:
@@ -150,3 +155,140 @@ def dashboard_view(request):
         return render(request, 'account/seller/dashboard.html')
     else:
         return render(request, 'account/client/dashboard.html')
+    
+@csrf_exempt
+@require_http_methods(["POST"])
+def forgot_password_api(request):
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        
+        if not email:
+            return JsonResponse({
+                'error': 'L\'adresse email est requise'
+            }, status=400)
+        
+        try:
+            user = User.objects.get(email=email, is_active=True)
+        except User.DoesNotExist:
+            # Ne pas révéler si l'email existe ou non
+            return JsonResponse({
+                'success': True,
+                'message': 'Si votre email existe dans notre système, vous recevrez un lien de réinitialisation.'
+            })
+        
+        # Générer le token
+        reset_token = PasswordResetToken.generate_token(user)
+        
+        # Construire l'URL de réinitialisation
+        reset_url = f"{settings.FRONTEND_URL}/account/reset-password-confirm/{reset_token.token}/"
+        
+        # Préparer l'email
+        subject = 'Réinitialisation de votre mot de passe FarmGen'
+        html_message = render_to_string('account/email/reset_password.html', {
+            'user': user,
+            'reset_url': reset_url,
+            'expires_hours': 24
+        })
+        plain_message = strip_tags(html_message)
+        
+        # Envoyer l'email
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Si votre email existe dans notre système, vous recevrez un lien de réinitialisation.'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Une erreur est survenue',
+            'message': str(e)
+        }, status=500)
+
+def reset_password_email_sent_view(request):
+    return render(request, 'client/auth/reset-password.html')
+
+def reset_password_confirm_view(request, token):
+    try:
+        reset_token = PasswordResetToken.objects.get(token=token)
+        if not reset_token.is_valid():
+            return render(request, 'client/auth/reset-password-invalid.html')
+        
+        return render(request, 'client/auth/forgot-password.html', {'token': token})
+        
+    except PasswordResetToken.DoesNotExist:
+        return render(request, 'client/auth/reset-password-invalid.html')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def reset_password_confirm_api(request, token):
+    try:
+        data = json.loads(request.body)
+        password = data.get('password')
+        password_confirmation = data.get('password_confirmation')
+        
+        if not password or not password_confirmation:
+            return JsonResponse({
+                'error': 'Tous les champs sont requis'
+            }, status=400)
+        
+        if password != password_confirmation:
+            return JsonResponse({
+                'error': 'Les mots de passe ne correspondent pas'
+            }, status=400)
+        
+        try:
+            reset_token = PasswordResetToken.objects.get(token=token)
+            if not reset_token.is_valid():
+                return JsonResponse({
+                    'error': 'Ce lien de réinitialisation est invalide ou a expiré'
+                }, status=400)
+            
+            # Mettre à jour le mot de passe
+            user = reset_token.user
+            user.set_password(password)
+            user.save()
+            
+            # Marquer le token comme utilisé
+            reset_token.is_used = True
+            reset_token.save()
+            
+            # Envoyer un email de confirmation
+            subject = 'Votre mot de passe a été modifié'
+            html_message = render_to_string('account/email/password_changed.html', {
+                'user': user
+            })
+            plain_message = strip_tags(html_message)
+            
+            send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Votre mot de passe a été modifié avec succès. Vous pouvez maintenant vous connecter.'
+            })
+            
+        except PasswordResetToken.DoesNotExist:
+            return JsonResponse({
+                'error': 'Ce lien de réinitialisation est invalide'
+            }, status=400)
+            
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Une erreur est survenue',
+            'message': str(e)
+        }, status=500)

@@ -10,9 +10,6 @@ def login(request):
 def register(request):
     return render(request, 'client/auth/register.html')
 
-def forgot_password(request):
-    return render(request, 'client/auth/forgot-password.html')
-
 def reset_password(request):
     return render(request, 'client/auth/reset-password.html')
 

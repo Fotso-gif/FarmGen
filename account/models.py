@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils.crypto import get_random_string
+import uuid
 
 class User(AbstractUser):
     ACCOUNT_TYPES = (
@@ -71,7 +73,7 @@ class SellerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
     farm_name = models.CharField(max_length=255)
     farm_description = models.TextField(blank=True)
-    specialty = models.CharField(max_length=20, choices=SPECIALTIES)
+    specialty = models.CharField(max_length=20, choices=SPECIALTIES, default='autres')
     farm_size = models.DecimalField(max_digits=10, decimal_places=2, help_text="Superficie en hectares")  # en hectares
     production_capacity = models.CharField(max_length=255, blank=True, help_text="Capacité de production mensuelle/annuelle")
     certification = models.CharField(max_length=20, choices=CERTIFICATION_TYPES, default='aucune')
@@ -143,3 +145,31 @@ class ClientProfile(models.Model):
         verbose_name = "Profil Client"
         verbose_name_plural = "Profils Clients"
 
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Reset token for {self.user.email}"
+    
+    def is_valid(self):
+        from django.utils import timezone
+        return not self.is_used and timezone.now() < self.expires_at
+    
+    @classmethod
+    def generate_token(cls, user):
+        # Supprimer les anciens tokens
+        cls.objects.filter(user=user).delete()
+        
+        # Créer un nouveau token
+        token = get_random_string(50)
+        expires_at = timezone.now() + timezone.timedelta(hours=24)
+        
+        return cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )

@@ -155,3 +155,14 @@ EMAIL_HOST_USER = os.getenv('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "FarmGen"
+
+# URLs pour la réinitialisation
+FRONTEND_URL = 'http://localhost:8000'  # À adapter en production
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/account/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Configuration des sessions
+SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
+SESSION_SAVE_EVERY_REQUEST = True
