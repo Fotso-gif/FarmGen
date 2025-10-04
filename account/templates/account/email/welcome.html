@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #228B22; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f9f9f9; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>FarmGen</h1>
+            <h2>Bienvenue dans notre communauté !</h2>
+        </div>
+        
+        <div class="content">
+            <p>Bonjour {{ user.get_full_name }},</p>
+            
+            <p>Félicitations ! Votre compte FarmGen a été créé avec succès.</p>
+            
+            {% if user.is_seller %}
+            <p>En tant qu'agriculteur/vendeur, vous pouvez maintenant :</p>
+            <ul>
+                <li>Créer votre boutique en ligne</li>
+                <li>Ajouter vos produits agricoles</li>
+                <li>Gérer vos stocks et commandes</li>
+                <li>Connecter avec des clients locaux</li>
+            </ul>
+            {% else %}
+            <p>En tant que client, vous pouvez maintenant :</p>
+            <ul>
+                <li>Découvrir des produits agricoles frais</li>
+                <li>Acheter directement auprès des producteurs</li>
+                <li>Suivre vos commandes en temps réel</li>
+                <li>Profiter de promotions exclusives</li>
+            </ul>
+            {% endif %}
+            
+            <p>Connectez-vous dès maintenant pour commencer :</p>
+            <p style="text-align: center;">
+                <a href="{{ login_url }}" style="display: inline-block; padding: 12px 24px; background: #228B22; color: white; text-decoration: none; border-radius: 5px;">
+                    Se connecter
+                </a>
+            </p>
+            
+            <p>Merci de nous rejoindre,<br>L'équipe FarmGen</p>
+        </div>
+        
+        <div class="footer">
+            <p>© {% now "Y" %} FarmGen. Tous droits réservés.</p>
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>

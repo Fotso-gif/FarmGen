@@ -1,0 +1,195 @@
+{% load static %}
+<!DOCTYPE html >
+<html lang="fr">
+<head>
+    <title>Vérification envoyée | FarmGen</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-green: #228B22;
+            --primary-yellow: #FFD700;
+            --primary-white: #F8F8F8;
+            --text-dark: #2d3e50;
+            --text-light: #6c757d;
+        }
+
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--primary-white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--primary-green);
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .info-box {
+            background-color: rgba(34, 139, 34, 0.1);
+            border: 1px solid var(--primary-green);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: var(--primary-green);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #1e7a1e;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        #resendForm {
+            margin-top: 1rem;
+        }
+
+        #resendMessage {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="success-icon">
+            <i class="fas fa-envelope"></i>
+        </div>
+        
+        <h1>Email de vérification envoyé !</h1>
+        
+        <p>Nous avons envoyé un lien de vérification à votre adresse email. Veuillez vérifier votre boîte de réception et cliquer sur le lien pour activer votre compte.</p>
+        
+        <div class="info-box">
+            <strong>Si vous ne recevez pas l'email :</strong>
+            <ul>
+                <li>Vérifiez votre dossier de spam/courrier indésirable</li>
+                <li>Assurez-vous d'avoir saisi la bonne adresse email</li>
+                <li>Attendez quelques minutes avant de réessayer</li>
+            </ul>
+        </div>
+
+        <div id="resendForm">
+            <button onclick="resendVerification()" class="btn" id="resendBtn">
+                <i class="fas fa-redo"></i> Renvoyer l'email
+            </button>
+            <div id="resendMessage"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'login_view' %}" class="btn">
+                <i class="fas fa-sign-in-alt"></i> Se connecter
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        function resendVerification() {
+            const btn = document.getElementById('resendBtn');
+            const messageDiv = document.getElementById('resendMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+            
+            // Récupérer l'email depuis la session ou les cookies
+            // Pour l'instant, on utilise une approche simple
+            fetch("{% url 'resend_verification' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    email: '{{ request.user.email }}'  // Si l'utilisateur est connecté
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.innerHTML = '<div style="color: var(--primary-green);"><i class="fas fa-check"></i> ' + data.message + '</div>';
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Email renvoyé !',
+                        text: data.message,
+                        confirmButtonColor: '#228B22'
+                    });
+                } else {
+                    messageDiv.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-times"></i> ' + data.error + '</div>';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Erreur',
+                        text: data.error,
+                        confirmButtonColor: '#228B22'
+                    });
+                }
+            })
+            .catch(error => {
+                messageDiv.innerHTML = '<div style="color: #dc3545;"><i class="fas fa-times"></i> Une erreur est survenue</div>';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Une erreur est survenue lors de l\'envoi',
+                    confirmButtonColor: '#228B22'
+                });
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-redo"></i> Renvoyer l\'email';
+            });
+        }
+    </script>
+</body>
+</html>

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
-from .models import User, SellerProfile, ClientProfile, PasswordResetToken
+from .models import User, SellerProfile, ClientProfile, PasswordResetToken, EmailVerificationToken
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.template.loader import render_to_string
@@ -88,13 +88,23 @@ def register_api(request):
             )
             client_profile.save()
         
+         # Génération du token de vérification
+        verification_token = EmailVerificationToken.generate_token(user)
+        verification_url = f"{settings.FRONTEND_URL}/account/verify-email/{verification_token.token}/"
+        
+        # Envoi de l'email de vérification
+        send_verification_email(user, verification_url)
+        
+        # Envoi de l'email de bienvenue
+        send_welcome_email(user)
+        
         # Connexion automatique
         login(request, user)
         
         return JsonResponse({
             'success': True,
-            'message': 'Votre compte a été créé avec succès!',
-            'redirect_url': '/dashboard/'  # À adapter selon vos URLs
+            'message': 'Votre compte a été créé avec succès ! Un email de vérification vous a été envoyé.',
+            'redirect_url': '/account/verification-sent/'
         })
         
     except Exception as e:
@@ -102,6 +112,81 @@ def register_api(request):
             'error': 'Une erreur est survenue lors de la création du compte',
             'message': str(e)
         }, status=500)
+    
+    # Vérification d'email
+def verify_email_view(request, token):
+    try:
+        verification_token = EmailVerificationToken.objects.get(token=token)
+        
+        if not verification_token.is_valid():
+            return render(request, 'account/verify-email-invalid.html')
+        
+        # Marquer l'email comme vérifié
+        user = verification_token.user
+        user.is_verified = True
+        user.save()
+        
+        # Marquer le token comme utilisé
+        verification_token.is_used = True
+        verification_token.save()
+        
+        # Connexion automatique si pas déjà connecté
+        if not request.user.is_authenticated:
+            login(request, user)
+        
+        return render(request, 'account/verify-email-success.html', {
+            'user': user
+        })
+        
+    except EmailVerificationToken.DoesNotExist:
+        return render(request, 'account/verify-email-invalid.html')
+
+# Renvoyer l'email de vérification
+@csrf_exempt
+@require_http_methods(["POST"])
+def resend_verification_email_api(request):
+    try:
+        data = json.loads(request.body)
+        email = data.get('email')
+        
+        if not email:
+            return JsonResponse({
+                'error': 'L\'adresse email est requise'
+            }, status=400)
+        
+        try:
+            user = User.objects.get(email=email, is_active=True)
+            
+            if user.is_verified:
+                return JsonResponse({
+                    'error': 'Cet email est déjà vérifié'
+                }, status=400)
+            
+            # Générer un nouveau token
+            verification_token = EmailVerificationToken.generate_token(user)
+            verification_url = f"{settings.FRONTEND_URL}/account/verify-email/{verification_token.token}/"
+            
+            # Renvoyer l'email
+            send_verification_email(user, verification_url)
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Un nouvel email de vérification vous a été envoyé.'
+            })
+            
+        except User.DoesNotExist:
+            # Ne pas révéler si l'email existe ou non
+            return JsonResponse({
+                'success': True,
+                'message': 'Si votre email existe dans notre système, vous recevrez un lien de vérification.'
+            })
+            
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Une erreur est survenue',
+            'message': str(e)
+        }, status=500)
+
 
 
 @csrf_exempt
@@ -185,7 +270,7 @@ def forgot_password_api(request):
         
         # Préparer l'email
         subject = 'Réinitialisation de votre mot de passe FarmGen'
-        html_message = render_to_string('account/email/reset_password.html', {
+        html_message = render_to_string('account/email/reset-password.html', {
             'user': user,
             'reset_url': reset_url,
             'expires_hours': 24
@@ -214,7 +299,7 @@ def forgot_password_api(request):
         }, status=500)
 
 def reset_password_email_sent_view(request):
-    return render(request, 'client/auth/reset-password.html')
+    return render(request, 'client/auth/reset-password-email.html')
 
 def reset_password_confirm_view(request, token):
     try:
@@ -222,7 +307,7 @@ def reset_password_confirm_view(request, token):
         if not reset_token.is_valid():
             return render(request, 'client/auth/reset-password-invalid.html')
         
-        return render(request, 'client/auth/forgot-password.html', {'token': token})
+        return render(request, 'client/auth/reset-password.html', {'token': token})
         
     except PasswordResetToken.DoesNotExist:
         return render(request, 'client/auth/reset-password-invalid.html')
@@ -292,3 +377,93 @@ def reset_password_confirm_api(request, token):
             'error': 'Une erreur est survenue',
             'message': str(e)
         }, status=500)
+    
+def send_verification_email(user, verification_url):
+    subject = 'Vérification de votre email - FarmGen'
+    html_message = render_to_string('account/email/verify_email.html', {
+        'user': user,
+        'verification_url': verification_url,
+        'expires_hours': 24
+    })
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+
+def send_welcome_email(user):
+    subject = 'Bienvenue sur FarmGen !'
+    html_message = render_to_string('account/email/welcome.html', {
+        'user': user,
+        'login_url': f"{settings.FRONTEND_URL}/login/"
+    })
+    plain_message = strip_tags(html_message)
+    
+    send_mail(
+        subject,
+        plain_message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=html_message,
+        fail_silently=False,
+    )
+# Vérification d'email
+def verification_sent_view(request):
+    return render(request, 'account/verification-sent.html')
+
+@login_required
+def profile(request):
+    """Page de profil utilisateur"""
+    user = request.user
+    
+    if request.method == 'POST':
+        # Mettre à jour les informations du profil
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.phone = request.POST.get('phone', user.phone)
+        user.address = request.POST.get('address', user.address)
+        user.city = request.POST.get('city', user.city)
+        user.region = request.POST.get('region', user.region)
+        
+        # Gérer l'upload de l'image de profil
+        if 'profile_image' in request.FILES:
+            user.profile_image = request.FILES['profile_image']
+        
+        user.save()
+        messages.success(request, "Profil mis à jour avec succès")
+        return redirect('profile')
+    
+    context = {
+        'user': user,
+    }
+    return render(request, 'account\profile.html', context)
+
+@login_required
+def update_password(request):
+    """Mettre à jour le mot de passe"""
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+        
+        if not request.user.check_password(current_password):
+            messages.error(request, "Mot de passe actuel incorrect")
+        elif new_password != confirm_password:
+            messages.error(request, "Les nouveaux mots de passe ne correspondent pas")
+        elif len(new_password) < 8:
+            messages.error(request, "Le mot de passe doit contenir au moins 8 caractères")
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            messages.success(request, "Mot de passe mis à jour avec succès")
+            # Reconnecter l'utilisateur
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+    
+    return redirect('profile')

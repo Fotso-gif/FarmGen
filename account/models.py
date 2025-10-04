@@ -145,6 +145,34 @@ class ClientProfile(models.Model):
         verbose_name = "Profil Client"
         verbose_name_plural = "Profils Clients"
 
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Verification token for {self.user.email}"
+    
+    def is_valid(self):
+        return not self.is_used and timezone.now() < self.expires_at
+    
+    @classmethod
+    def generate_token(cls, user):
+        # Supprimer les anciens tokens
+        cls.objects.filter(user=user).delete()
+        
+        # Créer un nouveau token
+        token = get_random_string(50)
+        expires_at = timezone.now() + timezone.timedelta(hours=24)
+        
+        return cls.objects.create(
+            user=user,
+            token=token,
+            expires_at=expires_at
+        )
+    
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=100, unique=True)

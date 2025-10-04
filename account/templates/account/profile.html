@@ -1,0 +1,1110 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #228B22;
+        --primary-light: #32a852;
+        --primary-lighter: #4caf50;
+        --secondary: #FFD700;
+        --accent: #ff6b35;
+        --light: #F8F8F8;
+        --dark: #2c3e50;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --shadow: 0 10px 30px rgba(34, 139, 34, 0.1);
+        --radius: 12px;
+        --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    /* Background gradient circles */
+    .gradient-circles {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .gradient-circle {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        opacity: 0.15;
+        animation: float 15s infinite ease-in-out;
+    }
+
+    .circle-1 {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, var(--primary-lighter), var(--primary-light));
+        top: -100px;
+        left: -100px;
+        animation-delay: 0s;
+    }
+
+    .circle-2 {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, var(--accent), var(--primary-light));
+        bottom: -150px;
+        right: -150px;
+        animation-delay: 2s;
+    }
+
+    @keyframes float {
+        0%, 100% {
+            transform: translate(0, 0);
+        }
+        50% {
+            transform: translate(30px, 30px);
+        }
+    }
+
+    /* Main container */
+    .profile-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: var(--radius);
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: var(--transition);
+    }
+
+    .profile-container:hover {
+        box-shadow: 0 15px 40px rgba(34, 139, 34, 0.15);
+    }
+
+    .section-header {
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .section-title {
+        font-size: 2rem;
+        color: var(--primary);
+        margin: 0;
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+    }
+
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        width: 60px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--secondary), var(--accent));
+        border-radius: 2px;
+    }
+
+    /* Profile layout */
+    .profile-content {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 30px;
+    }
+
+    @media (max-width: 992px) {
+        .profile-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Profile card */
+    .profile-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        position: relative;
+        border-left: 4px solid var(--primary);
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        position: relative;
+        border: 4px solid white;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--secondary), var(--primary));
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-edit {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--secondary);
+        color: var(--dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 2px solid white;
+    }
+
+    .avatar-edit:hover {
+        transform: scale(1.1);
+        background: var(--primary);
+        color: white;
+    }
+
+    .profile-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 5px;
+        color: var(--primary);
+    }
+
+    .profile-role {
+        color: var(--accent);
+        font-weight: 500;
+        margin: 0 0 15px;
+        text-transform: capitalize;
+    }
+
+    .profile-bio {
+        color: #7f8c8d;
+        margin: 0 0 25px;
+        line-height: 1.6;
+        font-size: 0.9rem;
+    }
+
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 25px 0;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin: 0;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin: 5px 0 0;
+    }
+
+    /* Info card */
+    .info-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        margin-bottom: 25px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .info-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .info-edit {
+        background: none;
+        border: none;
+        color: var(--primary);
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: var(--transition);
+        padding: 8px 15px;
+        border-radius: 5px;
+        border: 1px solid var(--primary);
+    }
+
+    .info-edit:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .info-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .info-item {
+        margin-bottom: 15px;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin: 0 0 5px;
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: var(--dark);
+        margin: 0;
+        font-weight: 500;
+        padding: 8px 12px;
+        background: var(--light);
+        border-radius: 5px;
+        border: 1px solid #e9ecef;
+    }
+
+    .info-value.editable {
+        background: white;
+        border: 1px solid #ddd;
+        cursor: text;
+    }
+
+    /* Form styles */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: var(--dark);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: var(--radius);
+        font-size: 14px;
+        transition: var(--transition);
+        background: white;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.1);
+        outline: none;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 25px;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        transition: var(--transition);
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #ecf0f1;
+        color: var(--dark);
+        border: 1px solid #ddd;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-light);
+    }
+
+    /* Tabs */
+    .tabs-container {
+        margin-bottom: 25px;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 10px;
+        border-bottom: 1px solid #ecf0f1;
+        padding-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .tab {
+        padding: 12px 20px;
+        border-radius: var(--radius) var(--radius) 0 0;
+        cursor: pointer;
+        transition: var(--transition);
+        font-weight: 500;
+        color: #7f8c8d;
+        border-bottom: 3px solid transparent;
+        background: var(--light);
+    }
+
+    .tab.active {
+        color: var(--primary);
+        border-bottom: 3px solid var(--accent);
+        background: white;
+    }
+
+    .tab:hover:not(.active) {
+        color: var(--primary-light);
+        background: white;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Activity feed */
+    .activity-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f1f1;
+        transition: var(--transition);
+    }
+
+    .activity-item:hover {
+        background: var(--light);
+        margin: 0 -15px;
+        padding: 15px;
+        border-radius: var(--radius);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(34, 139, 34, 0.1);
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        margin: 0 0 5px;
+        color: var(--dark);
+    }
+
+    .activity-time {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin: 0;
+    }
+
+    /* Shop info for sellers */
+    .shop-info {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+    }
+
+    .shop-info h4 {
+        margin: 0 0 10px 0;
+        color: white;
+    }
+
+    .shop-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .shop-stat {
+        text-align: center;
+    }
+
+    .shop-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .shop-stat-label {
+        font-size: 0.8rem;
+        opacity: 0.9;
+        margin: 5px 0 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-container {
+            padding: 20px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+        }
+
+        .profile-stats {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .shop-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .tabs {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            white-space: nowrap;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .info-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .info-edit {
+            align-self: stretch;
+            text-align: center;
+        }
+    }
+
+    /* Animation */
+    .animate__animated {
+        animation-duration: 0.5s;
+    }
+
+    /* Avatar initials fallback */
+    .avatar-initials {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+</style>
+
+<!-- Gradient background circles -->
+<div class="gradient-circles">
+    <div class="gradient-circle circle-1"></div>
+    <div class="gradient-circle circle-2"></div>
+</div>
+
+<!-- Main Content -->
+<main>
+    <!-- Section Profil -->
+    <div class="profile-container animate__animated animate__fadeIn">
+        <div class="section-header">
+            <h3 class="section-title"><i class="fas fa-user"></i> Mon Profil FarmGen</h3>
+        </div>
+
+        <div class="profile-content">
+            <!-- Colonne de gauche - Photo et infos basiques -->
+            <div class="profile-sidebar">
+                <div class="profile-card animate__animated animate__fadeInLeft">
+                    <div class="profile-avatar">
+                        {% if user.profile_image %}
+                            <img src="{{ user.profile_image.url }}" alt="Profile de {{ user.get_full_name }}">
+                        {% else %}
+                            <div class="avatar-initials">
+                                {{ user.first_name|first }}{{ user.last_name|first }}
+                            </div>
+                        {% endif %}
+                        <div class="avatar-edit" onclick="document.getElementById('profileImageInput').click()">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    
+                    <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
+                    <p class="profile-role">
+                        {% if user.user_type == 'seller' %}
+                            🌱 Agriculteur/Vendeur
+                        {% else %}
+                            🛒 Client
+                        {% endif %}
+                    </p>
+                    <p class="profile-bio">
+                        {% if user.user_type == 'seller' %}
+                            Spécialisé dans la production et vente de produits agricoles de qualité.
+                        {% else %}
+                            Amateur de produits agricoles frais et locaux.
+                        {% endif %}
+                    </p>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">
+                                {% if user.user_type == 'seller' %}
+                                    {{ user.shop.product_set.count }}
+                                {% else %}
+                                    {{ user.orders.count }}
+                                {% endif %}
+                            </div>
+                            <div class="stat-label">
+                                {% if user.user_type == 'seller' %}
+                                    Produits
+                                {% else %}
+                                    Commandes
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">
+                                {% if user.user_type == 'seller' %}
+                                    {{ user.shop.orders.count }}
+                                {% else %}
+                                    {{ user.favorite_shops.count }}
+                                {% endif %}
+                            </div>
+                            <div class="stat-label">
+                                {% if user.user_type == 'seller' %}
+                                    Ventes
+                                {% else %}
+                                    Favoris
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">
+                                {% now "Y" %}
+                            </div>
+                            <div class="stat-label">
+                                Membre
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if user.user_type == 'seller' and user.shop %}
+                    <div class="shop-info">
+                        <h4><i class="fas fa-store"></i> {{ user.shop.name }}</h4>
+                        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">{{ user.shop.description|truncatewords:10 }}</p>
+                        <div class="shop-stats">
+                            <div class="shop-stat">
+                                <div class="shop-stat-value">{{ user.shop.product_set.count }}</div>
+                                <div class="shop-stat-label">Produits</div>
+                            </div>
+                            <div class="shop-stat">
+                                <div class="shop-stat-value">{{ user.shop.orders.count }}</div>
+                                <div class="shop-stat-label">Ventes</div>
+                            </div>
+                            <div class="shop-stat">
+                                <div class="shop-stat-value">4.5</div>
+                                <div class="shop-stat-label">Note</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <form id="profileImageForm" method="post" enctype="multipart/form-data" style="display: none;">
+                        {% csrf_token %}
+                        <input type="file" id="profileImageInput" name="profile_image" accept="image/*" onchange="this.form.submit()">
+                    </form>
+                </div>
+            </div>
+
+            <!-- Colonne de droite - Détails du profil -->
+            <div class="profile-main">
+                <!-- Onglets -->
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="info">Informations personnelles</div>
+                        <div class="tab" data-tab="security">Sécurité</div>
+                        {% if user.user_type == 'seller' %}
+                        <div class="tab" data-tab="shop">Ma Boutique</div>
+                        {% endif %}
+                        <div class="tab" data-tab="activity">Activité récente</div>
+                    </div>
+                </div>
+
+                <!-- Contenu des onglets -->
+                <div class="tab-content active" id="info">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="info-card animate__animated animate__fadeIn">
+                            <div class="info-header">
+                                <h4 class="info-title"><i class="fas fa-user-circle"></i> Informations personnelles</h4>
+                                <button type="button" class="info-edit" id="editPersonalInfo">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </button>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <div class="info-label">Nom complet</div>
+                                    <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control" placeholder="Prénom" required>
+                                    <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control mt-2" placeholder="Nom" required>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Email</div>
+                                    <input type="email" name="email" value="{{ user.email }}" class="form-control" placeholder="Email" required>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Téléphone</div>
+                                    <input type="tel" name="phone" value="{{ user.phone|default:'' }}" class="form-control" placeholder="Numéro de téléphone">
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Type de compte</div>
+                                    <div class="info-value">{{ user.get_user_type_display }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Date d'inscription</div>
+                                    <div class="info-value">{{ user.date_joined|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="info-card animate__animated animate__fadeIn">
+                            <div class="info-header">
+                                <h4 class="info-title"><i class="fas fa-map-marker-alt"></i> Adresse</h4>
+                                <button type="button" class="info-edit" id="editAddress">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </button>
+                            </div>
+                            <div class="info-content">
+                                <div class="info-item">
+                                    <div class="info-label">Adresse</div>
+                                    <textarea name="address" class="form-control" placeholder="Votre adresse complète" rows="3">{{ user.address|default:'' }}</textarea>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Ville</div>
+                                    <input type="text" name="city" value="{{ user.city|default:'' }}" class="form-control" placeholder="Ville">
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Région</div>
+                                    <select name="region" class="form-control">
+                                        <option value="">Sélectionnez une région</option>
+                                        <option value="adamaoua" {% if user.region == 'adamaoua' %}selected{% endif %}>Adamaoua</option>
+                                        <option value="centre" {% if user.region == 'centre' %}selected{% endif %}>Centre</option>
+                                        <option value="est" {% if user.region == 'est' %}selected{% endif %}>Est</option>
+                                        <option value="extreme-nord" {% if user.region == 'extreme-nord' %}selected{% endif %}>Extrême-Nord</option>
+                                        <option value="littoral" {% if user.region == 'littoral' %}selected{% endif %}>Littoral</option>
+                                        <option value="nord" {% if user.region == 'nord' %}selected{% endif %}>Nord</option>
+                                        <option value="nord-ouest" {% if user.region == 'nord-ouest' %}selected{% endif %}>Nord-Ouest</option>
+                                        <option value="ouest" {% if user.region == 'ouest' %}selected{% endif %}>Ouest</option>
+                                        <option value="sud" {% if user.region == 'sud' %}selected{% endif %}>Sud</option>
+                                        <option value="sud-ouest" {% if user.region == 'sud-ouest' %}selected{% endif %}>Sud-Ouest</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelEdit">Annuler</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="tab-content" id="security">
+                    <form method="post" action="{% url 'update_password' %}">
+                        {% csrf_token %}
+                        <div class="info-card animate__animated animate__fadeIn">
+                            <div class="info-header">
+                                <h4 class="info-title"><i class="fas fa-lock"></i> Sécurité du compte</h4>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mot de passe actuel</label>
+                                <input type="password" name="current_password" class="form-control" placeholder="Entrez votre mot de passe actuel" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nouveau mot de passe</label>
+                                <input type="password" name="new_password" class="form-control" placeholder="Entrez votre nouveau mot de passe" required>
+                                <div class="form-text">Le mot de passe doit contenir au moins 8 caractères.</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirmer le nouveau mot de passe</label>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirmez votre nouveau mot de passe" required>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">Mettre à jour le mot de passe</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="info-card animate__animated animate__fadeIn">
+                        <div class="info-header">
+                            <h4 class="info-title"><i class="fas fa-shield-alt"></i> Authentification à deux facteurs</h4>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-item">
+                                <div class="info-label">Statut</div>
+                                <div class="info-value">Désactivé</div>
+                            </div>
+                            <p style="margin: 15px 0; color: #7f8c8d;">Protégez votre compte en activant l'authentification à deux facteurs. Vous recevrez un code par SMS à chaque connexion.</p>
+                            <button class="btn btn-primary">
+                                <i class="fas fa-lock"></i> Activer la 2FA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.user_type == 'seller' %}
+                <div class="tab-content" id="shop">
+                    {% if user.shop %}
+                    <div class="info-card animate__animated animate__fadeIn">
+                        <div class="info-header">
+                            <h4 class="info-title"><i class="fas fa-store"></i> Informations de la boutique</h4>
+                            <a href="{% url 'edit_shop' %}" class="info-edit">
+                                <i class="fas fa-edit"></i> Modifier la boutique
+                            </a>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-item">
+                                <div class="info-label">Nom de la boutique</div>
+                                <div class="info-value">{{ user.shop.name }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Description</div>
+                                <div class="info-value">{{ user.shop.description }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Statut</div>
+                                <div class="info-value">
+                                    <span class="badge bg-success">Active</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Date de création</div>
+                                <div class="info-value">{{ user.shop.created_at|date:"d/m/Y" }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card animate__animated animate__fadeIn">
+                        <div class="info-header">
+                            <h4 class="info-title"><i class="fas fa-chart-line"></i> Statistiques de la boutique</h4>
+                        </div>
+                        <div class="info-content">
+                            <div class="info-item">
+                                <div class="info-label">Produits actifs</div>
+                                <div class="info-value">{{ user.shop.product_set.count }} produits</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Commandes totales</div>
+                                <div class="info-value">{{ user.shop.orders.count }} commandes</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Ventes ce mois</div>
+                                <div class="info-value">0 FCFA</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Note moyenne</div>
+                                <div class="info-value">4.5/5 ⭐</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="info-card animate__animated animate__fadeIn">
+                        <div class="text-center py-4">
+                            <i class="fas fa-store fa-4x text-muted mb-3"></i>
+                            <h4 class="text-muted">Aucune boutique</h4>
+                            <p class="text-muted mb-4">Vous n'avez pas encore créé de boutique sur FarmGen</p>
+                            <a href="{% url 'create_shop' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus"></i> Créer ma boutique
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="tab-content" id="activity">
+                    <div class="info-card animate__animated animate__fadeIn">
+                        <div class="info-header">
+                            <h4 class="info-title"><i class="fas fa-history"></i> Activité récente</h4>
+                        </div>
+                        <ul class="activity-list">
+                            {% if user.user_type == 'seller' %}
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez ajouté un nouveau produit <strong>Tomates fraîches</strong></p>
+                                    <p class="activity-time">Il y a 2 heures</p>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Nouvelle commande reçue <strong>#CMD-001</strong></p>
+                                    <p class="activity-time">Hier à 14:32</p>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez publié un article sur le blog</p>
+                                    <p class="activity-time">23 Octobre 2023</p>
+                                </div>
+                            </li>
+                            {% else %}
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez passé une commande chez <strong>Fermier Bio</strong></p>
+                                    <p class="activity-time">Il y a 2 heures</p>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-heart"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez ajouté <strong>Ferme Traditionnelle</strong> à vos favoris</p>
+                                    <p class="activity-time">Hier à 14:32</p>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez noté le produit <strong>Bananes plantains</strong></p>
+                                    <p class="activity-time">23 Octobre 2023</p>
+                                </div>
+                            </li>
+                            {% endif %}
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez mis à jour vos informations de profil</p>
+                                    <p class="activity-time">20 Octobre 2023</p>
+                                </div>
+                            </li>
+                            <li class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <p class="activity-text">Vous avez complété votre profil à 100%</p>
+                                    <p class="activity-time">18 Octobre 2023</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation des éléments
+        const animateElements = () => {
+            const cards = document.querySelectorAll('.profile-card, .info-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('animate__fadeInUp');
+                }, index * 100);
+            });
+        };
+
+        // Initialiser les animations
+        animateElements();
+
+        // Gestion des onglets
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                // Désactiver tous les onglets
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                // Activer l'onglet cliqué
+                tab.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Édition en ligne du profil
+        let isEditing = false;
+        const editButtons = document.querySelectorAll('.info-edit');
+        const cancelButton = document.getElementById('cancelEdit');
+        
+        function toggleEditMode(enable) {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.type !== 'file') {
+                    if (enable) {
+                        input.removeAttribute('readonly');
+                        input.classList.add('editable');
+                    } else {
+                        input.setAttribute('readonly', true);
+                        input.classList.remove('editable');
+                    }
+                }
+            });
+            
+            isEditing = enable;
+            cancelButton.style.display = enable ? 'flex' : 'none';
+        }
+
+        editButtons.forEach(button => {
+            if (button.id !== 'editPersonalInfo' && button.id !== 'editAddress') return;
+            
+            button.addEventListener('click', function() {
+                toggleEditMode(true);
+            });
+        });
+
+        cancelButton.addEventListener('click', function() {
+            toggleEditMode(false);
+            // Recharger les valeurs originales (pourrait être amélioré avec JavaScript)
+            location.reload();
+        });
+
+        // Initialiser en mode lecture
+        toggleEditMode(false);
+
+        // Gestion de l'upload d'image
+        const profileImageInput = document.getElementById('profileImageInput');
+        if (profileImageInput) {
+            profileImageInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const form = document.getElementById('profileImageForm');
+                    form.submit();
+                }
+            });
+        }
+
+        // Afficher les messages Django
+        {% if messages %}
+            {% for message in messages %}
+                showNotification('{{ message.tags }}', '{{ message }}');
+            {% endfor %}
+        {% endif %}
+    });
+
+    function showNotification(type, message) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            min-width: 300px;
+        `;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+</script>
+{% endblock %}
