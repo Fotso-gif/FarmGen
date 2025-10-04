@@ -610,14 +610,14 @@
                     
                     <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
                     <p class="profile-role">
-                        {% if user.user_type == 'seller' %}
+                        {% if user.account_type == 'seller' %}
                             🌱 Agriculteur/Vendeur
                         {% else %}
                             🛒 Client
                         {% endif %}
                     </p>
                     <p class="profile-bio">
-                        {% if user.user_type == 'seller' %}
+                        {% if user.account_type == 'seller' %}
                             Spécialisé dans la production et vente de produits agricoles de qualité.
                         {% else %}
                             Amateur de produits agricoles frais et locaux.
