@@ -204,7 +204,7 @@ def login_api(request):
             }, status=400)
         
         # Authentification
-        user = authenticate(request, username=email, password=password)
+        user = authenticate(request, email=email, password=password)
         
         if user is not None:
             if user.is_active:

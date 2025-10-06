@@ -4,6 +4,7 @@ from django.urls import path
 urlpatterns = [
     path('login/traitement/', views.login_api, name='login'),
     path('register/traitement/', views.register_api, name='register'),
+    path('logout/', views.logout_view, name='logout'),
     # Réinitialisation de mot de passe
     path('forgot-password/api/', views.forgot_password_api, name='forgot_password_api'),
     path('reset-password-email/', views.reset_password_email_sent_view, name='reset_password_email'),
