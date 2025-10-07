@@ -1,5 +1,6 @@
 # account/views.py
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -193,7 +194,15 @@ def resend_verification_email_api(request):
 @require_http_methods(["POST"])
 def login_api(request):
     try:
-        data = json.loads(request.body)
+        # Vérifier le content-type pour gérer FormData et JSON
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            # Pour FormData
+            data = {
+                'email': request.POST.get('email'),
+                'password': request.POST.get('password')
+            }
         
         email = data.get('email')
         password = data.get('password')
@@ -204,7 +213,7 @@ def login_api(request):
             }, status=400)
         
         # Authentification
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=email, password=password)
         
         if user is not None:
             if user.is_active:
@@ -212,7 +221,7 @@ def login_api(request):
                 return JsonResponse({
                     'success': True,
                     'message': 'Connexion réussie',
-                    'redirect_url': "{% url 'dashboard' %}"  # À adapter selon vos URLs
+                    'redirect_url': reverse('dashboard')  # Correction ici
                 })
             else:
                 return JsonResponse({
@@ -223,18 +232,23 @@ def login_api(request):
                 'error': 'Email ou mot de passe incorrect'
             }, status=400)
             
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error': 'Données invalides',
+            'message': 'Le format des données est incorrect'
+        }, status=400)
     except Exception as e:
         return JsonResponse({
             'error': 'Une erreur est survenue lors de la connexion',
             'message': str(e)
         }, status=500)
-
+        
 def logout_view(request):
     logout(request)
     return redirect('login_view')
 
 @login_required
-def dashboard_view(request):
+def dashboard(request):
     # Redirection selon le type de compte
     if request.user.is_seller:
         return render(request, 'account/seller/dashboard.html')

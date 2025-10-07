@@ -349,89 +349,134 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Toggle mot de passe 👁️
-            const togglePassword = document.getElementById('togglePassword');
-            const password = document.getElementById('password');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle mot de passe 👁️
+        const togglePassword = document.getElementById('togglePassword');
+        const password = document.getElementById('password');
 
+        if (togglePassword && password) {
             togglePassword.addEventListener('click', function() {
                 const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
                 password.setAttribute('type', type);
                 this.classList.toggle('fa-eye-slash');
             });
+        }
 
-            // Soumission du formulaire AJAX
-            const loginForm = document.getElementById('loginForm');
-            const btnText = document.getElementById('btnText');
-            const btnLoading = document.getElementById('btnLoading');
+        // Soumission du formulaire AJAX
+        const loginForm = document.getElementById('loginForm');
+        const btnText = document.getElementById('btnText');
+        const btnLoading = document.getElementById('btnLoading');
 
+        if (loginForm) {
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
 
+                // Récupération des données du formulaire
                 const formData = new FormData(loginForm);
+                const jsonData = {
+                    email: formData.get('email'),
+                    password: formData.get('password')
+                };
 
                 // Affiche le chargement
-                btnText.style.display = 'none';
-                btnLoading.style.display = 'inline';
+                if (btnText && btnLoading) {
+                    btnText.style.display = 'none';
+                    btnLoading.style.display = 'inline';
+                }
 
-                fetch("{% url 'login' %}", {
-                        method: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": "{{ csrf_token }}",
-                            "Accept": "application/json"
-                        },
-                        body: formData
-                    })
-                    .then(async response => {
-                        const data = await response.json();
-
-                        if (response.ok) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Connexion réussie',
-                                text: data.message || 'Redirection en cours...',
-                                confirmButtonColor: '#228B22'
-                            }).then(() => {
-                                window.location.href = data.redirect_url || "{% url 'home' %}";
-                            });
-                        } else {
-                            throw data;
-                        }
-                    })
-                    .catch(error => {
-                        let errorMsg = "Une erreur est survenue. Veuillez réessayer.";
-
-                        if (error.message) {
-                            errorMsg = error.message;
-                        } else if (error.errors) {
-                            errorMsg = Object.values(error.errors).flat()[0];
-                        }
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Échec de connexion',
-                            text: errorMsg,
-                            confirmButtonColor: '#228B22'
+                // Option 1: Envoi en JSON (recommandé)
+                fetch("{% url 'login' %}", {  // Assurez-vous que c'est le bon nom d'URL
+                    method: "POST",
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken")  // Fonction corrigée
+                    },
+                    body: JSON.stringify(jsonData)
+                })
+                .then(response => {
+                    // Vérifier d'abord le statut HTTP
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw errorData;
+                        }).catch(() => {
+                            throw { error: `Erreur HTTP: ${response.status}` };
                         });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Connexion réussie',
+                            text: data.message || 'Redirection en cours...',
+                            confirmButtonColor: '#228B22'
+                        }).then(() => {
+                            window.location.href = data.redirect_url || "{% url 'home' %}";
+                        });
+                    } else {
+                        throw data;
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur détaillée:', error);
+                    
+                    let errorMsg = "Une erreur est survenue. Veuillez réessayer.";
 
-                        // Reset bouton
+                    if (error.error) {
+                        errorMsg = error.error;
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    } else if (error.errors) {
+                        errorMsg = Object.values(error.errors).flat()[0];
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Échec de connexion',
+                        text: errorMsg,
+                        confirmButtonColor: '#228B22'
+                    });
+                })
+                .finally(() => {
+                    // Reset bouton dans tous les cas
+                    if (btnText && btnLoading) {
                         btnText.style.display = 'inline';
                         btnLoading.style.display = 'none';
-                    });
+                    }
+                });
             });
+        }
 
-            // Animation au focus
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.classList.add('animate__animated', 'animate__pulse');
-                });
-                input.addEventListener('blur', function() {
-                    this.classList.remove('animate__animated', 'animate__pulse');
-                });
+        // Fonction pour récupérer le cookie CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Animation au focus
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.classList.add('animate__animated', 'animate__pulse');
+            });
+            input.addEventListener('blur', function() {
+                this.classList.remove('animate__animated', 'animate__pulse');
             });
         });
-    </script>
+    });
+</script>
 
 </body>
 </html>
