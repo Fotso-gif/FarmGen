@@ -27,7 +27,7 @@ class User(AbstractUser):
     
     # Champs communs à tous les utilisateurs
     account_type = models.CharField(max_length=10, choices=ACCOUNT_TYPES)
-    phone = models.CharField(max_length=20, unique=True)
+    phone = models.CharField(max_length=20, unique=True,null=True)
     address = models.TextField()
     city = models.CharField(max_length=100)
     region = models.CharField(max_length=20, choices=REGIONS_CAMEROUN)
