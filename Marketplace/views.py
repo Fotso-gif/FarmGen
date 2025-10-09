@@ -6,7 +6,7 @@ def index(request):
     
     
     
-    from rest_framework import viewsets, status, mixins
+"""from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Category, Product, ProductImage
@@ -54,3 +54,4 @@ class ProductViewSet(viewsets.ModelViewSet):
 class ProductImageViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     queryset = ProductImage.objects.select_related("product").all()
     serializer_class = ProductImageSerializer
+"""
