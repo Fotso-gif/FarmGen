@@ -1,7 +1,20 @@
 from django.db import models
 from django.utils import timezone
+from account.models import User
+
+class shop(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, related_name="shop", on_delete=models.PROTECT)
+    title = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    couverture = models.ImageField(upload_to="shop/%Y/%m/%d/")
+    slug = models.SlugField(max_length=140, unique=True, blank=True)
+    def __str__(self): return self.name
+
 
 class Category(models.Model):
+    id = models.AutoField(primary_key=True)
+    shop = models.ForeignKey(shop, related_name="category", on_delete=models.PROTECT)
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     def __str__(self): return self.name

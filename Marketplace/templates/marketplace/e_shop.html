@@ -1,0 +1,1599 @@
+{% extends "client/layout/main.html" %}
+{% load static %}
+{% block css %}
+<style>
+  /* Variables de couleur adaptées à FarmGen */
+  @font-face {
+    font-family: 'Chapaza';
+    src: url("{% static 'font/Chapaza.ttf' %}") format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  :root {
+    --primary-text: "Chapaza";
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hero Section Boutique */
+  .shop-hero {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shop-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80") center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 1;
+  }
+
+  .shop-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .shop-avatar-large {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 5px solid var(--white);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    background: var(--white);
+  }
+
+  .shop-avatar-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shop-info h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: var(--white);
+    font-family: var(--primary-text), sans-serif;
+  }
+
+  .shop-specialty {
+    font-size: 1.3rem;
+    color: var(--light-green);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .shop-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .shop-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .shop-stat i {
+    color: var(--light-green);
+  }
+
+  .shop-description {
+    color: var(--light-gray);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--light-gray);
+  }
+
+  .breadcrumb a {
+    color: var(--white);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .breadcrumb a:hover {
+    color: var(--light-green);
+  }
+
+  .breadcrumb span {
+    margin: 0 0.5rem;
+  }
+
+  /* Shop Layout */
+  .shop-section {
+    padding: 4rem 2rem;
+    background: var(--light-gray);
+    min-height: 100vh;
+  }
+
+  .shop-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+  }
+
+  /* Filters Sidebar */
+  .filters-sidebar {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+  }
+
+  .filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--light-gray);
+  }
+
+  .filters-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  .clear-filters {
+    background: none;
+    border: none;
+    color: var(--primary-green);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+
+  .clear-filters:hover {
+    color: var(--dark-green);
+  }
+
+  .filter-group {
+    margin-bottom: 2rem;
+  }
+
+  .filter-group h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+
+  .filter-option:hover {
+    background: var(--light-gray);
+  }
+
+  .filter-option input {
+    margin: 0;
+    accent-color: var(--primary-green);
+  }
+
+  .filter-option label {
+    cursor: pointer;
+    color: var(--text-dark);
+    flex: 1;
+  }
+
+  .products-count {
+    color: var(--earth-brown);
+    font-weight: 600;
+  }
+
+  /* Price Range */
+  .price-range {
+    padding: 0.5rem 0;
+  }
+
+  .price-inputs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .price-input {
+    flex: 1;
+  }
+
+  .price-input input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .price-input input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+  }
+
+  .range-slider {
+    width: 100%;
+    height: 6px;
+    background: var(--light-gray);
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .range-progress {
+    position: absolute;
+    height: 100%;
+    background: var(--primary-green);
+    border-radius: 3px;
+  }
+
+  .range-input {
+    position: absolute;
+    top: -5px;
+    width: 100%;
+    height: 6px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+  }
+
+  .range-input::-webkit-slider-thumb {
+    pointer-events: all;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-green);
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+
+  /* Main Content */
+  .shop-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Shop Header */
+  .shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+
+  .shop-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  .shop-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    padding: 0.8rem 1rem 0.8rem 3rem;
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    background: var(--white);
+    color: var(--text-dark);
+    width: 300px;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .search-box input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+  }
+
+  .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dark);
+  }
+
+  .sort-dropdown {
+    position: relative;
+  }
+
+  .sort-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    background: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .sort-btn:hover {
+    border-color: var(--primary-green);
+  }
+
+  .sort-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 100;
+    display: none;
+    box-shadow: var(--shadow);
+  }
+
+  .sort-menu.show {
+    display: block;
+  }
+
+  .sort-option {
+    padding: 0.8rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .sort-option:last-child {
+    border-bottom: none;
+  }
+
+  .sort-option:hover {
+    color: var(--primary-green);
+  }
+
+  .sort-option input {
+    margin: 0;
+    accent-color: var(--primary-green);
+  }
+
+  /* Products Grid */
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .product-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .product-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-green);
+  }
+
+  .product-image {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+  }
+
+  .product-card:hover .product-image img {
+    transform: scale(1.05);
+  }
+
+  .product-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .product-actions {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: var(--transition);
+  }
+
+  .product-card:hover .product-actions {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .product-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+  }
+
+  .product-action-btn:hover {
+    background: var(--primary-green);
+    color: var(--white);
+    transform: scale(1.1);
+  }
+
+  .product-content {
+    padding: 1.5rem;
+  }
+
+  .product-category {
+    color: var(--primary-green);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .product-content h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+    line-height: 1.3;
+  }
+
+  .product-description {
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--earth-brown);
+    font-weight: 600;
+  }
+
+  .product-rating i {
+    color: #ffc107;
+  }
+
+  .product-stock {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  .product-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--forest-green);
+    margin-bottom: 1rem;
+  }
+
+  .product-old-price {
+    font-size: 1rem;
+    color: var(--text-dark);
+    opacity: 0.5;
+    text-decoration: line-through;
+    margin-left: 0.5rem;
+  }
+
+  .product-actions-bottom {
+    display: flex;
+    gap: 0.8rem;
+  }
+
+  .add-to-cart-btn {
+    flex: 1;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--primary-green);
+    background: var(--primary-green);
+    color: var(--white);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .add-to-cart-btn:hover {
+    background: var(--dark-green);
+    border-color: var(--dark-green);
+    transform: translateY(-2px);
+  }
+
+  .add-to-cart-btn.added {
+    background: var(--earth-brown);
+    border-color: var(--earth-brown);
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+
+  .quantity-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--white);
+    color: var(--text-dark);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quantity-btn:hover {
+    background: var(--primary-green);
+    color: var(--white);
+  }
+
+  .quantity-input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-weight: 600;
+    color: var(--text-dark);
+  }
+
+  /* Cart Badge */
+  .cart-badge {
+    position: relative;
+  }
+
+  .cart-count {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--light-green);
+    color: var(--forest-green);
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: bounce 0.5s ease;
+  }
+
+  @keyframes bounce {
+    0%, 20%, 60%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-5px);
+    }
+    80% {
+      transform: translateY(-3px);
+    }
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--light-gray);
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+  }
+
+  .empty-state p {
+    color: var(--text-dark);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 992px) {
+    .shop-container {
+      grid-template-columns: 1fr;
+    }
+    
+    .filters-sidebar {
+      position: static;
+    }
+    
+    .products-grid {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    }
+    
+    .shop-hero-content {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+    
+    .shop-avatar-large {
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .shop-hero {
+      padding: 7rem 1.5rem 3rem;
+    }
+    
+    .shop-hero h1 {
+      font-size: 2.2rem;
+    }
+    
+    .shop-specialty {
+      font-size: 1.1rem;
+    }
+    
+    .products-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .shop-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .shop-actions {
+      width: 100%;
+    }
+    
+    .search-box input {
+      width: 100%;
+    }
+    
+    .product-actions-bottom {
+      flex-direction: column;
+    }
+    
+    .quantity-controls {
+      justify-content: center;
+    }
+  }
+
+  /* Animation classes */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .delay-1 {
+    transition-delay: 0.2s;
+  }
+
+  .delay-2 {
+    transition-delay: 0.4s;
+  }
+
+  .delay-3 {
+    transition-delay: 0.6s;
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="{% url 'home' %}">Accueil</a>
+  <span>/</span>
+  <a href="{% url 'marketplace' %}">Marketplace</a>
+  <span>/</span>
+  <span>Ferme Bio du Centre</span>
+</div>
+
+<!-- Hero Section -->
+<section class="shop-hero">
+  <div class="shop-hero-content">
+    <div class="shop-avatar-large">
+      <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Ferme Bio du Centre">
+    </div>
+    <div class="shop-info">
+      <h1>Ferme Bio du Centre</h1>
+      <div class="shop-specialty">
+        <i class="fas fa-seedling"></i>
+        Légumes & Fruits Bio
+      </div>
+      <div class="shop-stats">
+        <div class="shop-stat">
+          <i class="fas fa-star"></i>
+          <span>4.8 (124 avis)</span>
+        </div>
+        <div class="shop-stat">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Yaoundé, Centre</span>
+        </div>
+        <div class="shop-stat">
+          <i class="fas fa-shipping-fast"></i>
+          <span>Livraison disponible</span>
+        </div>
+      </div>
+      <p class="shop-description">
+        Producteur local passionné par l'agriculture biologique depuis 2015. Nous cultivons nos légumes et fruits sans pesticides ni engrais chimiques, avec un engagement fort pour la préservation de l'environnement et la santé de nos clients.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Shop Section -->
+<section class="shop-section">
+  <div class="shop-container">
+    <!-- Filters Sidebar -->
+    <aside class="filters-sidebar">
+      <div class="filters-header">
+        <h3>Filtres</h3>
+        <button class="clear-filters" id="clear-filters">
+          <i class="fas fa-times"></i>
+          Effacer
+        </button>
+      </div>
+
+      <!-- Catégories -->
+      <div class="filter-group">
+        <h4><i class="fas fa-tags"></i> Catégories</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="cat-legumes" data-category="legumes" checked>
+            <label for="cat-legumes">Légumes <span class="products-count">(12)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-fruits" data-category="fruits" checked>
+            <label for="cat-fruits">Fruits <span class="products-count">(8)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-herbes" data-category="herbes" checked>
+            <label for="cat-herbes">Herbes aromatiques <span class="products-count">(4)</span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prix -->
+      <div class="filter-group">
+        <h4><i class="fas fa-money-bill-wave"></i> Gamme de Prix</h4>
+        <div class="price-range">
+          <div class="price-inputs">
+            <div class="price-input">
+              <input type="number" id="min-price" placeholder="Min" value="0">
+            </div>
+            <div class="price-input">
+              <input type="number" id="max-price" placeholder="Max" value="10000">
+            </div>
+          </div>
+          <div class="range-slider">
+            <div class="range-progress"></div>
+            <input type="range" class="range-input" min="0" max="20000" value="0" step="500">
+            <input type="range" class="range-input" min="0" max="20000" value="10000" step="500">
+          </div>
+        </div>
+      </div>
+
+      <!-- Disponibilité -->
+      <div class="filter-group">
+        <h4><i class="fas fa-box"></i> Disponibilité</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="stock-available" data-stock="available" checked>
+            <label for="stock-available">En stock</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="stock-low" data-stock="low">
+            <label for="stock-low">Stock limité</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promotion -->
+      <div class="filter-group">
+        <h4><i class="fas fa-percentage"></i> Promotions</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="promo-active" data-promo="active">
+            <label for="promo-active">En promotion</label>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="shop-main">
+      <div class="shop-header">
+        <h2>Nos Produits</h2>
+        <div class="shop-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="product-search" placeholder="Rechercher un produit...">
+          </div>
+          <div class="sort-dropdown">
+            <button class="sort-btn">
+              <i class="fas fa-sort"></i>
+              Trier par
+            </button>
+            <div class="sort-menu">
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-popular" value="popular" checked>
+                <label for="sort-popular">Plus populaires</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-price-low" value="price-low">
+                <label for="sort-price-low">Prix croissant</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-price-high" value="price-high">
+                <label for="sort-price-high">Prix décroissant</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-new" value="new">
+                <label for="sort-new">Plus récents</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="products-grid" id="products-container">
+        <!-- Product 1 -->
+        <div class="product-card fade-in" data-category="legumes" data-price="2500" data-stock="available" data-promo="false">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tomates Bio">
+            <div class="product-badge">Bio</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="1">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="1">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Légumes</span>
+            <h3>Tomates Cerises Bio</h3>
+            <p class="product-description">Tomates cerises biologiques, cueillies à maturité, parfaites pour vos salades.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.8</span>
+              </div>
+              <div class="product-stock">En stock</div>
+            </div>
+            <div class="product-price">
+              2 500 FCFA
+              <span class="product-old-price">3 000 FCFA</span>
+            </div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="1">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="1" readonly>
+                <button class="quantity-btn plus-btn" data-product="1">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="1">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 2 -->
+        <div class="product-card fade-in delay-1" data-category="legumes" data-price="1800" data-stock="available" data-promo="false">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1574856344991-aaa31b6f4ce3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Carottes Bio">
+            <div class="product-badge">Bio</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="2">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="2">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Légumes</span>
+            <h3>Carottes Nouvelles Bio</h3>
+            <p class="product-description">Carottes nouvelles biologiques, croquantes et sucrées, idéales crues ou cuites.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.6</span>
+              </div>
+              <div class="product-stock">En stock</div>
+            </div>
+            <div class="product-price">1 800 FCFA</div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="2">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="2" readonly>
+                <button class="quantity-btn plus-btn" data-product="2">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="2">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 3 -->
+        <div class="product-card fade-in delay-2" data-category="fruits" data-price="3200" data-stock="available" data-promo="true">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Fraises Bio">
+            <div class="product-badge">Promo</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="3">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="3">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Fruits</span>
+            <h3>Fraises Gariguettes Bio</h3>
+            <p class="product-description">Fraises gariguettes biologiques, sucrées et parfumées, récoltées du jour.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.9</span>
+              </div>
+              <div class="product-stock">Stock limité</div>
+            </div>
+            <div class="product-price">
+              3 200 FCFA
+              <span class="product-old-price">4 000 FCFA</span>
+            </div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="3">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="3" readonly>
+                <button class="quantity-btn plus-btn" data-product="3">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="3">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 4 -->
+        <div class="product-card fade-in" data-category="herbes" data-price="1200" data-stock="available" data-promo="false">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1599889962057-49bf295faa44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Basilic Bio">
+            <div class="product-badge">Bio</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="4">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="4">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Herbes aromatiques</span>
+            <h3>Basilic Frais Bio</h3>
+            <p class="product-description">Basilic frais biologique, parfumé, parfait pour vos plats méditerranéens.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.7</span>
+              </div>
+              <div class="product-stock">En stock</div>
+            </div>
+            <div class="product-price">1 200 FCFA</div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="4">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="4" readonly>
+                <button class="quantity-btn plus-btn" data-product="4">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="4">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 5 -->
+        <div class="product-card fade-in delay-1" data-category="fruits" data-price="2800" data-stock="available" data-promo="false">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1550258987-190a2d41a8ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Pommes Bio">
+            <div class="product-badge">Bio</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="5">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="5">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Fruits</span>
+            <h3>Pommes Golden Bio</h3>
+            <p class="product-description">Pommes golden biologiques, croquantes et juteuses, idéales pour la pâtisserie.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.5</span>
+              </div>
+              <div class="product-stock">En stock</div>
+            </div>
+            <div class="product-price">2 800 FCFA</div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="5">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="5" readonly>
+                <button class="quantity-btn plus-btn" data-product="5">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="5">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product 6 -->
+        <div class="product-card fade-in delay-2" data-category="legumes" data-price="2200" data-stock="low" data-promo="true">
+          <div class="product-image">
+            <img src="https://images.unsplash.com/photo-1566385101042-7a3cca522c9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Poivrons Bio">
+            <div class="product-badge">Promo</div>
+            <div class="product-actions">
+              <button class="product-action-btn favorite-btn" data-product="6">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="product-action-btn share-btn" data-product="6">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+          </div>
+          <div class="product-content">
+            <span class="product-category">Légumes</span>
+            <h3>Poivrons Multicolores Bio</h3>
+            <p class="product-description">Poivrons biologiques rouges, jaunes et verts, parfaits pour vos salades et plats.</p>
+            <div class="product-meta">
+              <div class="product-rating">
+                <i class="fas fa-star"></i>
+                <span>4.8</span>
+              </div>
+              <div class="product-stock">Stock limité</div>
+            </div>
+            <div class="product-price">
+              2 200 FCFA
+              <span class="product-old-price">2 800 FCFA</span>
+            </div>
+            <div class="product-actions-bottom">
+              <div class="quantity-controls">
+                <button class="quantity-btn minus-btn" data-product="6">-</button>
+                <input type="text" class="quantity-input" value="1" data-product="6" readonly>
+                <button class="quantity-btn plus-btn" data-product="6">+</button>
+              </div>
+              <button class="add-to-cart-btn" data-product="6">
+                <i class="fas fa-shopping-cart"></i>
+                Ajouter
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  // Gestion du panier
+  class CartManager {
+    constructor() {
+      this.cart = JSON.parse(localStorage.getItem('farmgen_cart')) || {};
+      this.updateCartBadge();
+    }
+
+    addToCart(productId, quantity = 1) {
+      if (this.cart[productId]) {
+        this.cart[productId] += quantity;
+      } else {
+        this.cart[productId] = quantity;
+      }
+      this.saveCart();
+      this.updateCartBadge();
+      this.showAddToCartAnimation(productId);
+    }
+
+    removeFromCart(productId) {
+      delete this.cart[productId];
+      this.saveCart();
+      this.updateCartBadge();
+    }
+
+    updateQuantity(productId, quantity) {
+      if (quantity <= 0) {
+        this.removeFromCart(productId);
+      } else {
+        this.cart[productId] = quantity;
+        this.saveCart();
+      }
+      this.updateCartBadge();
+    }
+
+    getTotalItems() {
+      return Object.values(this.cart).reduce((total, qty) => total + qty, 0);
+    }
+
+    saveCart() {
+      localStorage.setItem('farmgen_cart', JSON.stringify(this.cart));
+    }
+
+    updateCartBadge() {
+      const cartBadges = document.querySelectorAll('.cart-badge');
+      const totalItems = this.getTotalItems();
+      
+      cartBadges.forEach(badge => {
+        let countElement = badge.querySelector('.cart-count');
+        if (!countElement) {
+          countElement = document.createElement('span');
+          countElement.className = 'cart-count';
+          badge.appendChild(countElement);
+        }
+        
+        if (totalItems > 0) {
+          countElement.textContent = totalItems;
+          countElement.style.display = 'flex';
+        } else {
+          countElement.style.display = 'none';
+        }
+      });
+    }
+
+    showAddToCartAnimation(productId) {
+      const button = document.querySelector(`.add-to-cart-btn[data-product="${productId}"]`);
+      if (button) {
+        button.classList.add('added');
+        button.innerHTML = '<i class="fas fa-check"></i> Ajouté !';
+        
+        setTimeout(() => {
+          button.classList.remove('added');
+          button.innerHTML = '<i class="fas fa-shopping-cart"></i> Ajouter';
+        }, 2000);
+      }
+    }
+  }
+
+  // Initialisation du gestionnaire de panier
+  const cartManager = new CartManager();
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animation on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll(".fade-in").forEach((el) => {
+      observer.observe(el);
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+    const priceInputs = document.querySelectorAll('#min-price, #max-price');
+    const rangeInputs = document.querySelectorAll('.range-input');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const searchInput = document.getElementById('product-search');
+    const sortBtn = document.querySelector('.sort-btn');
+    const sortMenu = document.querySelector('.sort-menu');
+    const sortOptions = document.querySelectorAll('.sort-option input');
+    const productCards = document.querySelectorAll('.product-card');
+
+    // Price range functionality
+    const priceRange = document.querySelector('.range-slider');
+    const rangeProgress = document.querySelector('.range-progress');
+    const minPriceInput = document.getElementById('min-price');
+    const maxPriceInput = document.getElementById('max-price');
+    const minRange = rangeInputs[0];
+    const maxRange = rangeInputs[1];
+
+    function updatePriceRange() {
+      const minVal = parseInt(minRange.value);
+      const maxVal = parseInt(maxRange.value);
+      
+      if (maxVal - minVal < 500) {
+        if (minRange === document.activeElement) {
+          minRange.value = maxVal - 500;
+        } else {
+          maxRange.value = minVal + 500;
+        }
+      }
+      
+      minPriceInput.value = minVal;
+      maxPriceInput.value = maxVal;
+      
+      const progressLeft = (minVal / parseInt(minRange.max)) * 100;
+      const progressRight = 100 - (maxVal / parseInt(maxRange.max)) * 100;
+      rangeProgress.style.left = progressLeft + "%";
+      rangeProgress.style.right = progressRight + "%";
+      
+      filterProducts();
+    }
+
+    minRange.addEventListener('input', updatePriceRange);
+    maxRange.addEventListener('input', updatePriceRange);
+
+    minPriceInput.addEventListener('input', function() {
+      minRange.value = this.value;
+      updatePriceRange();
+    });
+
+    maxPriceInput.addEventListener('input', function() {
+      maxRange.value = this.value;
+      updatePriceRange();
+    });
+
+    // Filter products function
+    function filterProducts() {
+      const selectedCategories = Array.from(document.querySelectorAll('.filter-option input[data-category]:checked'))
+        .map(cb => cb.getAttribute('data-category'));
+      
+      const minPrice = parseInt(minPriceInput.value) || 0;
+      const maxPrice = parseInt(maxPriceInput.value) || 20000;
+      
+      const stockAvailable = document.getElementById('stock-available').checked;
+      const stockLow = document.getElementById('stock-low').checked;
+      
+      const promoActive = document.getElementById('promo-active').checked;
+      
+      const searchTerm = searchInput.value.toLowerCase();
+
+      productCards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category');
+        const cardPrice = parseInt(card.getAttribute('data-price'));
+        const cardStock = card.getAttribute('data-stock');
+        const cardPromo = card.getAttribute('data-promo');
+        const cardTitle = card.querySelector('h3').textContent.toLowerCase();
+        const cardDescription = card.querySelector('.product-description').textContent.toLowerCase();
+
+        // Check filters
+        const categoryMatch = selectedCategories.length === 0 || 
+          selectedCategories.includes(cardCategory);
+        
+        const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
+        
+        const stockMatch = (!stockAvailable || cardStock === 'available') && 
+          (!stockLow || cardStock === 'low');
+        
+        const promoMatch = !promoActive || cardPromo === 'true';
+        
+        const searchMatch = !searchTerm || 
+          cardTitle.includes(searchTerm) || 
+          cardDescription.includes(searchTerm);
+
+        if (categoryMatch && priceMatch && stockMatch && promoMatch && searchMatch) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Event listeners for filters
+    filterCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', filterProducts);
+    });
+
+    priceInputs.forEach(input => {
+      input.addEventListener('input', filterProducts);
+    });
+
+    searchInput.addEventListener('input', filterProducts);
+
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+      filterCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      
+      minPriceInput.value = 0;
+      maxPriceInput.value = 10000;
+      minRange.value = 0;
+      maxRange.value = 10000;
+      updatePriceRange();
+      
+      searchInput.value = '';
+      
+      filterProducts();
+    });
+
+    // Sort functionality
+    sortBtn.addEventListener('click', function() {
+      sortMenu.classList.toggle('show');
+    });
+
+    sortOptions.forEach(option => {
+      option.addEventListener('change', function() {
+        const sortValue = this.value;
+        const productsContainer = document.getElementById('products-container');
+        const productCardsArray = Array.from(productCards);
+
+        productCardsArray.sort((a, b) => {
+          const priceA = parseInt(a.getAttribute('data-price'));
+          const priceB = parseInt(b.getAttribute('data-price'));
+          const ratingA = parseFloat(a.querySelector('.product-rating span').textContent);
+          const ratingB = parseFloat(b.querySelector('.product-rating span').textContent);
+          
+          switch(sortValue) {
+            case 'price-low':
+              return priceA - priceB;
+            
+            case 'price-high':
+              return priceB - priceA;
+            
+            case 'new':
+              // For demo, we'll use a random order
+              return Math.random() - 0.5;
+            
+            case 'popular':
+            default:
+              return ratingB - ratingA;
+          }
+        });
+
+        // Reappend sorted cards
+        productCardsArray.forEach(card => {
+          if (card.style.display !== 'none') {
+            productsContainer.appendChild(card);
+          }
+        });
+
+        sortMenu.classList.remove('show');
+      });
+    });
+
+    // Close sort menu when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+        sortMenu.classList.remove('show');
+      }
+    });
+
+    // Product interaction functionality
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    const shareButtons = document.querySelectorAll('.share-btn');
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    const quantityControls = document.querySelectorAll('.quantity-controls');
+
+    // Favorite functionality
+    favoriteButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product');
+        
+        this.classList.toggle('active');
+        this.querySelector('i').classList.toggle('far');
+        this.querySelector('i').classList.toggle('fas');
+        
+        if (this.classList.contains('active')) {
+          console.log(`Favorited product ${productId}`);
+        } else {
+          console.log(`Unfavorited product ${productId}`);
+        }
+      });
+    });
+
+    // Share functionality
+    shareButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product');
+        const productName = this.closest('.product-card').querySelector('h3').textContent;
+        
+        // In a real app, this would open a share dialog
+        if (navigator.share) {
+          navigator.share({
+            title: productName,
+            text: `Découvrez ${productName} sur FarmGen`,
+            url: window.location.href,
+          });
+        } else {
+          alert(`Partager le produit: ${productName}`);
+        }
+      });
+    });
+
+    // Quantity controls
+    quantityControls.forEach(control => {
+      const minusBtn = control.querySelector('.minus-btn');
+      const plusBtn = control.querySelector('.plus-btn');
+      const quantityInput = control.querySelector('.quantity-input');
+      const productId = minusBtn.getAttribute('data-product');
+
+      minusBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value);
+        if (currentValue > 1) {
+          quantityInput.value = currentValue - 1;
+        }
+      });
+
+      plusBtn.addEventListener('click', function() {
+        let currentValue = parseInt(quantityInput.value);
+        quantityInput.value = currentValue + 1;
+      });
+    });
+
+    // Add to cart functionality
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product');
+        const quantityInput = this.closest('.product-actions-bottom').querySelector('.quantity-input');
+        const quantity = parseInt(quantityInput.value);
+        
+        cartManager.addToCart(productId, quantity);
+        
+        // Reset quantity
+        quantityInput.value = 1;
+      });
+    });
+
+    // Initialize price range
+    updatePriceRange();
+  });
+</script>
+{% endblock %}

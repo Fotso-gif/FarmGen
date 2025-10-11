@@ -1,0 +1,1316 @@
+{% extends "client/layout/main.html" %}
+{% load static %} 
+{% block css %}
+<style>
+  /* Variables CSS adaptées à FarmGen */
+  :root {
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --darker-bg: #f5f5f5;
+  }
+
+  /* Hero Section Blog */
+  .blog-hero {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    padding: 10rem 2rem 6rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .blog-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80") center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 1;
+  }
+
+  .blog-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .blog-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: var(--white);
+  }
+
+  .blog-hero p {
+    font-size: 1.3rem;
+    color: var(--light-gray);
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    line-height: 1.6;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    width:100%;
+    
+    margin: 0 auto 2rem;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--light-gray);
+  }
+
+  .breadcrumb a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .breadcrumb a:hover {
+    color: var(--light-green);
+  }
+
+  .breadcrumb span {
+    margin: 0 0.5rem;
+  }
+
+  /* Blog Layout */
+  .blog-section {
+    padding: 6rem 2rem;
+    background: var(--light-gray);
+  }
+
+  .blog-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 4rem;
+  }
+
+  /* Featured Post */
+  .featured-post {
+    margin-bottom: 5rem;
+    grid-column: 1 / -1;
+  }
+
+  .featured-post-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    border: 1px solid var(--border-color);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .featured-post-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .featured-post-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-green);
+  }
+
+  .featured-post-image {
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .featured-post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .featured-post-card:hover .featured-post-image img {
+    transform: scale(1.05);
+  }
+
+  .featured-post-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--primary-green);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .featured-post-content {
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+  }
+
+  .post-author {
+    display: flex;
+    align-items: center;
+    margin-right: 1.5rem;
+  }
+
+  .author-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 0.5rem;
+    border: 2px solid var(--primary-green);
+  }
+
+  .author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-date {
+    display: flex;
+    align-items: center;
+  }
+
+  .post-date i {
+    margin-right: 0.5rem;
+    color: var(--primary-green);
+  }
+
+  .featured-post-content h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+    color: var(--text-dark);
+  }
+
+  .featured-post-content h2 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .featured-post-content h2 a:hover {
+    color: var(--primary-green);
+  }
+
+  .featured-post-content p {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .post-tag {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-green);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+
+  .post-tag:hover {
+    background: var(--primary-green);
+    color: white;
+    cursor: pointer;
+  }
+
+  .read-more {
+    color: var(--primary-green);
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+  }
+
+  .read-more i {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+  }
+
+  .read-more:hover {
+    color: var(--dark-green);
+  }
+
+  .read-more:hover i {
+    transform: translateX(5px);
+  }
+
+  /* Posts Grid */
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .post-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .post-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .post-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-green);
+  }
+
+  .post-card-image {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .post-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .post-card:hover .post-card-image img {
+    transform: scale(1.05);
+  }
+
+  .post-card-content {
+    padding: 2rem;
+  }
+
+  .post-card-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+    color: var(--text-dark);
+  }
+
+  .post-card-content h3 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .post-card-content h3 a:hover {
+    color: var(--primary-green);
+  }
+
+  .post-card-content p {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    position: sticky;
+    top: 120px;
+    height: fit-content;
+  }
+
+  .sidebar-widget {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .sidebar-widget h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-green);
+    color: var(--text-dark);
+  }
+
+  /* About Widget */
+  .about-widget p {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .social-links a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--light-gray);
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+  }
+
+  .social-links a:hover {
+    background: var(--primary-green);
+    color: white;
+    transform: translateY(-3px);
+  }
+
+  /* Categories Widget */
+  .categories-list {
+    list-style: none;
+  }
+
+  .categories-list li {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .categories-list li:last-child {
+    border-bottom: none;
+  }
+
+  .categories-list a {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .categories-list a:hover {
+    color: var(--primary-green);
+  }
+
+  .category-count {
+    background: var(--light-gray);
+    color: var(--text-dark);
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+  }
+
+  /* Recent Posts Widget */
+  .recent-posts-list {
+    list-style: none;
+  }
+
+  .recent-post {
+    display: flex;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .recent-post:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .recent-post-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-right: 1rem;
+    flex-shrink: 0;
+  }
+
+  .recent-post-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .recent-post-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .recent-post-content h4 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .recent-post-content h4 a:hover {
+    color: var(--primary-green);
+  }
+
+  .recent-post-date {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+  }
+
+  .recent-post-date i {
+    margin-right: 0.3rem;
+    color: var(--primary-green);
+  }
+
+  /* Tags Widget */
+  .tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-green);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .tag:hover {
+    background: var(--primary-green);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  .tag.active {
+    background: var(--primary-green);
+    color: white;
+  }
+
+  /* Newsletter Widget */
+  .newsletter-form {
+    margin-top: 1.5rem;
+  }
+
+  .newsletter-form input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--light-gray);
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+
+  .newsletter-form input:focus {
+    outline: none;
+    border-color: var(--primary-green);
+  }
+
+  .newsletter-form button {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary-green);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .newsletter-form button:hover {
+    background: var(--dark-green);
+    transform: translateY(-2px);
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 5rem;
+    grid-column: 1 / -1;
+  }
+
+  .pagination-list {
+    display: flex;
+    list-style: none;
+    gap: 0.5rem;
+  }
+
+  .pagination-item a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+  }
+
+  .pagination-item a:hover,
+  .pagination-item.active a {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* CTA Section */
+  .blog-cta {
+    padding: 6rem 2rem;
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    text-align: center;
+    color: white;
+    grid-column: 1 / -1;
+  }
+
+  .blog-cta-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .blog-cta h2 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+
+  .blog-cta p {
+    font-size: 1.2rem;
+    margin-bottom: 2.5rem;
+    opacity: 0.9;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+  }
+
+  .btn-light {
+    background: white;
+    color: var(--primary-green);
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-light:hover {
+    background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  }
+
+  .btn-outline-light {
+    background: transparent;
+    color: white;
+    padding: 1rem 2rem;
+    border: 2px solid white;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-outline-light:hover {
+    background: white;
+    color: var(--primary-green);
+    transform: translateY(-2px);
+  }
+
+  /* Filter Section */
+  .blog-filters {
+    margin-bottom: 3rem;
+    grid-column: 1 / -1;
+  }
+
+  .filters-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-group label {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-right: 0.5rem;
+  }
+
+  .filter-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--light-gray);
+    color: var(--text-dark);
+    cursor: pointer;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--primary-green);
+  }
+
+  .clear-filters {
+    background: var(--light-gray);
+    color: var(--text-dark);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .clear-filters:hover {
+    background: var(--primary-green);
+    color: white;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 992px) {
+    .blog-container {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+    
+    .sidebar {
+      position: static;
+      order: 2;
+    }
+    
+    .posts-grid {
+      order: 1;
+    }
+    
+    .featured-post-card {
+      grid-template-columns: 1fr;
+    }
+    
+    .featured-post-image {
+      height: 300px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .blog-hero {
+      padding: 8rem 1.5rem 4rem;
+    }
+    
+    .blog-hero h1 {
+      font-size: 2.5rem;
+    }
+    
+    .blog-hero p {
+      font-size: 1.1rem;
+    }
+    
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .cta-buttons {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .featured-post-content h2 {
+      font-size: 1.8rem;
+    }
+
+    .filters-container {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* Animation classes */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .delay-1 {
+    transition-delay: 0.2s;
+  }
+
+  .delay-2 {
+    transition-delay: 0.4s;
+  }
+
+  .delay-3 {
+    transition-delay: 0.6s;
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="{% url 'home' %}">Accueil</a>
+  <span>/</span>
+  <span>Blog</span>
+</div>
+
+<!-- Hero Section -->
+<section class="blog-hero">
+  <div class="blog-hero-content">
+    <h1 class="fade-in">Blog FarmGen</h1>
+    <p class="fade-in">Découvrez nos conseils agricoles, actualités et innovations pour optimiser votre production et développer votre activité agricole au Cameroun.</p>
+    <div class="cta-buttons fade-in">
+      <a href="#articles" class="btn-light">Explorer les articles</a>
+      <a href="#newsletter" class="btn-outline-light">S'abonner</a>
+    </div>
+  </div>
+</section>
+
+<!-- Blog Section -->
+<section class="blog-section" id="articles">
+  <div class="blog-container">
+    <!-- Filters Section -->
+    <div class="blog-filters">
+      <div class="filters-container">
+        <div class="filter-group">
+          <label>Catégorie:</label>
+          <select class="filter-select" id="category-filter">
+            <option value="all">Toutes les catégories</option>
+            <option value="techniques">Techniques Agricoles</option>
+            <option value="bio">Agriculture Biologique</option>
+            <option value="marché">Marché & Commercialisation</option>
+            <option value="innovation">Innovations</option>
+            <option value="saison">Conseils de Saison</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Type:</label>
+          <select class="filter-select" id="type-filter">
+            <option value="all">Tous les types</option>
+            <option value="article">Articles</option>
+            <option value="conseil">Conseils Pratiques</option>
+            <option value="témoignage">Témoignages</option>
+            <option value="actualité">Actualités</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Tri par:</label>
+          <select class="filter-select" id="sort-filter">
+            <option value="recent">Plus récent</option>
+            <option value="popular">Plus populaire</option>
+            <option value="ancien">Plus ancien</option>
+          </select>
+        </div>
+        <button class="clear-filters" id="clear-filters">Effacer les filtres</button>
+      </div>
+    </div>
+
+    <!-- Featured Post -->
+    <div class="featured-post">
+      <div class="featured-post-card fade-in">
+        <div class="featured-post-image">
+          <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Agriculture durable au Cameroun">
+          <div class="featured-post-badge">Article à la une</div>
+        </div>
+        <div class="featured-post-content">
+          <div class="post-meta">
+            <div class="post-author">
+              <div class="author-avatar">
+                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Jean Mbarga">
+              </div>
+              <span>Jean Mbarga</span>
+            </div>
+            <div class="post-date">
+              <i class="far fa-calendar"></i>
+              <span>15 Novembre 2023</span>
+            </div>
+          </div>
+          <h2><a href="#">L'agriculture durable au Cameroun : défis et opportunités</a></h2>
+          <p>Découvrez comment les agriculteurs camerounais adoptent des pratiques durables pour préserver l'environnement tout en augmentant leur productivité grâce aux nouvelles technologies.</p>
+          <div class="post-tags">
+            <span class="post-tag" data-tag="durable">Durable</span>
+            <span class="post-tag" data-tag="innovation">Innovation</span>
+            <span class="post-tag" data-tag="cameroun">Cameroun</span>
+          </div>
+          <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Posts Grid -->
+    <div class="posts-content">
+      <div class="posts-grid" id="posts-container">
+        <!-- Post 1 -->
+        <div class="post-card fade-in" data-category="techniques" data-type="conseil" data-tags="irrigation,technique">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1574326344267-5c1c5a4a2c7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Techniques d'irrigation">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>8 Novembre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">Optimiser l'irrigation : techniques modernes pour économiser l'eau</a></h3>
+            <p>Découvrez les méthodes d'irrigation efficaces qui permettent de réduire la consommation d'eau tout en améliorant le rendement des cultures.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="irrigation">Irrigation</span>
+              <span class="post-tag" data-tag="technique">Technique</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Post 2 -->
+        <div class="post-card fade-in delay-1" data-category="bio" data-type="article" data-tags="biologique,santé">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Agriculture biologique">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>2 Novembre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">Les bienfaits de l'agriculture biologique pour la santé et l'environnement</a></h3>
+            <p>Pourquoi passer au bio ? Analyse des avantages pour les consommateurs, les producteurs et l'écosystème local.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="biologique">Biologique</span>
+              <span class="post-tag" data-tag="santé">Santé</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Post 3 -->
+        <div class="post-card fade-in delay-2" data-category="marché" data-type="actualité" data-tags="marché,commerce">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Marchés agricoles">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>28 Octobre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">Tendances du marché : quels produits agricoles sont les plus demandés ?</a></h3>
+            <p>Analyse des tendances de consommation et conseils pour adapter votre production aux demandes du marché local.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="marché">Marché</span>
+              <span class="post-tag" data-tag="commerce">Commerce</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Post 4 -->
+        <div class="post-card fade-in" data-category="innovation" data-type="article" data-tags="technologie,innovation">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Technologie agricole">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>20 Octobre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">La révolution digitale dans l'agriculture camerounaise</a></h3>
+            <p>Comment les applications mobiles et les plateformes digitales transforment l'agriculture traditionnelle en Afrique.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="technologie">Technologie</span>
+              <span class="post-tag" data-tag="innovation">Innovation</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Post 5 -->
+        <div class="post-card fade-in delay-1" data-category="saison" data-type="conseil" data-tags="saison,calendrier">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Calendrier cultural">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>15 Octobre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">Calendrier cultural : que planter en saison sèche au Cameroun ?</a></h3>
+            <p>Guide complet des cultures adaptées à la saison sèche et conseils pour maximiser votre production.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="saison">Saison</span>
+              <span class="post-tag" data-tag="calendrier">Calendrier</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+
+        <!-- Post 6 -->
+        <div class="post-card fade-in delay-2" data-category="techniques" data-type="témoignage" data-tag="compost,biologique">
+          <div class="post-card-image">
+            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Compostage naturel">
+          </div>
+          <div class="post-card-content">
+            <div class="post-meta">
+              <div class="post-date">
+                <i class="far fa-calendar"></i>
+                <span>10 Octobre 2023</span>
+              </div>
+            </div>
+            <h3><a href="#">Témoignage : comment j'ai doublé mon rendement avec le compost naturel</a></h3>
+            <p>Retour d'expérience d'un agriculteur qui a transformé sa production grâce aux techniques de compostage traditionnelles.</p>
+            <div class="post-tags">
+              <span class="post-tag" data-tag="compost">Compost</span>
+              <span class="post-tag" data-tag="biologique">Biologique</span>
+            </div>
+            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination">
+        <ul class="pagination-list">
+          <li class="pagination-item active"><a href="#">1</a></li>
+          <li class="pagination-item"><a href="#">2</a></li>
+          <li class="pagination-item"><a href="#">3</a></li>
+          <li class="pagination-item"><a href="#"><i class="fas fa-chevron-right"></i></a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- About Widget -->
+      <div class="sidebar-widget fade-in">
+        <h3>À propos</h3>
+        <div class="about-widget">
+          <p>FarmGen est la plateforme agricole qui connecte les producteurs locaux aux consommateurs, en promouvant une agriculture durable et innovante au Cameroun.</p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories Widget -->
+      <div class="sidebar-widget fade-in delay-1">
+        <h3>Catégories</h3>
+        <ul class="categories-list">
+          <li><a href="#">Techniques Agricoles <span class="category-count">15</span></a></li>
+          <li><a href="#">Agriculture Biologique <span class="category-count">8</span></a></li>
+          <li><a href="#">Marché & Commercialisation <span class="category-count">12</span></a></li>
+          <li><a href="#">Innovations Technologiques <span class="category-count">6</span></a></li>
+          <li><a href="#">Conseils de Saison <span class="category-count">10</span></a></li>
+        </ul>
+      </div>
+
+      <!-- Recent Posts Widget -->
+      <div class="sidebar-widget fade-in delay-2">
+        <h3>Articles récents</h3>
+        <ul class="recent-posts-list">
+          <li class="recent-post">
+            <div class="recent-post-image">
+              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Agriculture durable">
+            </div>
+            <div class="recent-post-content">
+              <h4><a href="#">L'agriculture durable au Cameroun</a></h4>
+              <div class="recent-post-date">
+                <i class="far fa-calendar"></i>
+                <span>15 Nov 2023</span>
+              </div>
+            </div>
+          </li>
+          <li class="recent-post">
+            <div class="recent-post-image">
+              <img src="https://images.unsplash.com/photo-1574326344267-5c1c5a4a2c7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Techniques d'irrigation">
+            </div>
+            <div class="recent-post-content">
+              <h4><a href="#">Optimiser l'irrigation</a></h4>
+              <div class="recent-post-date">
+                <i class="far fa-calendar"></i>
+                <span>8 Nov 2023</span>
+              </div>
+            </div>
+          </li>
+          <li class="recent-post">
+            <div class="recent-post-image">
+              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Agriculture biologique">
+            </div>
+            <div class="recent-post-content">
+              <h4><a href="#">Les bienfaits du bio</a></h4>
+              <div class="recent-post-date">
+                <i class="far fa-calendar"></i>
+                <span>2 Nov 2023</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Tags Widget -->
+      <div class="sidebar-widget fade-in delay-3">
+        <h3>Tags populaires</h3>
+        <div class="tags-cloud" id="tags-cloud">
+          <span class="tag" data-tag="technique">Technique</span>
+          <span class="tag" data-tag="biologique">Biologique</span>
+          <span class="tag" data-tag="innovation">Innovation</span>
+          <span class="tag" data-tag="marché">Marché</span>
+          <span class="tag" data-tag="irrigation">Irrigation</span>
+          <span class="tag" data-tag="saison">Saison</span>
+          <span class="tag" data-tag="cameroun">Cameroun</span>
+          <span class="tag" data-tag="durable">Durable</span>
+        </div>
+      </div>
+
+      <!-- Newsletter Widget -->
+      <div class="sidebar-widget fade-in" id="newsletter">
+        <h3>Newsletter</h3>
+        <p>Abonnez-vous pour recevoir nos derniers conseils agricoles et actualités.</p>
+        <form class="newsletter-form">
+          <input type="email" placeholder="Votre adresse email" required>
+          <button type="submit">S'abonner</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="blog-cta">
+  <div class="blog-cta-container">
+    <h2 class="fade-in">Prêt à développer votre activité agricole ?</h2>
+    <p class="fade-in">Rejoignez FarmGen aujourd'hui et accédez à tous nos outils pour vendre vos produits et développer votre réseau de clients.</p>
+    <div class="cta-buttons fade-in">
+      <a href="#" class="btn-light">Créer ma boutique</a>
+      <a href="#" class="btn-outline-light">Découvrir le marché</a>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animation on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll(".fade-in").forEach((el) => {
+      observer.observe(el);
+    });
+
+    // Filter functionality
+    const categoryFilter = document.getElementById('category-filter');
+    const typeFilter = document.getElementById('type-filter');
+    const sortFilter = document.getElementById('sort-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const postCards = document.querySelectorAll('.post-card');
+    const tags = document.querySelectorAll('.tag[data-tag]');
+
+    // Filter posts function
+    function filterPosts() {
+      const selectedCategory = categoryFilter.value;
+      const selectedType = typeFilter.value;
+      const selectedSort = sortFilter.value;
+
+      postCards.forEach(card => {
+        const cardCategory = card.getAttribute('data-category');
+        const cardType = card.getAttribute('data-type');
+        
+        const categoryMatch = selectedCategory === 'all' || cardCategory === selectedCategory;
+        const typeMatch = selectedType === 'all' || cardType === selectedType;
+
+        if (categoryMatch && typeMatch) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      // Sort posts
+      const visiblePosts = Array.from(postCards).filter(card => card.style.display !== 'none');
+      
+      if (selectedSort === 'recent') {
+        // Already in recent order
+      } else if (selectedSort === 'ancien') {
+        visiblePosts.reverse();
+      }
+      // For popularity, you would need actual data
+
+      // Reorder in DOM
+      const postsContainer = document.getElementById('posts-container');
+      visiblePosts.forEach(post => {
+        postsContainer.appendChild(post);
+      });
+    }
+
+    // Tag filtering
+    tags.forEach(tag => {
+      tag.addEventListener('click', function() {
+        const tagValue = this.getAttribute('data-tag');
+        
+        // Toggle active state
+        this.classList.toggle('active');
+        
+        // Filter posts by tag
+        postCards.forEach(card => {
+          const cardTags = card.getAttribute('data-tags');
+          if (this.classList.contains('active')) {
+            if (cardTags && cardTags.includes(tagValue)) {
+              card.style.display = 'block';
+            } else {
+              card.style.display = 'none';
+            }
+          } else {
+            // If no tags are active, show all
+            const activeTags = document.querySelectorAll('.tag.active');
+            if (activeTags.length === 0) {
+              card.style.display = 'block';
+            }
+          }
+        });
+      });
+    });
+
+    // Event listeners for filters
+    categoryFilter.addEventListener('change', filterPosts);
+    typeFilter.addEventListener('change', filterPosts);
+    sortFilter.addEventListener('change', filterPosts);
+
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+      categoryFilter.value = 'all';
+      typeFilter.value = 'all';
+      sortFilter.value = 'recent';
+      
+      // Clear active tags
+      tags.forEach(tag => tag.classList.remove('active'));
+      
+      // Show all posts
+      postCards.forEach(card => {
+        card.style.display = 'block';
+      });
+    });
+
+    // Newsletter form handling
+    const newsletterForm = document.querySelector('.newsletter-form');
+    if (newsletterForm) {
+      newsletterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = this.querySelector('input[type="email"]').value;
+        
+        // Simulate form submission
+        this.innerHTML = '<p style="color: var(--primary-green); text-align: center; margin: 0; font-weight: 600;">Merci pour votre inscription !</p>';
+        
+        console.log('Newsletter subscription:', email);
+      });
+    }
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -4,7 +4,9 @@ from django.shortcuts import render
 def index(request):
     render(request, 'marketplace/index.html')
     
-    
+def shop(request):
+    # produits = Product.objects.all()
+    return render(request, 'marketplace/e_shop.html')    
     
 """from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action

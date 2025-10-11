@@ -16,3 +16,5 @@ def forgot_password(request):
 def marketplace(request):
     return render(request, 'client/marketplace.html')
 
+def blog(request):
+    return render(request, 'client/blog.html')

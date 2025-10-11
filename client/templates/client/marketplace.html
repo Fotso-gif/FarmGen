@@ -1,0 +1,1396 @@
+{% extends "client/layout/main.html" %}
+{% load static %} 
+{% block css %}
+<style>
+  /* Variables de couleur adaptées à FarmGen */
+  @font-face {
+    font-family: 'Chapaza';
+    src: url("{% static 'font/Chapaza.ttf' %}") format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  :root {
+    --primary-text: "Chapaza";
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Hero Section Marketplace */
+  .marketplace-hero {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    padding: 10rem 2rem 6rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .marketplace-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80") center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 1;
+  }
+
+  .marketplace-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  .marketplace-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    color: var(--white);
+    font-family: var(--primary-text), sans-serif;
+  }
+
+  .marketplace-hero p {
+    font-size: 1.3rem;
+    color: var(--light-gray);
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    line-height: 1.6;
+  }
+
+  /* Breadcrumb */
+  .breadcrumb {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    width:100%;
+    
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--light-gray);
+  }
+
+  .breadcrumb a {
+    color: var(--white);
+    text-decoration: none;
+    transition: var(--transition);
+  }
+
+  .breadcrumb a:hover {
+    color: var(--light-green);
+  }
+
+  .breadcrumb span {
+    margin: 0 0.5rem;
+  }
+
+  /* Marketplace Layout */
+  .marketplace-section {
+    padding: 4rem 2rem;
+    background: var(--light-gray);
+    min-height: 100vh;
+  }
+
+  .marketplace-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+  }
+
+  /* Filters Sidebar */
+  .filters-sidebar {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+  }
+
+  .filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--light-gray);
+  }
+
+  .filters-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  .clear-filters {
+    background: none;
+    border: none;
+    color: var(--primary-green);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+  }
+
+  .clear-filters:hover {
+    color: var(--dark-green);
+  }
+
+  .filter-group {
+    margin-bottom: 2rem;
+  }
+
+  .filter-group h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+
+  .filter-option:hover {
+    background: var(--light-gray);
+  }
+
+  .filter-option input {
+    margin: 0;
+    accent-color: var(--primary-green);
+  }
+
+  .filter-option label {
+    cursor: pointer;
+    color: var(--text-dark);
+    flex: 1;
+  }
+
+  .products-count {
+    color: var(--earth-brown);
+    font-weight: 600;
+  }
+
+  /* Price Range */
+  .price-range {
+    padding: 0.5rem 0;
+  }
+
+  .price-inputs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .price-input {
+    flex: 1;
+  }
+
+  .price-input input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid var(--light-gray);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .price-input input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+  }
+
+  .range-slider {
+    width: 100%;
+    height: 6px;
+    background: var(--light-gray);
+    border-radius: 3px;
+    position: relative;
+  }
+
+  .range-progress {
+    position: absolute;
+    height: 100%;
+    background: var(--primary-green);
+    border-radius: 3px;
+  }
+
+  .range-input {
+    position: absolute;
+    top: -5px;
+    width: 100%;
+    height: 6px;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+  }
+
+  .range-input::-webkit-slider-thumb {
+    pointer-events: all;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary-green);
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+
+  /* Main Content */
+  .marketplace-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Marketplace Header */
+  .marketplace-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .marketplace-header h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+  }
+
+  .marketplace-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-box input {
+    padding: 0.8rem 1rem 0.8rem 3rem;
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    background: var(--white);
+    color: var(--text-dark);
+    width: 300px;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .search-box input:focus {
+    border-color: var(--primary-green);
+    outline: none;
+  }
+
+  .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dark);
+  }
+
+  .sort-dropdown {
+    position: relative;
+  }
+
+  .sort-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    background: var(--white);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition);
+  }
+
+  .sort-btn:hover {
+    border-color: var(--primary-green);
+  }
+
+  .sort-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--white);
+    border-radius: 8px;
+    border: 2px solid var(--light-gray);
+    padding: 1rem;
+    min-width: 200px;
+    z-index: 100;
+    display: none;
+    box-shadow: var(--shadow);
+  }
+
+  .sort-menu.show {
+    display: block;
+  }
+
+  .sort-option {
+    padding: 0.8rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border-bottom: 1px solid var(--light-gray);
+  }
+
+  .sort-option:last-child {
+    border-bottom: none;
+  }
+
+  .sort-option:hover {
+    color: var(--primary-green);
+  }
+
+  .sort-option input {
+    margin: 0;
+    accent-color: var(--primary-green);
+  }
+
+  /* Shops Grid */
+  .shops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2.5rem;
+  }
+
+  .shop-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: var(--transition);
+    border: 2px solid transparent;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  .shop-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .shop-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-green);
+  }
+
+  .shop-header-image {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shop-header-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+  }
+
+  .shop-card:hover .shop-header-image img {
+    transform: scale(1.05);
+  }
+
+  .shop-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .shop-avatar {
+    position: absolute;
+    bottom: -15px;
+    left: 20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid var(--white);
+    overflow: hidden;
+    background: var(--white);
+    box-shadow: var(--shadow);
+  }
+
+  .shop-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shop-content {
+    padding: 2.5rem 2rem 2rem;
+    margin-top: 30px;
+  }
+
+  .shop-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-dark);
+  }
+
+  .shop-specialty {
+    color: var(--primary-green);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .shop-stats {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+  }
+
+  .shop-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .shop-stat i {
+    color: var(--primary-green);
+  }
+
+  .shop-description {
+    color: var(--text-dark);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .shop-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .shop-tag {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-green);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .shop-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--light-gray);
+    padding-top: 1.5rem;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: 6px;
+  }
+
+  .action-btn:hover {
+    color: var(--primary-green);
+    background: rgba(46, 204, 113, 0.1);
+  }
+
+  .action-btn.active {
+    color: var(--primary-green);
+  }
+
+  .action-btn.favorited {
+    color: var(--earth-brown);
+  }
+
+  .visit-shop-btn {
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    border: 2px solid var(--primary-green);
+    background: transparent;
+    color: var(--primary-green);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .visit-shop-btn:hover {
+    background: var(--primary-green);
+    color: var(--white);
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--light-gray);
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+  }
+
+  .empty-state p {
+    color: var(--text-dark);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 992px) {
+    .marketplace-container {
+      grid-template-columns: 1fr;
+    }
+    
+    .filters-sidebar {
+      position: static;
+    }
+    
+    .shops-grid {
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    
+    .marketplace-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .marketplace-actions {
+      width: 100%;
+    }
+    
+    .search-box input {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .marketplace-hero {
+      padding: 8rem 1.5rem 4rem;
+    }
+    
+    .marketplace-hero h1 {
+      font-size: 2.5rem;
+    }
+    
+    .marketplace-hero p {
+      font-size: 1.1rem;
+    }
+    
+    .shops-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .shop-actions-bar {
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .action-buttons {
+      order: 2;
+      width: 100%;
+      justify-content: space-around;
+    }
+    
+    .visit-shop-btn {
+      order: 1;
+    }
+  }
+
+  /* Animation classes */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .delay-1 {
+    transition-delay: 0.2s;
+  }
+
+  .delay-2 {
+    transition-delay: 0.4s;
+  }
+
+  .delay-3 {
+    transition-delay: 0.6s;
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+  <a href="{% url 'home' %}">Accueil</a>
+  <span>/</span>
+  <span>Marketplace</span>
+</div>
+
+<!-- Hero Section -->
+<section class="marketplace-hero">
+  <div class="marketplace-hero-content">
+    <h1 class="fade-in">Marketplace FarmGen</h1>
+    <p class="fade-in">Découvrez les meilleurs produits agricoles directement des producteurs locaux. Fraîcheur, qualité et traçabilité garanties.</p>
+    <div class="cta-buttons fade-in">
+      <a href="#shops" class="visit-shop-btn" style="background: var(--light-green); color: var(--white); border-color: var(--light-green);">Explorer les boutiques</a>
+    </div>
+  </div>
+</section>
+
+<!-- Marketplace Section -->
+<section class="marketplace-section" id="shops">
+  <div class="marketplace-container">
+    <!-- Filters Sidebar -->
+    <aside class="filters-sidebar">
+      <div class="filters-header">
+        <h3>Filtres</h3>
+        <button class="clear-filters" id="clear-filters">
+          <i class="fas fa-times"></i>
+          Effacer
+        </button>
+      </div>
+
+      <!-- Catégories -->
+      <div class="filter-group">
+        <h4><i class="fas fa-tags"></i> Catégories</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="cat-legumes" data-category="legumes" checked>
+            <label for="cat-legumes">Légumes <span class="products-count">(24)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-fruits" data-category="fruits" checked>
+            <label for="cat-fruits">Fruits <span class="products-count">(18)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-cereales" data-category="cereales" checked>
+            <label for="cat-cereales">Céréales <span class="products-count">(12)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-tubercules" data-category="tubercules" checked>
+            <label for="cat-tubercules">Tubercules <span class="products-count">(8)</span></label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cat-elevage" data-category="elevage" checked>
+            <label for="cat-elevage">Élevage <span class="products-count">(15)</span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Régions -->
+      <div class="filter-group">
+        <h4><i class="fas fa-map-marker-alt"></i> Régions</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="region-centre" data-region="centre" checked>
+            <label for="region-centre">Centre</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="region-littoral" data-region="littoral" checked>
+            <label for="region-littoral">Littoral</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="region-ouest" data-region="ouest" checked>
+            <label for="region-ouest">Ouest</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="region-nord" data-region="nord" checked>
+            <label for="region-nord">Nord</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Certifications -->
+      <div class="filter-group">
+        <h4><i class="fas fa-certificate"></i> Certifications</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="cert-bio" data-certification="bio">
+            <label for="cert-bio">Agriculture Biologique</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cert-local" data-certification="local" checked>
+            <label for="cert-local">Produit Local</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="cert-qualite" data-certification="qualite">
+            <label for="cert-qualite">Certification Qualité</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prix -->
+      <div class="filter-group">
+        <h4><i class="fas fa-money-bill-wave"></i> Gamme de Prix</h4>
+        <div class="price-range">
+          <div class="price-inputs">
+            <div class="price-input">
+              <input type="number" id="min-price" placeholder="Min" value="0">
+            </div>
+            <div class="price-input">
+              <input type="number" id="max-price" placeholder="Max" value="50000">
+            </div>
+          </div>
+          <div class="range-slider">
+            <div class="range-progress"></div>
+            <input type="range" class="range-input" min="0" max="100000" value="0" step="1000">
+            <input type="range" class="range-input" min="0" max="100000" value="50000" step="1000">
+          </div>
+        </div>
+      </div>
+
+      <!-- Livraison -->
+      <div class="filter-group">
+        <h4><i class="fas fa-truck"></i> Livraison</h4>
+        <div class="filter-options">
+          <div class="filter-option">
+            <input type="checkbox" id="delivery-available" data-delivery="available" checked>
+            <label for="delivery-available">Livraison Disponible</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="delivery-free" data-delivery="free">
+            <label for="delivery-free">Livraison Gratuite</label>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="marketplace-main">
+      <div class="marketplace-header">
+        <h2 class="fade-in">Boutiques Agricoles</h2>
+        <div class="marketplace-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="shop-search" placeholder="Rechercher une boutique ou un produit...">
+          </div>
+          <div class="sort-dropdown">
+            <button class="sort-btn">
+              <i class="fas fa-sort"></i>
+              Trier par
+            </button>
+            <div class="sort-menu">
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-popular" value="popular" checked>
+                <label for="sort-popular">Plus populaires</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-rating" value="rating">
+                <label for="sort-rating">Meilleures notes</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-new" value="new">
+                <label for="sort-new">Plus récentes</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-name" value="name">
+                <label for="sort-name">Ordre alphabétique</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="shops-grid" id="shops-container">
+        <!-- Shop 1 -->
+        <div class="shop-card fade-in" data-category="legumes fruits" data-region="centre" data-certification="local" data-price="20000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Ferme Bio du Centre">
+            <div class="shop-badge">Bio</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Ferme Bio du Centre">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Ferme Bio du Centre</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-seedling"></i>
+              Légumes & Fruits Bio
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.8 (124 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Yaoundé</span>
+              </div>
+            </div>
+            <p class="shop-description">Producteur local spécialisé dans les légumes et fruits biologiques. Engagé dans une agriculture durable et respectueuse de l'environnement.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Bio</span>
+              <span class="shop-tag">Local</span>
+              <span class="shop-tag">Écoresponsable</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="1">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="1">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shop 2 -->
+        <div class="shop-card fade-in delay-1" data-category="cereales" data-region="ouest" data-certification="local" data-price="15000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Céréales de l'Ouest">
+            <div class="shop-badge">Local</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Céréales de l'Ouest">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Céréales de l'Ouest</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-wheat"></i>
+              Céréales Traditionnelles
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.6 (89 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Bafoussam</span>
+              </div>
+            </div>
+            <p class="shop-description">Spécialiste des céréales locales : maïs, mil, sorgho. Production traditionnelle préservant les méthodes ancestrales.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Traditionnel</span>
+              <span class="shop-tag">Local</span>
+              <span class="shop-tag">Céréales</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="2">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="2">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shop 3 -->
+        <div class="shop-card fade-in delay-2" data-category="elevage" data-region="nord" data-certification="qualite" data-price="35000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Élevage du Nord">
+            <div class="shop-badge">Qualité</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Élevage du Nord">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Élevage du Nord</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-paw"></i>
+              Viande & Produits Laitiers
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.9 (156 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Garoua</span>
+              </div>
+            </div>
+            <p class="shop-description">Éleveur passionné proposant de la viande bovine et des produits laitiers de qualité supérieure. Bien-être animal garanti.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Viande</span>
+              <span class="shop-tag">Laitier</span>
+              <span class="shop-tag">Qualité</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="3">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="3">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shop 4 -->
+        <div class="shop-card fade-in" data-category="tubercules" data-region="littoral" data-certification="local" data-price="12000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Tubercules du Littoral">
+            <div class="shop-badge">Fraîcheur</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Tubercules du Littoral">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Tubercules du Littoral</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-carrot"></i>
+              Tubercules & Plantains
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.7 (203 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Douala</span>
+              </div>
+            </div>
+            <p class="shop-description">Producteur spécialisé dans les tubercules locaux : igname, macabo, patate douce. Récolte quotidienne pour une fraîcheur optimale.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Tubercules</span>
+              <span class="shop-tag">Fraîcheur</span>
+              <span class="shop-tag">Local</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="4">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="4">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shop 5 -->
+        <div class="shop-card fade-in delay-1" data-category="fruits" data-region="centre" data-certification="bio" data-price="28000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Verger Bio">
+            <div class="shop-badge">Bio</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Verger Bio">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Verger Bio</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-apple-alt"></i>
+              Fruits de Saison Bio
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.9 (178 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Mbalmayo</span>
+              </div>
+            </div>
+            <p class="shop-description">Verger biologique produisant une variété de fruits de saison. Sans pesticides ni engrais chimiques.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Bio</span>
+              <span class="shop-tag">Fruits</span>
+              <span class="shop-tag">Saison</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="5">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="5">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shop 6 -->
+        <div class="shop-card fade-in delay-2" data-category="elevage" data-region="ouest" data-certification="local" data-price="22000" data-delivery="available">
+          <div class="shop-header-image">
+            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Poulets Fermiers">
+            <div class="shop-badge">Fermier</div>
+            <div class="shop-avatar">
+              <img src="https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Poulets Fermiers">
+            </div>
+          </div>
+          <div class="shop-content">
+            <h3>Poulets Fermiers</h3>
+            <div class="shop-specialty">
+              <i class="fas fa-egg"></i>
+              Volailles & Œufs
+            </div>
+            <div class="shop-stats">
+              <div class="shop-stat">
+                <i class="fas fa-star"></i>
+                <span>4.5 (92 avis)</span>
+              </div>
+              <div class="shop-stat">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Dschang</span>
+              </div>
+            </div>
+            <p class="shop-description">Élevage en plein air de volailles et production d'œufs fermiers. Alimentation naturelle et espace vital respecté.</p>
+            <div class="shop-tags">
+              <span class="shop-tag">Volailles</span>
+              <span class="shop-tag">Œufs</span>
+              <span class="shop-tag">Fermier</span>
+            </div>
+            <div class="shop-actions-bar">
+              <div class="action-buttons">
+                <button class="action-btn favorite-btn" data-shop="6">
+                  <i class="far fa-heart"></i>
+                </button>
+                <button class="action-btn share-btn" data-shop="6">
+                  <i class="far fa-share-square"></i>
+                </button>
+              </div>
+              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animation on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, observerOptions);
+
+    // Observe all fade-in elements
+    document.querySelectorAll(".fade-in").forEach((el) => {
+      observer.observe(el);
+    });
+
+    // Filter functionality
+    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+    const priceInputs = document.querySelectorAll('#min-price, #max-price');
+    const rangeInputs = document.querySelectorAll('.range-input');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    const searchInput = document.getElementById('shop-search');
+    const sortBtn = document.querySelector('.sort-btn');
+    const sortMenu = document.querySelector('.sort-menu');
+    const sortOptions = document.querySelectorAll('.sort-option input');
+    const shopCards = document.querySelectorAll('.shop-card');
+
+    // Price range functionality
+    const priceRange = document.querySelector('.range-slider');
+    const rangeProgress = document.querySelector('.range-progress');
+    const minPriceInput = document.getElementById('min-price');
+    const maxPriceInput = document.getElementById('max-price');
+    const minRange = rangeInputs[0];
+    const maxRange = rangeInputs[1];
+
+    function updatePriceRange() {
+      const minVal = parseInt(minRange.value);
+      const maxVal = parseInt(maxRange.value);
+      
+      if (maxVal - minVal < 1000) {
+        if (minRange === document.activeElement) {
+          minRange.value = maxVal - 1000;
+        } else {
+          maxRange.value = minVal + 1000;
+        }
+      }
+      
+      minPriceInput.value = minVal;
+      maxPriceInput.value = maxVal;
+      
+      const progressLeft = (minVal / parseInt(minRange.max)) * 100;
+      const progressRight = 100 - (maxVal / parseInt(maxRange.max)) * 100;
+      rangeProgress.style.left = progressLeft + "%";
+      rangeProgress.style.right = progressRight + "%";
+      
+      filterShops();
+    }
+
+    minRange.addEventListener('input', updatePriceRange);
+    maxRange.addEventListener('input', updatePriceRange);
+
+    minPriceInput.addEventListener('input', function() {
+      minRange.value = this.value;
+      updatePriceRange();
+    });
+
+    maxPriceInput.addEventListener('input', function() {
+      maxRange.value = this.value;
+      updatePriceRange();
+    });
+
+    // Filter shops function
+    function filterShops() {
+      const selectedCategories = Array.from(document.querySelectorAll('.filter-option input[data-category]:checked'))
+        .map(cb => cb.getAttribute('data-category'));
+      
+      const selectedRegions = Array.from(document.querySelectorAll('.filter-option input[data-region]:checked'))
+        .map(cb => cb.getAttribute('data-region'));
+      
+      const selectedCertifications = Array.from(document.querySelectorAll('.filter-option input[data-certification]:checked'))
+        .map(cb => cb.getAttribute('data-certification'));
+      
+      const minPrice = parseInt(minPriceInput.value) || 0;
+      const maxPrice = parseInt(maxPriceInput.value) || 100000;
+      
+      const deliveryAvailable = document.getElementById('delivery-available').checked;
+      const deliveryFree = document.getElementById('delivery-free').checked;
+      
+      const searchTerm = searchInput.value.toLowerCase();
+
+      shopCards.forEach(card => {
+        const cardCategories = card.getAttribute('data-category').split(' ');
+        const cardRegion = card.getAttribute('data-region');
+        const cardCertification = card.getAttribute('data-certification');
+        const cardPrice = parseInt(card.getAttribute('data-price'));
+        const cardDelivery = card.getAttribute('data-delivery');
+        const cardTitle = card.querySelector('h3').textContent.toLowerCase();
+        const cardDescription = card.querySelector('.shop-description').textContent.toLowerCase();
+
+        // Check filters
+        const categoryMatch = selectedCategories.length === 0 || 
+          selectedCategories.some(cat => cardCategories.includes(cat));
+        
+        const regionMatch = selectedRegions.length === 0 || 
+          selectedRegions.includes(cardRegion);
+        
+        const certificationMatch = selectedCertifications.length === 0 || 
+          selectedCertifications.includes(cardCertification);
+        
+        const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
+        
+        const deliveryMatch = (!deliveryAvailable || cardDelivery === 'available') && 
+          (!deliveryFree || cardDelivery === 'free');
+        
+        const searchMatch = !searchTerm || 
+          cardTitle.includes(searchTerm) || 
+          cardDescription.includes(searchTerm);
+
+        if (categoryMatch && regionMatch && certificationMatch && 
+            priceMatch && deliveryMatch && searchMatch) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Event listeners for filters
+    filterCheckboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', filterShops);
+    });
+
+    priceInputs.forEach(input => {
+      input.addEventListener('input', filterShops);
+    });
+
+    searchInput.addEventListener('input', filterShops);
+
+    // Clear filters
+    clearFiltersBtn.addEventListener('click', function() {
+      filterCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+      });
+      
+      minPriceInput.value = 0;
+      maxPriceInput.value = 50000;
+      minRange.value = 0;
+      maxRange.value = 50000;
+      updatePriceRange();
+      
+      searchInput.value = '';
+      
+      filterShops();
+    });
+
+    // Sort functionality
+    sortBtn.addEventListener('click', function() {
+      sortMenu.classList.toggle('show');
+    });
+
+    sortOptions.forEach(option => {
+      option.addEventListener('change', function() {
+        const sortValue = this.value;
+        const shopsContainer = document.getElementById('shops-container');
+        const shopCardsArray = Array.from(shopCards);
+
+        shopCardsArray.sort((a, b) => {
+          switch(sortValue) {
+            case 'rating':
+              const ratingA = parseFloat(a.querySelector('.shop-stat span').textContent.split(' ')[0]);
+              const ratingB = parseFloat(b.querySelector('.shop-stat span').textContent.split(' ')[0]);
+              return ratingB - ratingA;
+            
+            case 'new':
+              // For demo, we'll use a random order
+              return Math.random() - 0.5;
+            
+            case 'name':
+              const nameA = a.querySelector('h3').textContent.toLowerCase();
+              const nameB = b.querySelector('h3').textContent.toLowerCase();
+              return nameA.localeCompare(nameB);
+            
+            case 'popular':
+            default:
+              const reviewsA = parseInt(a.querySelector('.shop-stat span').textContent.match(/\d+/)[0]);
+              const reviewsB = parseInt(b.querySelector('.shop-stat span').textContent.match(/\d+/)[0]);
+              return reviewsB - reviewsA;
+          }
+        });
+
+        // Reappend sorted cards
+        shopCardsArray.forEach(card => {
+          shopsContainer.appendChild(card);
+        });
+
+        sortMenu.classList.remove('show');
+      });
+    });
+
+    // Close sort menu when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+        sortMenu.classList.remove('show');
+      }
+    });
+
+    // Shop interaction functionality
+    const favoriteButtons = document.querySelectorAll('.favorite-btn');
+    const shareButtons = document.querySelectorAll('.share-btn');
+
+    favoriteButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const shopId = this.getAttribute('data-shop');
+        
+        this.classList.toggle('favorited');
+        this.querySelector('i').classList.toggle('far');
+        this.querySelector('i').classList.toggle('fas');
+        
+        if (this.classList.contains('favorited')) {
+          console.log(`Favorited shop ${shopId}`);
+        } else {
+          console.log(`Unfavorited shop ${shopId}`);
+        }
+      });
+    });
+
+    shareButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const shopId = this.getAttribute('data-shop');
+        
+        // In a real app, this would open a share dialog
+        alert(`Partager la boutique ${shopId}`);
+        console.log(`Shared shop ${shopId}`);
+      });
+    });
+
+    // Initialize price range
+    updatePriceRange();
+  });
+</script>
+{% endblock %}
