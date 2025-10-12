@@ -250,6 +250,7 @@
     min-width: 200px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     opacity: 0;
+    display:none;
     visibility: hidden;
     transform: translateY(-10px) scale(0.95);
     transition: var(--transition);
@@ -258,6 +259,7 @@
 
   .user-menu.active .dropdown-menu {
     opacity: 1;
+    display:block;
     visibility: visible;
     transform: translateY(0) scale(1);
   }
@@ -551,16 +553,16 @@
         <div class="dropdown-menu" id="dropdownMenu">
           <a href="{% url 'dashboard' %}" class="dropdown-item">
             <i class="fas fa-user-cog"></i>
-            Mon profil
+            Dashboard
           </a>
-          <a href="#" class="dropdown-item">
+          <a href="{% url 'profile' %}" class="dropdown-item">
             <i class="fas fa-cog"></i>
             Paramètres
           </a>
-          <a href="#" class="dropdown-item">
+          {% comment %} <a href="#" class="dropdown-item">
             <i class="fas fa-question-circle"></i>
             Aide
-          </a>
+          </a> {% endcomment %}
           <div class="dropdown-divider"></div>
           <a href="{% url 'logout' %}" class="dropdown-item">
             <i class="fas fa-sign-out-alt"></i>
