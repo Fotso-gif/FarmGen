@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Charger les variables d'environnement
 load_dotenv() 
@@ -33,9 +34,21 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = []
-
-
+# ALLOWED_HOSTS from env (comma separated) or default to allow localhost in development
+_raw_allowed = os.getenv('ALLOWED_HOSTS', '').strip()
+if _raw_allowed:
+    # allow comma separated values, trim whitespace
+    ALLOWED_HOSTS = [h.strip() for h in _raw_allowed.split(',') if h.strip()]
+else:
+    # During development, allow local addresses to avoid DisallowedHost for local testing.
+    # If you need a quick permissive fallback, set ALLOW_ALL_HOSTS=True in your environment to set ALLOWED_HOSTS=['*'].
+    if DEBUG:
+        if os.getenv('ALLOW_ALL_HOSTS', 'False') == 'True':
+            ALLOWED_HOSTS = ['*']
+        else:
+            ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '[::1]']
+    else:
+        ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
@@ -49,9 +62,17 @@ INSTALLED_APPS = [
     'account',
     'Blog',
     'Marketplace',
+    # Added apps for API, CORS, storage and JWT
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'storages',
+    'payments',  # added payments app
 ]
 
 MIDDLEWARE = [
+    # cors middleware should be high in the list
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -95,7 +116,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT', 5432), 
+        'PORT': int(os.getenv('DB_PORT', 5432)), 
     }
 }
 
@@ -146,10 +167,12 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'account.User'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'  # Ou os.path.join(BASE_DIR, 'media')
 
-#Gestion de mail
+# Remove duplicate MEDIA_* definitions above by keeping these consistent
+MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
+MEDIA_ROOT = os.getenv('MEDIA_ROOT', os.path.join(BASE_DIR, 'media'))
+
+# Email config
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
@@ -158,13 +181,81 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = "FarmGen"
 
-# URLs pour la réinitialisation
+# FRONTEND / auth urls
 FRONTEND_URL = 'http://localhost:8000'  # À adapter en production
 
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/account/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Configuration des sessions
+# Sessions
 SESSION_COOKIE_AGE = 1209600  # 2 semaines en secondes
 SESSION_SAVE_EVERY_REQUEST = True
+
+# === New: Third-party services & payment configuration ===
+
+# Stripe
+STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
+
+# Mobile Money (example keys for MTN/Orange/Wave — adapt fields to provider SDKs)
+MOMO = {
+    'MTN': {
+        'CLIENT_ID': os.getenv('MTN_CLIENT_ID'),
+        'CLIENT_SECRET': os.getenv('MTN_CLIENT_SECRET'),
+        'API_KEY': os.getenv('MTN_API_KEY'),
+        'BASE_URL': os.getenv('MTN_BASE_URL'),
+    },
+    'ORANGE': {
+        'API_KEY': os.getenv('ORANGE_API_KEY'),
+        'BASE_URL': os.getenv('ORANGE_BASE_URL'),
+    },
+    'WAVE': {
+        'API_KEY': os.getenv('WAVE_API_KEY'),
+        'BASE_URL': os.getenv('WAVE_BASE_URL'),
+    },
+}
+
+# === New: REST framework + JWT settings (for mobile/API auth) ===
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_MINUTES', 60))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_DAYS', 7))),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# === New: CORS & CSRF (frontend origins) ===
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8000')
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', FRONTEND_URL).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [FRONTEND_URL]
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', FRONTEND_URL).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [FRONTEND_URL]
+
+# === New: Optional AWS S3 storage for media/static (enable with USE_S3=True) ===
+USE_S3 = os.getenv('USE_S3') == 'True'
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_S3_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', None)
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = os.getenv('AWS_MEDIA_URL', f'https://{AWS_S3_CUSTOM_DOMAIN}/media/')
+else:
+    # keep local media/static configured earlier
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+# === New: Security cookie settings (toggle in production) ===
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True

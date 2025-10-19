@@ -1,0 +1,41 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Produits</title>
+  <link href="{% static 'css/cart.css' %}" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-5xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">Produits</h1>
+    <div class="grid grid-cols-3 gap-6">
+      {% for product in products %}
+      <div class="bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">{{ product.name }}</h2>
+        <p class="text-sm text-gray-600 mb-2">{{ product.description|default:"" }}</p>
+        <div class="mb-3 font-bold">{{ product.price }} €</div>
+        <div class="flex items-center space-x-2">
+          <!-- data-price is in cents -->
+          <button data-add-button
+                  data-product-id="{{ product.pk }}"
+                  data-name="{{ product.name|escapejs }}"
+                  data-price="{{ product.price|floatformat:2|floatformat:0|floatformat }}" 
+                  data-quantity="1"
+                  class="px-3 py-2 bg-green-600 text-white rounded">
+            Ajouter au panier
+          </button>
+          <a href="/payments/checkout/?product_id={{ product.pk }}&quantity=1" class="px-3 py-2 bg-blue-600 text-white rounded">Acheter</a>
+        </div>
+      </div>
+      {% empty %}
+      <p>Aucun produit.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script src="{% static 'js/cart.js' %}"></script>
+</body>
+</html>

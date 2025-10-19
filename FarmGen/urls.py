@@ -15,7 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path,include
+from django.urls import path, include
+from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -25,6 +26,9 @@ urlpatterns = [
     path('account/', include('account.urls')),
     path('marketplace/', include('Marketplace.urls')),
     path('blog/', include('Blog.urls')),
+    path('payments/', include('payments.urls')),
+    # redirect /checkout/ to the payments checkout UI
+    path('checkout/', RedirectView.as_view(url='/payments/checkout/', permanent=False), name='checkout-redirect'),
 ]
 
 if settings.DEBUG:
