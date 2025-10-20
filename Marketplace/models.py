@@ -6,6 +6,9 @@ class Shop(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, related_name="shop", on_delete=models.PROTECT)
     title = models.CharField(max_length=120, unique=True)
+    localisation = models.CharField(max_length=120)
+    type_shop = models.CharField(max_length=120)
+    note = models.DecimalField(max_digits=12, decimal_places=2)
     description = models.TextField(blank=True)
     couverture = models.ImageField(upload_to="shop/%Y/%m/%d/")
     slug = models.SlugField(max_length=140, unique=True, blank=True)
@@ -26,6 +29,7 @@ class Category(models.Model):
     def __str__(self): return self.name
 
 class Product(models.Model):
+    shop = models.ForeignKey(Shop, related_name="product", on_delete=models.PROTECT)
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     category = models.ForeignKey(Category, related_name="products", on_delete=models.PROTECT)

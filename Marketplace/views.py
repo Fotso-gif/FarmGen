@@ -1,12 +1,13 @@
 from django.shortcuts import render
-
+from .models import Shop
 # Create your views here.
 def index(request):
     render(request, 'marketplace/index.html')
     
-def shop(request):
-    # produits = Product.objects.all()
-    return render(request, 'marketplace/e_shop.html')    
+def shop(request, shop_id):
+    shop = Shop.objects.get(id = shop_id)
+    produits = shop.produits.all()
+    return render(request, 'marketplace/e_shop.html', {'produits': produits, 'shop': shop})    
     
 """from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action

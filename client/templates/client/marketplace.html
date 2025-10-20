@@ -874,275 +874,51 @@
       </div>
       
       <div class="shops-grid" id="shops-container">
+        {% if shops %}
+        {% for shop in shops  %}
         <!-- Shop 1 -->
         <div class="shop-card fade-in" data-category="legumes fruits" data-region="centre" data-certification="local" data-price="20000" data-delivery="available">
           <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Ferme Bio du Centre">
-            <div class="shop-badge">Bio</div>
+            <img src="{{ shop.couverture.url }}" alt="Ferme Bio du Centre">
+            <div class="shop-badge">{{ shop.type_shop }}</div>
             <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Ferme Bio du Centre">
+              <img src="{{ shop.user.profile_picture.url }}" alt="Ferme Bio du Centre">
             </div>
           </div>
           <div class="shop-content">
-            <h3>Ferme Bio du Centre</h3>
-            <div class="shop-specialty">
+            <h3>{{ shop.title }} </h3>
+           <!--<div class="shop-specialty">
               <i class="fas fa-seedling"></i>
               Légumes & Fruits Bio
-            </div>
+            </div> -->
             <div class="shop-stats">
               <div class="shop-stat">
                 <i class="fas fa-star"></i>
-                <span>4.8 (124 avis)</span>
+                <span>{{ shop.note }}</span>
               </div>
               <div class="shop-stat">
                 <i class="fas fa-map-marker-alt"></i>
-                <span>Yaoundé</span>
+                <span>{{ shop.localisation }}</span>
               </div>
             </div>
-            <p class="shop-description">Producteur local spécialisé dans les légumes et fruits biologiques. Engagé dans une agriculture durable et respectueuse de l'environnement.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Bio</span>
-              <span class="shop-tag">Local</span>
-              <span class="shop-tag">Écoresponsable</span>
-            </div>
+            <p class="shop-description">{{ shop.description }}</p>
             <div class="shop-actions-bar">
               <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="1">
+                <button class="action-btn favorite-btn" data-shop="{{ shop.id }}">
                   <i class="far fa-heart"></i>
                 </button>
                 <button class="action-btn share-btn" data-shop="1">
                   <i class="far fa-share-square"></i>
                 </button>
               </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
-            </div>
-          </div>
-        </div>
+              <a href="{% url 'shop' shop.id %}" class="visit-shop-btn">Visiter la boutique</a>
 
-        <!-- Shop 2 -->
-        <div class="shop-card fade-in delay-1" data-category="cereales" data-region="ouest" data-certification="local" data-price="15000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Céréales de l'Ouest">
-            <div class="shop-badge">Local</div>
-            <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1546410531-bb4caa6b424d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Céréales de l'Ouest">
-            </div>
-          </div>
-          <div class="shop-content">
-            <h3>Céréales de l'Ouest</h3>
-            <div class="shop-specialty">
-              <i class="fas fa-wheat"></i>
-              Céréales Traditionnelles
-            </div>
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>4.6 (89 avis)</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Bafoussam</span>
-              </div>
-            </div>
-            <p class="shop-description">Spécialiste des céréales locales : maïs, mil, sorgho. Production traditionnelle préservant les méthodes ancestrales.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Traditionnel</span>
-              <span class="shop-tag">Local</span>
-              <span class="shop-tag">Céréales</span>
-            </div>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="2">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="2">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
             </div>
           </div>
         </div>
+        {% endfor %}
+        {% endif %}
 
-        <!-- Shop 3 -->
-        <div class="shop-card fade-in delay-2" data-category="elevage" data-region="nord" data-certification="qualite" data-price="35000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Élevage du Nord">
-            <div class="shop-badge">Qualité</div>
-            <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Élevage du Nord">
-            </div>
-          </div>
-          <div class="shop-content">
-            <h3>Élevage du Nord</h3>
-            <div class="shop-specialty">
-              <i class="fas fa-paw"></i>
-              Viande & Produits Laitiers
-            </div>
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>4.9 (156 avis)</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Garoua</span>
-              </div>
-            </div>
-            <p class="shop-description">Éleveur passionné proposant de la viande bovine et des produits laitiers de qualité supérieure. Bien-être animal garanti.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Viande</span>
-              <span class="shop-tag">Laitier</span>
-              <span class="shop-tag">Qualité</span>
-            </div>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="3">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="3">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Shop 4 -->
-        <div class="shop-card fade-in" data-category="tubercules" data-region="littoral" data-certification="local" data-price="12000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Tubercules du Littoral">
-            <div class="shop-badge">Fraîcheur</div>
-            <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Tubercules du Littoral">
-            </div>
-          </div>
-          <div class="shop-content">
-            <h3>Tubercules du Littoral</h3>
-            <div class="shop-specialty">
-              <i class="fas fa-carrot"></i>
-              Tubercules & Plantains
-            </div>
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>4.7 (203 avis)</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Douala</span>
-              </div>
-            </div>
-            <p class="shop-description">Producteur spécialisé dans les tubercules locaux : igname, macabo, patate douce. Récolte quotidienne pour une fraîcheur optimale.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Tubercules</span>
-              <span class="shop-tag">Fraîcheur</span>
-              <span class="shop-tag">Local</span>
-            </div>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="4">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="4">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Shop 5 -->
-        <div class="shop-card fade-in delay-1" data-category="fruits" data-region="centre" data-certification="bio" data-price="28000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Verger Bio">
-            <div class="shop-badge">Bio</div>
-            <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Verger Bio">
-            </div>
-          </div>
-          <div class="shop-content">
-            <h3>Verger Bio</h3>
-            <div class="shop-specialty">
-              <i class="fas fa-apple-alt"></i>
-              Fruits de Saison Bio
-            </div>
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>4.9 (178 avis)</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Mbalmayo</span>
-              </div>
-            </div>
-            <p class="shop-description">Verger biologique produisant une variété de fruits de saison. Sans pesticides ni engrais chimiques.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Bio</span>
-              <span class="shop-tag">Fruits</span>
-              <span class="shop-tag">Saison</span>
-            </div>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="5">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="5">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Shop 6 -->
-        <div class="shop-card fade-in delay-2" data-category="elevage" data-region="ouest" data-certification="local" data-price="22000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Poulets Fermiers">
-            <div class="shop-badge">Fermier</div>
-            <div class="shop-avatar">
-              <img src="https://images.unsplash.com/photo-1507591064344-4c6ce005b128?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Poulets Fermiers">
-            </div>
-          </div>
-          <div class="shop-content">
-            <h3>Poulets Fermiers</h3>
-            <div class="shop-specialty">
-              <i class="fas fa-egg"></i>
-              Volailles & Œufs
-            </div>
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>4.5 (92 avis)</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>Dschang</span>
-              </div>
-            </div>
-            <p class="shop-description">Élevage en plein air de volailles et production d'œufs fermiers. Alimentation naturelle et espace vital respecté.</p>
-            <div class="shop-tags">
-              <span class="shop-tag">Volailles</span>
-              <span class="shop-tag">Œufs</span>
-              <span class="shop-tag">Fermier</span>
-            </div>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="6">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="6">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' %}" class="visit-shop-btn">Visiter la boutique</a>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   </div>

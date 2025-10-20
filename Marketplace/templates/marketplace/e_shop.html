@@ -829,29 +829,29 @@
   <span>/</span>
   <a href="{% url 'marketplace' %}">Marketplace</a>
   <span>/</span>
-  <span>Ferme Bio du Centre</span>
+  <span>{{ shop.title }}</span>
 </div>
 
 <!-- Hero Section -->
 <section class="shop-hero">
   <div class="shop-hero-content">
     <div class="shop-avatar-large">
-      <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="Ferme Bio du Centre">
+      <img src="{{ shop.user.profile_picture.url }}" alt="Ferme Bio du Centre">
     </div>
     <div class="shop-info">
-      <h1>Ferme Bio du Centre</h1>
-      <div class="shop-specialty">
+      <h1>{{ shop.title }}</h1>
+      <!--<div class="shop-specialty">
         <i class="fas fa-seedling"></i>
         Légumes & Fruits Bio
-      </div>
+      </div>-->
       <div class="shop-stats">
         <div class="shop-stat">
           <i class="fas fa-star"></i>
-          <span>4.8 (124 avis)</span>
+          <span>{{ shop.note }}</span>
         </div>
         <div class="shop-stat">
           <i class="fas fa-map-marker-alt"></i>
-          <span>Yaoundé, Centre</span>
+          <span>{{ shop.localisation }}</span>
         </div>
         <div class="shop-stat">
           <i class="fas fa-shipping-fast"></i>
@@ -859,7 +859,7 @@
         </div>
       </div>
       <p class="shop-description">
-        Producteur local passionné par l'agriculture biologique depuis 2015. Nous cultivons nos légumes et fruits sans pesticides ni engrais chimiques, avec un engagement fort pour la préservation de l'environnement et la santé de nos clients.
+      {{ shop.description}}
       </p>
     </div>
   </div>
@@ -982,10 +982,12 @@
       
       <div class="products-grid" id="products-container">
         <!-- Product 1 -->
+        {% if produits %} 
+        {% for produit in produits %}
         <div class="product-card fade-in" data-category="legumes" data-price="2500" data-stock="available" data-promo="false">
           <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Tomates Bio">
-            <div class="product-badge">Bio</div>
+            <img src="{{ produit.produit_image.url}}" alt="Tomates Bio">
+            <div class="product-badge">{{ shop.type }}</div>
             <div class="product-actions">
               <button class="product-action-btn favorite-btn" data-product="1">
                 <i class="far fa-heart"></i>
@@ -998,17 +1000,17 @@
           <div class="product-content">
             <span class="product-category">Légumes</span>
             <h3>Tomates Cerises Bio</h3>
-            <p class="product-description">Tomates cerises biologiques, cueillies à maturité, parfaites pour vos salades.</p>
+            <p class="product-description">{{ produit.description }}</p>
             <div class="product-meta">
               <div class="product-rating">
                 <i class="fas fa-star"></i>
                 <span>4.8</span>
               </div>
-              <div class="product-stock">En stock</div>
+              <div class="product-stock">{{ produit.quantity }}</div>
             </div>
             <div class="product-price">
-              2 500 FCFA
-              <span class="product-old-price">3 000 FCFA</span>
+              {{ produit.price }}
+              <span class="product-old-price">{{ produit.price }}</span>
             </div>
             <div class="product-actions-bottom">
               <div class="quantity-controls">
@@ -1023,212 +1025,9 @@
             </div>
           </div>
         </div>
-
-        <!-- Product 2 -->
-        <div class="product-card fade-in delay-1" data-category="legumes" data-price="1800" data-stock="available" data-promo="false">
-          <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1574856344991-aaa31b6f4ce3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Carottes Bio">
-            <div class="product-badge">Bio</div>
-            <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="2">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product="2">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">Légumes</span>
-            <h3>Carottes Nouvelles Bio</h3>
-            <p class="product-description">Carottes nouvelles biologiques, croquantes et sucrées, idéales crues ou cuites.</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.6</span>
-              </div>
-              <div class="product-stock">En stock</div>
-            </div>
-            <div class="product-price">1 800 FCFA</div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="2">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="2" readonly>
-                <button class="quantity-btn plus-btn" data-product="2">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product="2">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 3 -->
-        <div class="product-card fade-in delay-2" data-category="fruits" data-price="3200" data-stock="available" data-promo="true">
-          <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1619566636858-adf3ef46400b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Fraises Bio">
-            <div class="product-badge">Promo</div>
-            <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="3">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product="3">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">Fruits</span>
-            <h3>Fraises Gariguettes Bio</h3>
-            <p class="product-description">Fraises gariguettes biologiques, sucrées et parfumées, récoltées du jour.</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.9</span>
-              </div>
-              <div class="product-stock">Stock limité</div>
-            </div>
-            <div class="product-price">
-              3 200 FCFA
-              <span class="product-old-price">4 000 FCFA</span>
-            </div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="3">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="3" readonly>
-                <button class="quantity-btn plus-btn" data-product="3">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product="3">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 4 -->
-        <div class="product-card fade-in" data-category="herbes" data-price="1200" data-stock="available" data-promo="false">
-          <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1599889962057-49bf295faa44?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Basilic Bio">
-            <div class="product-badge">Bio</div>
-            <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="4">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product="4">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">Herbes aromatiques</span>
-            <h3>Basilic Frais Bio</h3>
-            <p class="product-description">Basilic frais biologique, parfumé, parfait pour vos plats méditerranéens.</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.7</span>
-              </div>
-              <div class="product-stock">En stock</div>
-            </div>
-            <div class="product-price">1 200 FCFA</div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="4">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="4" readonly>
-                <button class="quantity-btn plus-btn" data-product="4">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product="4">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 5 -->
-        <div class="product-card fade-in delay-1" data-category="fruits" data-price="2800" data-stock="available" data-promo="false">
-          <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1550258987-190a2d41a8ba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Pommes Bio">
-            <div class="product-badge">Bio</div>
-            <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="5">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product="5">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">Fruits</span>
-            <h3>Pommes Golden Bio</h3>
-            <p class="product-description">Pommes golden biologiques, croquantes et juteuses, idéales pour la pâtisserie.</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.5</span>
-              </div>
-              <div class="product-stock">En stock</div>
-            </div>
-            <div class="product-price">2 800 FCFA</div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="5">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="5" readonly>
-                <button class="quantity-btn plus-btn" data-product="5">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product="5">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Product 6 -->
-        <div class="product-card fade-in delay-2" data-category="legumes" data-price="2200" data-stock="low" data-promo="true">
-          <div class="product-image">
-            <img src="https://images.unsplash.com/photo-1566385101042-7a3cca522c9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Poivrons Bio">
-            <div class="product-badge">Promo</div>
-            <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="6">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product="6">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">Légumes</span>
-            <h3>Poivrons Multicolores Bio</h3>
-            <p class="product-description">Poivrons biologiques rouges, jaunes et verts, parfaits pour vos salades et plats.</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.8</span>
-              </div>
-              <div class="product-stock">Stock limité</div>
-            </div>
-            <div class="product-price">
-              2 200 FCFA
-              <span class="product-old-price">2 800 FCFA</span>
-            </div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="6">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="6" readonly>
-                <button class="quantity-btn plus-btn" data-product="6">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product="6">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
+        
+    {% endfor %} 
+    {% endif %}
       </div>
     </main>
   </div>
