@@ -18,7 +18,7 @@ class Shop(models.Model):
 class Category(models.Model):
     id = models.AutoField(primary_key=True)
     shop = models.ForeignKey(
-        'Marketplace.Shop',            # adjust app label if different
+        'Marketplace.Shop',            
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -29,7 +29,6 @@ class Category(models.Model):
     def __str__(self): return self.name
 
 class Product(models.Model):
-    shop = models.ForeignKey(Shop, related_name="product", on_delete=models.PROTECT)
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     category = models.ForeignKey(Category, related_name="products", on_delete=models.PROTECT)
@@ -51,3 +50,49 @@ class ProductImage(models.Model):
     image = models.ImageField(upload_to="products/%Y/%m/%d/")
     alt_text = models.CharField(max_length=255, blank=True)
     def __str__(self): return f"Image for {self.product.name}"
+
+class Favorite(models.Model):
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, related_name="favorites", on_delete=models.CASCADE)
+    shop = models.ForeignKey(
+    Shop,
+    related_name="favorited_by",
+    on_delete=models.CASCADE,
+    null=True,
+    blank=True
+)
+    product = models.ForeignKey(
+    Product,
+    related_name="fav_product",
+    on_delete=models.CASCADE,
+    null=True,
+    blank=True
+)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'shop')  # Un utilisateur ne peut favoriser qu'une fois une boutique
+        ordering = ["-created_at"]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.shop.title}"
+
+class ProductLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'product')
+
+class ProductView(models.Model):
+    product = models.ForeignKey('Product', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    ip_address = models.GenericIPAddressField()
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+class SearchHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    query = models.CharField(max_length=255)
+    filters = models.JSONField(default=dict)
+    searched_at = models.DateTimeField(auto_now_add=True)

@@ -75,7 +75,6 @@
   .breadcrumb {
     background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
     width:100%;
-    
     padding: 0 2rem;
     display: flex;
     align-items: center;
@@ -202,70 +201,6 @@
     font-weight: 600;
   }
 
-  /* Price Range */
-  .price-range {
-    padding: 0.5rem 0;
-  }
-
-  .price-inputs {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .price-input {
-    flex: 1;
-  }
-
-  .price-input input {
-    width: 100%;
-    padding: 0.8rem;
-    border: 2px solid var(--light-gray);
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: var(--transition);
-  }
-
-  .price-input input:focus {
-    border-color: var(--primary-green);
-    outline: none;
-  }
-
-  .range-slider {
-    width: 100%;
-    height: 6px;
-    background: var(--light-gray);
-    border-radius: 3px;
-    position: relative;
-  }
-
-  .range-progress {
-    position: absolute;
-    height: 100%;
-    background: var(--primary-green);
-    border-radius: 3px;
-  }
-
-  .range-input {
-    position: absolute;
-    top: -5px;
-    width: 100%;
-    height: 6px;
-    background: none;
-    pointer-events: none;
-    -webkit-appearance: none;
-  }
-
-  .range-input::-webkit-slider-thumb {
-    pointer-events: all;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: var(--primary-green);
-    cursor: pointer;
-    -webkit-appearance: none;
-  }
-
   /* Main Content */
   .marketplace-main {
     display: flex;
@@ -287,6 +222,15 @@
     font-weight: 700;
     color: var(--text-dark);
     margin: 0;
+  }
+
+  .results-counter {
+    font-size: 1rem;
+    color: var(--text-dark);
+    background: rgba(46, 204, 113, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
   }
 
   .marketplace-actions {
@@ -331,8 +275,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
     border: 2px solid var(--light-gray);
     background: var(--white);
     color: var(--text-dark);
@@ -551,8 +495,8 @@
     color: var(--text-dark);
     cursor: pointer;
     transition: var(--transition);
-    padding: 0.5rem;
-    border-radius: 6px;
+    padding: 8px 20px;
+    border-radius: 30px;
   }
 
   .action-btn:hover {
@@ -565,12 +509,16 @@
   }
 
   .action-btn.favorited {
-    color: var(--earth-brown);
+    color: #e74c3c;
+  }
+
+  .action-btn.favorited i {
+    color: #e74c3c;
   }
 
   .visit-shop-btn {
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
     border: 2px solid var(--primary-green);
     background: transparent;
     color: var(--primary-green);
@@ -611,6 +559,35 @@
     max-width: 500px;
     margin: 0 auto 2rem;
     line-height: 1.6;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--white);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary-green);
+    z-index: 1000;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    max-width: 300px;
+  }
+
+  .toast.show {
+    transform: translateX(0);
+  }
+
+  .toast.error {
+    border-left-color: #e74c3c;
+  }
+
+  .toast-message {
+    font-weight: 600;
+    color: var(--text-dark);
   }
 
   /* Responsive Design */
@@ -732,106 +709,33 @@
         </button>
       </div>
 
-      <!-- Catégories -->
+      <!-- Type de Boutique (dynamique) -->
       <div class="filter-group">
-        <h4><i class="fas fa-tags"></i> Catégories</h4>
-        <div class="filter-options">
-          <div class="filter-option">
-            <input type="checkbox" id="cat-legumes" data-category="legumes" checked>
-            <label for="cat-legumes">Légumes <span class="products-count">(24)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-fruits" data-category="fruits" checked>
-            <label for="cat-fruits">Fruits <span class="products-count">(18)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-cereales" data-category="cereales" checked>
-            <label for="cat-cereales">Céréales <span class="products-count">(12)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-tubercules" data-category="tubercules" checked>
-            <label for="cat-tubercules">Tubercules <span class="products-count">(8)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-elevage" data-category="elevage" checked>
-            <label for="cat-elevage">Élevage <span class="products-count">(15)</span></label>
-          </div>
+        <h4><i class="fas fa-store"></i> Type de Boutique</h4>
+        <div class="filter-options" id="type-filter">
+          <!-- Les options seront générées dynamiquement -->
         </div>
       </div>
 
-      <!-- Régions -->
+      <!-- Localisation (dynamique) -->
       <div class="filter-group">
-        <h4><i class="fas fa-map-marker-alt"></i> Régions</h4>
-        <div class="filter-options">
-          <div class="filter-option">
-            <input type="checkbox" id="region-centre" data-region="centre" checked>
-            <label for="region-centre">Centre</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="region-littoral" data-region="littoral" checked>
-            <label for="region-littoral">Littoral</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="region-ouest" data-region="ouest" checked>
-            <label for="region-ouest">Ouest</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="region-nord" data-region="nord" checked>
-            <label for="region-nord">Nord</label>
-          </div>
+        <h4><i class="fas fa-map-marker-alt"></i> Localisation</h4>
+        <div class="filter-options" id="location-filter">
+          <!-- Les options seront générées dynamiquement -->
         </div>
       </div>
 
-      <!-- Certifications -->
+      <!-- Notes -->
       <div class="filter-group">
-        <h4><i class="fas fa-certificate"></i> Certifications</h4>
+        <h4><i class="fas fa-star"></i> Notes</h4>
         <div class="filter-options">
           <div class="filter-option">
-            <input type="checkbox" id="cert-bio" data-certification="bio">
-            <label for="cert-bio">Agriculture Biologique</label>
+            <input type="checkbox" id="rating-4" data-rating="4">
+            <label for="rating-4">4 étoiles et plus</label>
           </div>
           <div class="filter-option">
-            <input type="checkbox" id="cert-local" data-certification="local" checked>
-            <label for="cert-local">Produit Local</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cert-qualite" data-certification="qualite">
-            <label for="cert-qualite">Certification Qualité</label>
-          </div>
-        </div>
-      </div>
-
-      <!-- Prix -->
-      <div class="filter-group">
-        <h4><i class="fas fa-money-bill-wave"></i> Gamme de Prix</h4>
-        <div class="price-range">
-          <div class="price-inputs">
-            <div class="price-input">
-              <input type="number" id="min-price" placeholder="Min" value="0">
-            </div>
-            <div class="price-input">
-              <input type="number" id="max-price" placeholder="Max" value="50000">
-            </div>
-          </div>
-          <div class="range-slider">
-            <div class="range-progress"></div>
-            <input type="range" class="range-input" min="0" max="100000" value="0" step="1000">
-            <input type="range" class="range-input" min="0" max="100000" value="50000" step="1000">
-          </div>
-        </div>
-      </div>
-
-      <!-- Livraison -->
-      <div class="filter-group">
-        <h4><i class="fas fa-truck"></i> Livraison</h4>
-        <div class="filter-options">
-          <div class="filter-option">
-            <input type="checkbox" id="delivery-available" data-delivery="available" checked>
-            <label for="delivery-available">Livraison Disponible</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="delivery-free" data-delivery="free">
-            <label for="delivery-free">Livraison Gratuite</label>
+            <input type="checkbox" id="rating-3" data-rating="3">
+            <label for="rating-3">3 étoiles et plus</label>
           </div>
         </div>
       </div>
@@ -875,80 +779,234 @@
       
       <div class="shops-grid" id="shops-container">
         {% if shops %}
-        {% for shop in shops  %}
-        <!-- Shop 1 -->
-        <div class="shop-card fade-in" data-category="legumes fruits" data-region="centre" data-certification="local" data-price="20000" data-delivery="available">
-          <div class="shop-header-image">
-            <img src="{{ shop.couverture.url }}" alt="Ferme Bio du Centre">
-            <div class="shop-badge">{{ shop.type_shop }}</div>
-            <div class="shop-avatar">
-              <img src="{{ shop.user.profile_picture.url }}" alt="Ferme Bio du Centre">
+          {% for shop in shops %}
+          <div class="shop-card fade-in" 
+               data-category="{{ shop.type_shop }}" 
+               data-region="{{ shop.localisation }}" 
+               data-rating="{{ shop.note }}"
+               data-shop-id="{{ shop.id }}">
+            <div class="shop-header-image">
+              <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}">
+              <div class="shop-badge">{{ shop.type_shop }}</div>
+              <div class="shop-avatar">
+                <img src="{{ shop.user.profile_picture.url }}" alt="{{ shop.title }}">
+              </div>
+            </div>
+            <div class="shop-content">
+              <h3>{{ shop.title }}</h3>
+              <div class="shop-stats">
+                <div class="shop-stat">
+                  <i class="fas fa-star"></i>
+                  <span>{{ shop.note }}</span>
+                </div>
+                <div class="shop-stat">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span>{{ shop.localisation }}</span>
+                </div>
+              </div>
+              <p class="shop-description">{{ shop.description }}</p>
+              <div class="shop-actions-bar">
+                <div class="action-buttons">
+                  <button class="action-btn favorite-btn" data-shop-id="{{ shop.id }}">
+                    <i class="far fa-heart"></i>
+                  </button>
+                  <button class="action-btn share-btn" data-shop-id="{{ shop.id }}" data-shop-title="{{ shop.title }}">
+                    <i class="far fa-share-square"></i>
+                  </button>
+                </div>
+                <a href="{% url 'shop' shop.id %}" class="visit-shop-btn">Visiter la boutique</a>
+              </div>
             </div>
           </div>
-          <div class="shop-content">
-            <h3>{{ shop.title }} </h3>
-           <!--<div class="shop-specialty">
-              <i class="fas fa-seedling"></i>
-              Légumes & Fruits Bio
-            </div> -->
-            <div class="shop-stats">
-              <div class="shop-stat">
-                <i class="fas fa-star"></i>
-                <span>{{ shop.note }}</span>
-              </div>
-              <div class="shop-stat">
-                <i class="fas fa-map-marker-alt"></i>
-                <span>{{ shop.localisation }}</span>
-              </div>
-            </div>
-            <p class="shop-description">{{ shop.description }}</p>
-            <div class="shop-actions-bar">
-              <div class="action-buttons">
-                <button class="action-btn favorite-btn" data-shop="{{ shop.id }}">
-                  <i class="far fa-heart"></i>
-                </button>
-                <button class="action-btn share-btn" data-shop="1">
-                  <i class="far fa-share-square"></i>
-                </button>
-              </div>
-              <a href="{% url 'shop' shop.id %}" class="visit-shop-btn">Visiter la boutique</a>
-
-            </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <i class="fas fa-store-slash"></i>
+            <h3>Aucune boutique disponible</h3>
+            <p>Il n'y a actuellement aucune boutique dans la marketplace.</p>
           </div>
-        </div>
-        {% endfor %}
         {% endif %}
-
       </div>
     </main>
   </div>
 </section>
 
+<!-- Toast Notification -->
+<div id="toast" class="toast" style="display: none;">
+  <div class="toast-message" id="toast-message"></div>
+</div>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+// Fonction pour afficher les notifications toast
+function showToast(message, isError = false) {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toast-message');
+    
+    toastMessage.textContent = message;
+    toast.style.display = 'block';
+    
+    if (isError) {
+        toast.classList.add('error');
+    } else {
+        toast.classList.remove('error');
+    }
+    
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 300);
+    }, 3000);
+}
+
+// Fonction pour partager une boutique
+function shareShop(shopId, shopTitle) {
+    const shopUrl = `${window.location.origin}{% url 'shop' 0 %}`.replace('/0', `/${shopId}`);
+    const shareText = `Découvrez la boutique ${shopTitle} sur FarmGen Marketplace!`;
+    
+    if (navigator.share) {
+        // Utiliser l'API Web Share si disponible
+        navigator.share({
+            title: shopTitle,
+            text: shareText,
+            url: shopUrl
+        }).then(() => {
+            showToast('Boutique partagée avec succès!');
+        }).catch((error) => {
+            console.log('Erreur de partage:', error);
+        });
+    } else if (navigator.clipboard) {
+        // Copier dans le presse-papier
+        navigator.clipboard.writeText(`${shareText} ${shopUrl}`).then(() => {
+            showToast('Lien copié dans le presse-papier!');
+        }).catch((error) => {
+            // Fallback pour les navigateurs sans clipboard API
+            fallbackCopy(shopUrl);
+        });
+    } else {
+        // Fallback ultime
+        fallbackCopy(shopUrl);
+    }
+}
+
+// Fallback pour la copie
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('Lien copié dans le presse-papier!');
+    } catch (err) {
+        showToast('Impossible de copier le lien', true);
+    }
+    document.body.removeChild(textArea);
+}
+
+// Fonction pour gérer les favoris
+async function toggleFavorite(shopId, button) {
+    const isCurrentlyFavorited = button.classList.contains('favorited');
+    const icon = button.querySelector('i');
+    
+    try {
+        const response = await fetch(`/marketplace/favorite/${shopId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json',
+            },
+        });
+        
+        const data = await response.json();
+        
+        if (data.status === 'success' || data.status === 'added' || data.status === 'removed') {
+            // Basculer l'état visuel
+            button.classList.toggle('favorited');
+            
+            if (button.classList.contains('favorited')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                showToast('Boutique ajoutée aux favoris!');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                showToast('Boutique retirée des favoris');
+            }
+        } else {
+            throw new Error(data.message || 'Erreur lors de la mise à jour des favoris');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Vous devez être connecté pour ajouter aux favoris', true);
+    }
+}
+
+// Fonction pour récupérer le token CSRF
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Fonction pour charger le statut des favoris
+async function loadFavoritesStatus() {
+    try {
+        const response = await fetch('/marketplace/favorites/status/');
+        const data = await response.json();
+        
+        if (data.favorites) {
+            // Mettre à jour l'état visuel des boutons favoris
+            data.favorites.forEach(shopId => {
+                const button = document.querySelector(`.favorite-btn[data-shop-id="${shopId}"]`);
+                if (button) {
+                    button.classList.add('favorited');
+                    const icon = button.querySelector('i');
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error loading favorites status:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
     // Animation on scroll
     const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-        }
-      });
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+            }
+        });
     }, observerOptions);
 
-    // Observe all fade-in elements
     document.querySelectorAll(".fade-in").forEach((el) => {
-      observer.observe(el);
+        observer.observe(el);
     });
 
-    // Filter functionality
-    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
-    const priceInputs = document.querySelectorAll('#min-price, #max-price');
-    const rangeInputs = document.querySelectorAll('.range-input');
+    // Initialisation des filtres dynamiques
+    initializeDynamicFilters();
+
+    // Éléments du DOM
     const clearFiltersBtn = document.getElementById('clear-filters');
     const searchInput = document.getElementById('shop-search');
     const sortBtn = document.querySelector('.sort-btn');
@@ -956,217 +1014,249 @@
     const sortOptions = document.querySelectorAll('.sort-option input');
     const shopCards = document.querySelectorAll('.shop-card');
 
-    // Price range functionality
-    const priceRange = document.querySelector('.range-slider');
-    const rangeProgress = document.querySelector('.range-progress');
-    const minPriceInput = document.getElementById('min-price');
-    const maxPriceInput = document.getElementById('max-price');
-    const minRange = rangeInputs[0];
-    const maxRange = rangeInputs[1];
+    // Fonction pour initialiser les filtres dynamiques
+    function initializeDynamicFilters() {
+        const types = new Set();
+        const locations = new Set();
+        
+        // Collecter les types et localisations uniques depuis les boutiques
+        shopCards.forEach(card => {
+            const type = card.getAttribute('data-category');
+            const location = card.getAttribute('data-region');
+            
+            if (type) types.add(type);
+            if (location) locations.add(location);
+        });
 
-    function updatePriceRange() {
-      const minVal = parseInt(minRange.value);
-      const maxVal = parseInt(maxRange.value);
-      
-      if (maxVal - minVal < 1000) {
-        if (minRange === document.activeElement) {
-          minRange.value = maxVal - 1000;
-        } else {
-          maxRange.value = minVal + 1000;
-        }
-      }
-      
-      minPriceInput.value = minVal;
-      maxPriceInput.value = maxVal;
-      
-      const progressLeft = (minVal / parseInt(minRange.max)) * 100;
-      const progressRight = 100 - (maxVal / parseInt(maxRange.max)) * 100;
-      rangeProgress.style.left = progressLeft + "%";
-      rangeProgress.style.right = progressRight + "%";
-      
-      filterShops();
+        // Générer les options de filtre pour les types
+        const typeFilterContainer = document.getElementById('type-filter');
+        types.forEach(type => {
+            const option = createFilterOption('type', type, type, true);
+            typeFilterContainer.appendChild(option);
+        });
+
+        // Générer les options de filtre pour les localisations
+        const locationFilterContainer = document.getElementById('location-filter');
+        locations.forEach(location => {
+            const option = createFilterOption('location', location, location, true);
+            locationFilterContainer.appendChild(option);
+        });
+
+        // Réattacher les événements après la génération dynamique
+        attachFilterEvents();
     }
 
-    minRange.addEventListener('input', updatePriceRange);
-    maxRange.addEventListener('input', updatePriceRange);
+    // Créer une option de filtre
+    function createFilterOption(filterType, value, label, checked = true) {
+        const id = `${filterType}-${value.toLowerCase().replace(/\s+/g, '-')}`;
+        
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'filter-option';
+        optionDiv.innerHTML = `
+            <input type="checkbox" id="${id}" data-${filterType}="${value}" ${checked ? 'checked' : ''}>
+            <label for="${id}">${label}</label>
+        `;
+        
+        return optionDiv;
+    }
 
-    minPriceInput.addEventListener('input', function() {
-      minRange.value = this.value;
-      updatePriceRange();
-    });
+    // Attacher les événements aux filtres
+    function attachFilterEvents() {
+        const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
+        
+        filterCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', filterShops);
+        });
+    }
 
-    maxPriceInput.addEventListener('input', function() {
-      maxRange.value = this.value;
-      updatePriceRange();
-    });
-
-    // Filter shops function
+    // Fonction de filtrage améliorée
     function filterShops() {
-      const selectedCategories = Array.from(document.querySelectorAll('.filter-option input[data-category]:checked'))
-        .map(cb => cb.getAttribute('data-category'));
-      
-      const selectedRegions = Array.from(document.querySelectorAll('.filter-option input[data-region]:checked'))
-        .map(cb => cb.getAttribute('data-region'));
-      
-      const selectedCertifications = Array.from(document.querySelectorAll('.filter-option input[data-certification]:checked'))
-        .map(cb => cb.getAttribute('data-certification'));
-      
-      const minPrice = parseInt(minPriceInput.value) || 0;
-      const maxPrice = parseInt(maxPriceInput.value) || 100000;
-      
-      const deliveryAvailable = document.getElementById('delivery-available').checked;
-      const deliveryFree = document.getElementById('delivery-free').checked;
-      
-      const searchTerm = searchInput.value.toLowerCase();
+        const selectedTypes = Array.from(document.querySelectorAll('.filter-option input[data-type]:checked'))
+            .map(cb => cb.getAttribute('data-type'));
+        
+        const selectedLocations = Array.from(document.querySelectorAll('.filter-option input[data-location]:checked'))
+            .map(cb => cb.getAttribute('data-location'));
+        
+        const selectedRatings = Array.from(document.querySelectorAll('.filter-option input[data-rating]:checked'))
+            .map(cb => parseFloat(cb.getAttribute('data-rating')));
+        
+        const searchTerm = searchInput.value.toLowerCase().trim();
 
-      shopCards.forEach(card => {
-        const cardCategories = card.getAttribute('data-category').split(' ');
-        const cardRegion = card.getAttribute('data-region');
-        const cardCertification = card.getAttribute('data-certification');
-        const cardPrice = parseInt(card.getAttribute('data-price'));
-        const cardDelivery = card.getAttribute('data-delivery');
-        const cardTitle = card.querySelector('h3').textContent.toLowerCase();
-        const cardDescription = card.querySelector('.shop-description').textContent.toLowerCase();
+        let visibleCount = 0;
 
-        // Check filters
-        const categoryMatch = selectedCategories.length === 0 || 
-          selectedCategories.some(cat => cardCategories.includes(cat));
-        
-        const regionMatch = selectedRegions.length === 0 || 
-          selectedRegions.includes(cardRegion);
-        
-        const certificationMatch = selectedCertifications.length === 0 || 
-          selectedCertifications.includes(cardCertification);
-        
-        const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
-        
-        const deliveryMatch = (!deliveryAvailable || cardDelivery === 'available') && 
-          (!deliveryFree || cardDelivery === 'free');
-        
-        const searchMatch = !searchTerm || 
-          cardTitle.includes(searchTerm) || 
-          cardDescription.includes(searchTerm);
+        shopCards.forEach(card => {
+            const cardType = card.getAttribute('data-category');
+            const cardLocation = card.getAttribute('data-region');
+            const cardRating = parseFloat(card.querySelector('.shop-stat span').textContent);
+            const cardTitle = card.querySelector('h3').textContent.toLowerCase();
+            const cardDescription = card.querySelector('.shop-description').textContent.toLowerCase();
 
-        if (categoryMatch && regionMatch && certificationMatch && 
-            priceMatch && deliveryMatch && searchMatch) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
+            // Vérifier les filtres
+            const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(cardType);
+            const locationMatch = selectedLocations.length === 0 || selectedLocations.includes(cardLocation);
+            const ratingMatch = selectedRatings.length === 0 || 
+                selectedRatings.some(minRating => cardRating >= minRating);
+            const searchMatch = !searchTerm || 
+                cardTitle.includes(searchTerm) || 
+                cardDescription.includes(searchTerm);
+
+            if (typeMatch && locationMatch && ratingMatch && searchMatch) {
+                card.style.display = 'block';
+                visibleCount++;
+                card.classList.add('visible');
+            } else {
+                card.style.display = 'none';
+                card.classList.remove('visible');
+            }
+        });
+
+        // Gérer l'état vide
+        showEmptyState(visibleCount === 0);
+        updateResultsCount(visibleCount);
     }
 
-    // Event listeners for filters
-    filterCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', filterShops);
+    // Afficher/masquer l'état vide
+    function showEmptyState(show) {
+        let emptyState = document.querySelector('.empty-state');
+        
+        if (show && !emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <i class="fas fa-search"></i>
+                <h3>Aucune boutique trouvée</h3>
+                <p>Aucune boutique ne correspond à vos critères de recherche. Essayez de modifier vos filtres.</p>
+                <button class="visit-shop-btn" onclick="clearAllFilters()">Réinitialiser les filtres</button>
+            `;
+            document.getElementById('shops-container').appendChild(emptyState);
+        } else if (!show && emptyState) {
+            emptyState.remove();
+        }
+    }
+
+    // Mettre à jour le compteur de résultats
+    function updateResultsCount(count) {
+        let resultsCounter = document.querySelector('.results-counter');
+        
+        if (!resultsCounter) {
+            resultsCounter = document.createElement('div');
+            resultsCounter.className = 'results-counter';
+            document.querySelector('.marketplace-header').appendChild(resultsCounter);
+        }
+        
+        resultsCounter.textContent = `${count} boutique${count !== 1 ? 's' : ''} trouvée${count !== 1 ? 's' : ''}`;
+    }
+
+    // Réinitialiser tous les filtres
+    function clearAllFilters() {
+        document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        
+        searchInput.value = '';
+        filterShops();
+    }
+
+    // Recherche avec debounce
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(filterShops, 300);
     });
 
-    priceInputs.forEach(input => {
-      input.addEventListener('input', filterShops);
-    });
-
-    searchInput.addEventListener('input', filterShops);
-
-    // Clear filters
-    clearFiltersBtn.addEventListener('click', function() {
-      filterCheckboxes.forEach(checkbox => {
-        checkbox.checked = true;
-      });
-      
-      minPriceInput.value = 0;
-      maxPriceInput.value = 50000;
-      minRange.value = 0;
-      maxRange.value = 50000;
-      updatePriceRange();
-      
-      searchInput.value = '';
-      
-      filterShops();
-    });
-
-    // Sort functionality
+    // Tri amélioré
     sortBtn.addEventListener('click', function() {
-      sortMenu.classList.toggle('show');
+        sortMenu.classList.toggle('show');
     });
 
     sortOptions.forEach(option => {
-      option.addEventListener('change', function() {
-        const sortValue = this.value;
+        option.addEventListener('change', function() {
+            const sortValue = this.value;
+            sortShops(sortValue);
+            sortMenu.classList.remove('show');
+        });
+    });
+
+    // Fonction de tri
+    function sortShops(sortValue) {
         const shopsContainer = document.getElementById('shops-container');
-        const shopCardsArray = Array.from(shopCards);
+        const visibleShopCards = Array.from(shopCards).filter(card => 
+            card.style.display !== 'none'
+        );
 
-        shopCardsArray.sort((a, b) => {
-          switch(sortValue) {
-            case 'rating':
-              const ratingA = parseFloat(a.querySelector('.shop-stat span').textContent.split(' ')[0]);
-              const ratingB = parseFloat(b.querySelector('.shop-stat span').textContent.split(' ')[0]);
-              return ratingB - ratingA;
-            
-            case 'new':
-              // For demo, we'll use a random order
-              return Math.random() - 0.5;
-            
-            case 'name':
-              const nameA = a.querySelector('h3').textContent.toLowerCase();
-              const nameB = b.querySelector('h3').textContent.toLowerCase();
-              return nameA.localeCompare(nameB);
-            
-            case 'popular':
-            default:
-              const reviewsA = parseInt(a.querySelector('.shop-stat span').textContent.match(/\d+/)[0]);
-              const reviewsB = parseInt(b.querySelector('.shop-stat span').textContent.match(/\d+/)[0]);
-              return reviewsB - reviewsA;
-          }
+        visibleShopCards.sort((a, b) => {
+            switch(sortValue) {
+                case 'rating':
+                    const ratingA = parseFloat(a.querySelector('.shop-stat span').textContent);
+                    const ratingB = parseFloat(b.querySelector('.shop-stat span').textContent);
+                    return ratingB - ratingA;
+                
+                case 'name':
+                    const nameA = a.querySelector('h3').textContent.toLowerCase();
+                    const nameB = b.querySelector('h3').textContent.toLowerCase();
+                    return nameA.localeCompare(nameB);
+                
+                case 'new':
+                    return Array.from(shopCards).indexOf(a) - Array.from(shopCards).indexOf(b);
+                
+                case 'popular':
+                default:
+                    const popA = parseFloat(a.querySelector('.shop-stat span').textContent);
+                    const popB = parseFloat(b.querySelector('.shop-stat span').textContent);
+                    return popB - popA;
+            }
         });
 
-        // Reappend sorted cards
-        shopCardsArray.forEach(card => {
-          shopsContainer.appendChild(card);
+        // Réorganiser les cartes visibles
+        visibleShopCards.forEach(card => {
+            shopsContainer.appendChild(card);
         });
+    }
 
-        sortMenu.classList.remove('show');
-      });
-    });
-
-    // Close sort menu when clicking outside
+    // Fermer le menu de tri en cliquant à l'extérieur
     document.addEventListener('click', function(e) {
-      if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
-        sortMenu.classList.remove('show');
-      }
-    });
-
-    // Shop interaction functionality
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    const shareButtons = document.querySelectorAll('.share-btn');
-
-    favoriteButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const shopId = this.getAttribute('data-shop');
-        
-        this.classList.toggle('favorited');
-        this.querySelector('i').classList.toggle('far');
-        this.querySelector('i').classList.toggle('fas');
-        
-        if (this.classList.contains('favorited')) {
-          console.log(`Favorited shop ${shopId}`);
-        } else {
-          console.log(`Unfavorited shop ${shopId}`);
+        if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+            sortMenu.classList.remove('show');
         }
-      });
     });
 
-    shareButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const shopId = this.getAttribute('data-shop');
-        
-        // In a real app, this would open a share dialog
-        alert(`Partager la boutique ${shopId}`);
-        console.log(`Shared shop ${shopId}`);
-      });
+    // Gestion des favoris
+    document.querySelectorAll('.favorite-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const shopId = this.getAttribute('data-shop-id');
+            toggleFavorite(shopId, this);
+        });
     });
 
-    // Initialize price range
-    updatePriceRange();
-  });
+    // Gestion du partage
+    document.querySelectorAll('.share-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const shopId = this.getAttribute('data-shop-id');
+            const shopTitle = this.getAttribute('data-shop-title');
+            shareShop(shopId, shopTitle);
+        });
+    });
+
+    // Réinitialiser les filtres
+    clearFiltersBtn.addEventListener('click', clearAllFilters);
+
+    // Charger le statut des favoris au chargement de la page
+    loadFavoritesStatus();
+
+    // Initialiser le filtrage
+    filterShops();
+});
+
+// Fonction globale pour réinitialiser les filtres
+function clearAllFilters() {
+    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    
+    document.getElementById('shop-search').value = '';
+    
+    const event = new Event('change');
+    document.querySelector('.filter-option input[type="checkbox"]').dispatchEvent(event);
+}
 </script>
 {% endblock %}

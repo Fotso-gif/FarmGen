@@ -600,7 +600,7 @@
                             <img src="{{ user.profile_image.url }}" alt="Profile de {{ user.get_full_name }}">
                         {% else %}
                             <div class="avatar-initials">
-                                {{ user.first_name|first }}{{ user.last_name|first }}
+                                <img src="{{ user.profile_picture.url}}">
                             </div>
                         {% endif %}
                         <div class="avatar-edit" onclick="document.getElementById('profileImageInput').click()">
@@ -736,7 +736,13 @@
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Type de compte</div>
-                                    <div class="info-value">{{ user.get_user_type_display }}</div>
+                                    <div class="info-value">
+                                    {% if user.account_type == 'seller' %}
+                                        Agriculteur/Vendeur
+                                    {% else %}
+                                         Client
+                                    {% endif %}
+                                    </div>
                                 </div>
                                 <div class="info-item">
                                     <div class="info-label">Date d'inscription</div>

@@ -1,13 +1,69 @@
 from django.shortcuts import render
-from .models import Shop
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import json
+from .models import Shop, Product, Favorite
 # Create your views here.
 def index(request):
     render(request, 'marketplace/index.html')
+
+def history(request):
+    render(request, 'marketplace/historiqueCommande.html')
     
 def shop(request, shop_id):
     shop = Shop.objects.get(id = shop_id)
-    produits = shop.produits.all()
+    produits = Product.objects.filter(category__shop=shop)
     return render(request, 'marketplace/e_shop.html', {'produits': produits, 'shop': shop})    
+
+@login_required
+@require_POST
+@csrf_exempt
+def toggle_favorite(request, shop_id):
+    try:
+        shop = Shop.objects.get(id=shop_id)
+        favorite, created = Favorite.objects.get_or_create(
+            user=request.user,
+            shop=shop
+        )
+        
+        if not created:
+            # Si déjà favori, on supprime
+            favorite.delete()
+            return JsonResponse({
+                'status': 'removed',
+                'message': 'Boutique retirée des favoris',
+                'is_favorite': False
+            })
+        
+        return JsonResponse({
+            'status': 'added',
+            'message': 'Boutique ajoutée aux favoris',
+            'is_favorite': True
+        })
+        
+    except Shop.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Boutique non trouvée'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
+
+@login_required
+def get_favorites_status(request):
+    """Récupère le statut favori des boutiques pour l'utilisateur connecté"""
+    favorite_shop_ids = Favorite.objects.filter(
+        user=request.user
+    ).values_list('shop_id', flat=True)
+    
+    return JsonResponse({
+        'favorites': list(favorite_shop_ids)
+})
     
 """from rest_framework import viewsets, status, mixins
 from rest_framework.decorators import action

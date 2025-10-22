@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='product',
             name='shop',
-            field=models.ForeignKey(default=django.utils.timezone.now, on_delete=django.db.models.deletion.PROTECT, related_name='product', to='Marketplace.shop'),
+            field=models.ForeignKey(to='Marketplace.Shop', on_delete=models.CASCADE, null=True, blank=True),
             preserve_default=False,
         ),
     ]

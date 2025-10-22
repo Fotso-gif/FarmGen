@@ -204,6 +204,7 @@
   }
 
   .filter-group {
+    overflow:hidden;
     margin-bottom: 2rem;
   }
 
@@ -827,6 +828,246 @@
     transition-delay: 0.6s;
   }
 </style>
+<style>
+  /* Variables existantes... */
+
+  /* Nouveaux styles pour les améliorations */
+  
+  /* Filtres avancés */
+  .filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .filter-tag {
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .filter-tag-remove {
+    background: none;
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filter-tag-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Recherche intelligente */
+  .search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .search-suggestions.show {
+    display: block;
+  }
+
+  .suggestion-item {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--light-gray);
+    transition: var(--transition);
+  }
+
+  .suggestion-item:hover {
+    background: var(--light-gray);
+  }
+
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+
+  /* Likes avec animations */
+  .like-btn {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .like-btn.liking::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(231, 76, 60, 0.3);
+    border-radius: 50%;
+    animation: likePulse 0.6s ease-out;
+  }
+
+  @keyframes likePulse {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(4);
+      opacity: 0;
+    }
+  }
+
+  .like-count {
+    font-size: 0.8rem;
+    margin-left: 0.3rem;
+    font-weight: 600;
+  }
+
+  /* Partage avancé */
+  .share-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+  }
+
+  .share-modal.show {
+    display: flex;
+  }
+
+  .share-modal-content {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.3s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-50px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .share-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .share-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border: 2px solid var(--light-gray);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .share-option:hover {
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+  }
+
+  .share-option i {
+    font-size: 1.5rem;
+  }
+
+  /* Filtres rapides */
+  .quick-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .quick-filter {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--light-gray);
+    border-radius: 25px;
+    background: var(--white);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 0.9rem;
+  }
+
+  .quick-filter.active {
+    background: var(--primary-green);
+    color: var(--white);
+    border-color: var(--primary-green);
+  }
+
+  /* Statistiques en temps réel */
+  .products-stats {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+  }
+
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Loading states */
+  .loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--light-gray);
+    border-top: 2px solid var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+</style>
 {% endblock %}
 
 {% block main %}
@@ -843,14 +1084,10 @@
 <section class="shop-hero">
   <div class="shop-hero-content">
     <div class="shop-avatar-large">
-      <img src="{{ shop.user.profile_picture.url }}" alt="Ferme Bio du Centre">
+      <img src="{{ shop.user.profile_picture.url }}" alt="{{ shop.title }}">
     </div>
     <div class="shop-info">
       <h1>{{ shop.title }}</h1>
-      <!--<div class="shop-specialty">
-        <i class="fas fa-seedling"></i>
-        Légumes & Fruits Bio
-      </div>-->
       <div class="shop-stats">
         <div class="shop-stat">
           <i class="fas fa-star"></i>
@@ -864,48 +1101,63 @@
           <i class="fas fa-shipping-fast"></i>
           <span>Livraison disponible</span>
         </div>
+        <div class="shop-stat">
+          <i class="fas fa-eye"></i>
+          <span id="total-views">Chargement...</span>
+        </div>
       </div>
-      <p class="shop-description">
-      {{ shop.description}}
-      </p>
+      <p class="shop-description">{{ shop.description }}</p>
     </div>
   </div>
-  <img src="{{ shop.couverture.url }}" alt="produit" class="couverture">
+  <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}" class="couverture">
 </section>
 
 <!-- Shop Section -->
 <section class="shop-section">
   <div class="shop-container">
-    <!-- Filters Sidebar -->
+    <!-- Filters Sidebar amélioré -->
     <aside class="filters-sidebar">
       <div class="filters-header">
-        <h3>Filtres</h3>
+        <h3>Filtres Intelligents</h3>
         <button class="clear-filters" id="clear-filters">
           <i class="fas fa-times"></i>
           Effacer
         </button>
       </div>
 
-      <!-- Catégories -->
+      <!-- Filtres actifs -->
+      <div class="filter-tags" id="active-filters"></div>
+
+      <!-- Recherche avec suggestions -->
       <div class="filter-group">
-        <h4><i class="fas fa-tags"></i> Catégories</h4>
-        <div class="filter-options">
-          <div class="filter-option">
-            <input type="checkbox" id="cat-legumes" data-category="legumes" checked>
-            <label for="cat-legumes">Légumes <span class="products-count">(12)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-fruits" data-category="fruits" checked>
-            <label for="cat-fruits">Fruits <span class="products-count">(8)</span></label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="cat-herbes" data-category="herbes" checked>
-            <label for="cat-herbes">Herbes aromatiques <span class="products-count">(4)</span></label>
-          </div>
+        <h4><i class="fas fa-search"></i> Recherche Intelligente</h4>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" id="smart-search" placeholder="Rechercher des produits..." data-shop-id="{{ shop.id }}">
+          <div class="search-suggestions" id="search-suggestions"></div>
         </div>
       </div>
 
-      <!-- Prix -->
+      <!-- Filtres rapides -->
+      <div class="filter-group">
+        <h4><i class="fas fa-bolt"></i> Filtres Rapides</h4>
+        <div class="quick-filters">
+          <div class="quick-filter" data-filter="popular">Populaires</div>
+          <div class="quick-filter" data-filter="promo">Promotions</div>
+          <div class="quick-filter" data-filter="new">Nouveautés</div>
+          <div class="quick-filter" data-filter="stock">En stock</div>
+        </div>
+      </div>
+
+      <!-- Catégories dynamiques -->
+      <div class="filter-group">
+        <h4><i class="fas fa-tags"></i> Catégories</h4>
+        <div class="filter-options" id="category-filters">
+          <!-- Généré dynamiquement -->
+        </div>
+      </div>
+
+      <!-- Prix avec gamme intelligente -->
       <div class="filter-group">
         <h4><i class="fas fa-money-bill-wave"></i> Gamme de Prix</h4>
         <div class="price-range">
@@ -922,40 +1174,52 @@
             <input type="range" class="range-input" min="0" max="20000" value="0" step="500">
             <input type="range" class="range-input" min="0" max="20000" value="10000" step="500">
           </div>
-        </div>
-      </div>
-
-      <!-- Disponibilité -->
-      <div class="filter-group">
-        <h4><i class="fas fa-box"></i> Disponibilité</h4>
-        <div class="filter-options">
-          <div class="filter-option">
-            <input type="checkbox" id="stock-available" data-stock="available" checked>
-            <label for="stock-available">En stock</label>
-          </div>
-          <div class="filter-option">
-            <input type="checkbox" id="stock-low" data-stock="low">
-            <label for="stock-low">Stock limité</label>
+          <div class="price-stats">
+            <small>Prix moyen: <span id="average-price">-</span></small>
           </div>
         </div>
       </div>
 
-      <!-- Promotion -->
+      <!-- Filtres avancés -->
       <div class="filter-group">
-        <h4><i class="fas fa-percentage"></i> Promotions</h4>
+        <h4><i class="fas fa-sliders-h"></i> Options Avancées</h4>
         <div class="filter-options">
           <div class="filter-option">
-            <input type="checkbox" id="promo-active" data-promo="active">
-            <label for="promo-active">En promotion</label>
+            <input type="checkbox" id="filter-liked" data-filter="liked">
+            <label for="filter-liked">Produits likés</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="filter-viewed" data-filter="viewed">
+            <label for="filter-viewed">Déjà consultés</label>
+          </div>
+          <div class="filter-option">
+            <input type="checkbox" id="filter-eco" data-filter="eco">
+            <label for="filter-eco">Produits écologiques</label>
           </div>
         </div>
       </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content amélioré -->
     <main class="shop-main">
       <div class="shop-header">
-        <h2>Nos Produits</h2>
+        <div>
+          <h2>Nos Produits</h2>
+          <div class="products-stats">
+            <div class="stat-item">
+              <i class="fas fa-cube"></i>
+              <span id="total-products">0 produits</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-filter"></i>
+              <span id="filtered-count">0 filtrés</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-heart"></i>
+              <span id="total-likes">0 likes</span>
+            </div>
+          </div>
+        </div>
         <div class="shop-actions">
           <div class="search-box">
             <i class="fas fa-search"></i>
@@ -970,6 +1234,10 @@
               <div class="sort-option">
                 <input type="radio" name="sort" id="sort-popular" value="popular" checked>
                 <label for="sort-popular">Plus populaires</label>
+              </div>
+              <div class="sort-option">
+                <input type="radio" name="sort" id="sort-likes" value="likes">
+                <label for="sort-likes">Plus likés</label>
               </div>
               <div class="sort-option">
                 <input type="radio" name="sort" id="sort-price-low" value="price-low">
@@ -989,418 +1257,663 @@
       </div>
       
       <div class="products-grid" id="products-container">
-        <!-- Product 1 -->
-        {% if produits %} 
-        {% for produit in produits %}
-        <div class="product-card fade-in" data-category="legumes" data-price="2500" data-stock="available" data-promo="false">
+         {% for produit in produits %}
+        <div class="product-card fade-in" 
+             data-product-id="{{ produit.id }}"
+             data-category="{{ produit.category.name|default:'non-categorise' }}" 
+             data-price="{{ produit.price }}"
+             data-stock="{% if produit.quantity > 10 %}available{% elif produit.quantity > 0 %}low{% else %}out-of-stock{% endif %}"
+             data-promo="false"
+             data-likes="{{ produit.likes_count|default:0 }}"
+             data-views="{{ produit.views_count|default:0 }}"
+             data-created="{{ produit.created_at|date:'U' }}">
           <div class="product-image">
-            <img src="{{ produit.images.first.image.url}}" alt="Tomates Bio">
-            <div class="product-badge">{{ shop.type_shop }}</div>
+            <img src="{{ produit.images.first.image.url }}" alt="{{ produit.name }}">
+            <div class="product-badge">{{ produit.category.name|default:shop.type_shop }}</div>
             <div class="product-actions">
-              <button class="product-action-btn favorite-btn" data-product="1">
+              <button class="product-action-btn like-btn" data-product-id="{{ produit.id }}">
                 <i class="far fa-heart"></i>
               </button>
-              <button class="product-action-btn share-btn" data-product="1">
+              <button class="product-action-btn share-btn" data-product-id="{{ produit.id }}" data-product-name="{{ produit.name }}">
                 <i class="far fa-share-square"></i>
               </button>
             </div>
           </div>
           <div class="product-content">
-            <span class="product-category">Légumes</span>
-            <h3>Tomates Cerises Bio</h3>
-            <p class="product-description">{{ produit.description }}</p>
+            <span class="product-category">{{ produit.category.name|default:"Produit" }}</span>
+            <h3>{{ produit.name }}</h3>
+            <p class="product-description">{{ produit.description|truncatewords:15 }}</p>
             <div class="product-meta">
               <div class="product-rating">
                 <i class="fas fa-star"></i>
                 <span>4.8</span>
+                <span class="like-count">(<span data-likes-count="{{ produit.id }}">0</span>)</span>
               </div>
-              <div class="product-stock">{{ produit.quantity }}</div>
+              <div class="product-stock {% if produit.quantity > 10 %}in-stock{% elif produit.quantity > 0 %}low-stock{% else %}out-of-stock{% endif %}">
+                {{ produit.quantity }} en stock
+              </div>
             </div>
             <div class="product-price">
-              {{ produit.price }}
-              <span class="product-old-price">{{ produit.price }}</span>
+              {{ produit.price }} FCFA
             </div>
             <div class="product-actions-bottom">
               <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product="1">-</button>
-                <input type="text" class="quantity-input" value="1" data-product="1" readonly>
-                <button class="quantity-btn plus-btn" data-product="1">+</button>
+                <button class="quantity-btn minus-btn" data-product-id="{{ produit.id }}">-</button>
+                <input type="text" class="quantity-input" value="1" data-product-id="{{ produit.id }}" readonly>
+                <button class="quantity-btn plus-btn" data-product-id="{{ produit.id }}">+</button>
               </div>
-              <button class="add-to-cart-btn" data-product="1">
+              <button class="add-to-cart-btn" data-product-id="{{ produit.id }}">
                 <i class="fas fa-shopping-cart"></i>
                 Ajouter
               </button>
             </div>
           </div>
         </div>
-        
-    {% endfor %} 
-    {% endif %}
+        {% endfor %} 
       </div>
     </main>
   </div>
 </section>
 
+<!-- Modal de partage -->
+<div class="share-modal" id="share-modal">
+  <div class="share-modal-content">
+    <h3>Partager ce produit</h3>
+    <div class="share-options">
+      <div class="share-option" data-share="whatsapp">
+        <i class="fab fa-whatsapp" style="color: #25D366;"></i>
+        <span>WhatsApp</span>
+      </div>
+      <div class="share-option" data-share="facebook">
+        <i class="fab fa-facebook" style="color: #1877F2;"></i>
+        <span>Facebook</span>
+      </div>
+      <div class="share-option" data-share="twitter">
+        <i class="fab fa-twitter" style="color: #1DA1F2;"></i>
+        <span>Twitter</span>
+      </div>
+      <div class="share-option" data-share="copy">
+        <i class="fas fa-link"></i>
+        <span>Copier le lien</span>
+      </div>
+      <div class="share-option" data-share="email">
+        <i class="fas fa-envelope"></i>
+        <span>Email</span>
+      </div>
+      <div class="share-option" data-share="sms">
+        <i class="fas fa-sms"></i>
+        <span>SMS</span>
+      </div>
+    </div>
+    <button class="visit-shop-btn" id="close-share-modal">Fermer</button>
+  </div>
+</div>
+
 <script>
-  // Gestion du panier
-  class CartManager {
-    constructor() {
-      this.cart = JSON.parse(localStorage.getItem('farmgen_cart')) || {};
-      this.updateCartBadge();
-    }
+// Système de gestion avancé
+class AdvancedShopSystem {
+  constructor() {
+    this.filters = {
+      categories: [],
+      priceRange: [0, 10000],
+      availability: [],
+      promotions: false,
+      liked: false,
+      viewed: false,
+      eco: false,
+      quick: null,
+      search: ''
+    };
+    this.activeFilters = new Set();
+    this.likedProducts = new Set(JSON.parse(localStorage.getItem('farmgen_likes') || '[]'));
+    this.viewedProducts = new Set(JSON.parse(localStorage.getItem('farmgen_views') || '[]'));
+    this.searchHistory = JSON.parse(localStorage.getItem('farmgen_search_history') || '[]');
+    this.cartManager = new CartManager();
+    this.init();
+  }
 
-    addToCart(productId, quantity = 1) {
-      if (this.cart[productId]) {
-        this.cart[productId] += quantity;
-      } else {
-        this.cart[productId] = quantity;
-      }
-      this.saveCart();
-      this.updateCartBadge();
-      this.showAddToCartAnimation(productId);
-    }
+  async init() {
+    await this.loadInitialData();
+    this.setupEventListeners();
+    this.updateStats();
+    this.trackProductViews();
+  }
 
-    removeFromCart(productId) {
-      delete this.cart[productId];
-      this.saveCart();
-      this.updateCartBadge();
-    }
+  async loadInitialData() {
+    // Charger les données initiales
+    await this.loadCategories();
+    await this.loadLikesData();
+    this.updateProductDisplays();
+  }
 
-    updateQuantity(productId, quantity) {
-      if (quantity <= 0) {
-        this.removeFromCart(productId);
-      } else {
-        this.cart[productId] = quantity;
-        this.saveCart();
-      }
-      this.updateCartBadge();
-    }
+  async loadCategories() {
+    // Simuler le chargement des catégories
+    const categories = [...new Set(Array.from(document.querySelectorAll('.product-card')).map(card => 
+      card.getAttribute('data-category')
+    ))];
+    
+    const container = document.getElementById('category-filters');
+    container.innerHTML = categories.map(cat => `
+      <div class="filter-option">
+        <input type="checkbox" id="cat-${this.slugify(cat)}" data-category="${cat}">
+        <label for="cat-${this.slugify(cat)}">${cat}</label>
+      </div>
+    `).join('');
+  }
 
-    getTotalItems() {
-      return Object.values(this.cart).reduce((total, qty) => total + qty, 0);
-    }
-
-    saveCart() {
-      localStorage.setItem('farmgen_cart', JSON.stringify(this.cart));
-    }
-
-    updateCartBadge() {
-      const cartBadges = document.querySelectorAll('.cart-badge');
-      const totalItems = this.getTotalItems();
+  async loadLikesData() {
+    // Mettre à jour les compteurs de likes
+    document.querySelectorAll('.product-card').forEach(card => {
+      const productId = card.getAttribute('data-product-id');
+      const likeBtn = card.querySelector('.like-btn');
+      const likeCount = card.querySelector('.like-count span');
       
-      cartBadges.forEach(badge => {
-        let countElement = badge.querySelector('.cart-count');
-        if (!countElement) {
-          countElement = document.createElement('span');
-          countElement.className = 'cart-count';
-          badge.appendChild(countElement);
-        }
-        
-        if (totalItems > 0) {
-          countElement.textContent = totalItems;
-          countElement.style.display = 'flex';
-        } else {
-          countElement.style.display = 'none';
-        }
-      });
-    }
-
-    showAddToCartAnimation(productId) {
-      const button = document.querySelector(`.add-to-cart-btn[data-product="${productId}"]`);
-      if (button) {
-        button.classList.add('added');
-        button.innerHTML = '<i class="fas fa-check"></i> Ajouté !';
-        
-        setTimeout(() => {
-          button.classList.remove('added');
-          button.innerHTML = '<i class="fas fa-shopping-cart"></i> Ajouter';
-        }, 2000);
+      if (this.likedProducts.has(productId)) {
+        likeBtn.classList.add('active');
+        likeBtn.querySelector('i').classList.replace('far', 'fas');
       }
+      
+      // Simuler des données de likes
+      const likes = Math.floor(Math.random() * 50);
+      likeCount.textContent = likes;
+      card.setAttribute('data-likes', likes);
+    });
+  }
+
+  setupEventListeners() {
+    // Recherche intelligente
+    const smartSearch = document.getElementById('smart-search');
+    smartSearch.addEventListener('input', this.debounce(this.handleSmartSearch.bind(this), 300));
+    
+    // Filtres rapides
+    document.querySelectorAll('.quick-filter').forEach(filter => {
+      filter.addEventListener('click', (e) => {
+        this.handleQuickFilter(e.target);
+      });
+    });
+
+    // Likes avancés
+    document.querySelectorAll('.like-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.handleLike(e.target.closest('.like-btn'));
+      });
+    });
+
+    // Partage avancé
+    document.querySelectorAll('.share-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        this.handleShare(e.target.closest('.share-btn'));
+      });
+    });
+
+    // Gestion des filtres
+    this.setupFilterListeners();
+  }
+
+  handleSmartSearch(e) {
+    const query = e.target.value;
+    if (query.length > 2) {
+      this.showSearchSuggestions(query);
+      this.saveSearchHistory(query);
+    } else {
+      this.hideSearchSuggestions();
     }
   }
 
-  // Initialisation du gestionnaire de panier
-  const cartManager = new CartManager();
+  showSearchSuggestions(query) {
+    const suggestions = this.generateSuggestions(query);
+    const container = document.getElementById('search-suggestions');
+    
+    container.innerHTML = suggestions.map(suggestion => `
+      <div class="suggestion-item" data-suggestion="${suggestion}">
+        <i class="fas fa-search"></i> ${suggestion}
+      </div>
+    `).join('');
+    
+    container.classList.add('show');
+    
+    // Ajouter les écouteurs d'événements
+    container.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.getElementById('smart-search').value = item.getAttribute('data-suggestion');
+        this.filters.search = item.getAttribute('data-suggestion');
+        this.hideSearchSuggestions();
+        this.updateProductDisplays();
+      });
+    });
+  }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    // Animation on scroll
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
+  generateSuggestions(query) {
+    const products = Array.from(document.querySelectorAll('.product-card'));
+    const suggestions = new Set();
+    
+    products.forEach(card => {
+      const name = card.querySelector('h3').textContent.toLowerCase();
+      const category = card.getAttribute('data-category').toLowerCase();
+      const description = card.querySelector('.product-description').textContent.toLowerCase();
+      
+      if (name.includes(query.toLowerCase())) suggestions.add(card.querySelector('h3').textContent);
+      if (category.includes(query.toLowerCase())) suggestions.add(card.getAttribute('data-category'));
+      
+      // Extraire des mots-clés de la description
+      description.split(' ').forEach(word => {
+        if (word.includes(query.toLowerCase()) && word.length > 3) {
+          suggestions.add(word.charAt(0).toUpperCase() + word.slice(1));
         }
       });
-    }, observerOptions);
-
-    // Observe all fade-in elements
-    document.querySelectorAll(".fade-in").forEach((el) => {
-      observer.observe(el);
     });
+    
+    // Ajouter l'historique de recherche
+    this.searchHistory.forEach(history => {
+      if (history.query.toLowerCase().includes(query.toLowerCase())) {
+        suggestions.add(history.query);
+      }
+    });
+    
+    return Array.from(suggestions).slice(0, 5);
+  }
 
-    // Filter functionality
-    const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
-    const priceInputs = document.querySelectorAll('#min-price, #max-price');
-    const rangeInputs = document.querySelectorAll('.range-input');
-    const clearFiltersBtn = document.getElementById('clear-filters');
-    const searchInput = document.getElementById('product-search');
-    const sortBtn = document.querySelector('.sort-btn');
-    const sortMenu = document.querySelector('.sort-menu');
-    const sortOptions = document.querySelectorAll('.sort-option input');
+  async handleLike(button) {
+    const productId = button.getAttribute('data-product-id');
+    const wasLiked = this.likedProducts.has(productId);
+    
+    // Animation
+    button.classList.add('liking');
+    setTimeout(() => button.classList.remove('liking'), 600);
+    
+    try {
+      if (wasLiked) {
+        // Unlike
+        this.likedProducts.delete(productId);
+        button.classList.remove('active');
+        button.querySelector('i').classList.replace('fas', 'far');
+        await this.unlikeProduct(productId);
+      } else {
+        // Like
+        this.likedProducts.add(productId);
+        button.classList.add('active');
+        button.querySelector('i').classList.replace('far', 'fas');
+        await this.likeProduct(productId);
+      }
+      
+      // Mettre à jour le localStorage
+      localStorage.setItem('farmgen_likes', JSON.stringify([...this.likedProducts]));
+      
+      // Mettre à jour le compteur
+      this.updateLikeCount(productId, wasLiked ? -1 : 1);
+      this.updateStats();
+      
+    } catch (error) {
+      console.error('Erreur like:', error);
+      // Revert visual state
+      button.classList.toggle('active');
+      button.querySelector('i').classList.toggle('far');
+      button.querySelector('i').classList.toggle('fas');
+    }
+  }
+
+  async likeProduct(productId) {
+    // Simuler un appel API
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log(`Produit ${productId} liké`);
+        resolve();
+      }, 300);
+    });
+  }
+
+  updateLikeCount(productId, change) {
+    const countElement = document.querySelector(`[data-likes-count="${productId}"]`);
+    if (countElement) {
+      const current = parseInt(countElement.textContent) || 0;
+      countElement.textContent = Math.max(0, current + change);
+    }
+  }
+
+  handleShare(button) {
+    const productId = button.getAttribute('data-product-id');
+    const productName = button.getAttribute('data-product-name');
+    this.showShareModal(productId, productName);
+  }
+
+  showShareModal(productId, productName) {
+    const modal = document.getElementById('share-modal');
+    const product = document.querySelector(`[data-product-id="${productId}"]`);
+    const productImage = product?.querySelector('img')?.src || '';
+    const productPrice = product?.getAttribute('data-price') || '';
+    
+    modal.setAttribute('data-product-id', productId);
+    modal.setAttribute('data-product-name', productName);
+    modal.setAttribute('data-product-image', productImage);
+    modal.setAttribute('data-product-price', productPrice);
+    
+    modal.classList.add('show');
+    
+    // Setup share options
+    this.setupShareOptions();
+  }
+
+  setupShareOptions() {
+    const modal = document.getElementById('share-modal');
+    const productId = modal.getAttribute('data-product-id');
+    const productName = modal.getAttribute('data-product-name');
+    const productImage = modal.getAttribute('data-product-image');
+    const productPrice = modal.getAttribute('data-product-price');
+    
+    const shareUrl = `${window.location.origin}/produit/${productId}/`;
+    const shareText = `Découvrez "${productName}" à ${productPrice}FCFA sur FarmGen!`;
+    
+    document.querySelectorAll('.share-option').forEach(option => {
+      option.onclick = () => {
+        const platform = option.getAttribute('data-share');
+        this.executeShare(platform, shareUrl, shareText, productName, productImage);
+      };
+    });
+    
+    // Fermer le modal
+    document.getElementById('close-share-modal').onclick = () => {
+      modal.classList.remove('show');
+    };
+  }
+
+  executeShare(platform, url, text, title, image) {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+    const encodedTitle = encodeURIComponent(title);
+    
+    const shareConfigs = {
+      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
+      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      email: `mailto:?subject=${encodedTitle}&body=${encodedText}%0A%0A${url}`,
+      sms: `sms:?body=${encodedText}%20${url}`,
+      copy: () => {
+        navigator.clipboard.writeText(`${text} ${url}`).then(() => {
+          this.showToast('Lien copié dans le presse-papier!');
+        });
+      }
+    };
+    
+    if (platform === 'copy') {
+      shareConfigs.copy();
+    } else {
+      window.open(shareConfigs[platform], '_blank', 'width=600,height=400');
+    }
+    
+    document.getElementById('share-modal').classList.remove('show');
+  }
+
+  trackProductViews() {
     const productCards = document.querySelectorAll('.product-card');
+    productCards.forEach(card => {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const productId = card.getAttribute('data-product-id');
+            if (!this.viewedProducts.has(productId)) {
+              this.viewedProducts.add(productId);
+              localStorage.setItem('farmgen_views', JSON.stringify([...this.viewedProducts]));
+              this.trackView(productId);
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+      
+      observer.observe(card);
+    });
+  }
 
-    // Price range functionality
-    const priceRange = document.querySelector('.range-slider');
-    const rangeProgress = document.querySelector('.range-progress');
+  async trackView(productId) {
+    // Simuler le tracking de vue
+    console.log(`Produit ${productId} consulté`);
+  }
+
+  updateProductDisplays() {
+    const products = Array.from(document.querySelectorAll('.product-card'));
+    let visibleCount = 0;
+    
+    products.forEach(product => {
+      if (this.matchesFilters(product)) {
+        product.style.display = 'block';
+        visibleCount++;
+        product.classList.add('visible');
+      } else {
+        product.style.display = 'none';
+        product.classList.remove('visible');
+      }
+    });
+    
+    this.updateFilteredCount(visibleCount);
+    this.updateActiveFiltersDisplay();
+  }
+
+  matchesFilters(product) {
+    const category = product.getAttribute('data-category');
+    const price = parseInt(product.getAttribute('data-price'));
+    const likes = parseInt(product.getAttribute('data-likes'));
+    const views = parseInt(product.getAttribute('data-views'));
+    const created = parseInt(product.getAttribute('data-created'));
+    const productId = product.getAttribute('data-product-id');
+    const stock = product.getAttribute('data-stock');
+    
+    // Filtre catégorie
+    if (this.filters.categories.length > 0 && !this.filters.categories.includes(category)) {
+      return false;
+    }
+    
+    // Filtre prix
+    if (price < this.filters.priceRange[0] || price > this.filters.priceRange[1]) {
+      return false;
+    }
+    
+    // Filtre likes
+    if (this.filters.liked && !this.likedProducts.has(productId)) {
+      return false;
+    }
+    
+    // Filtre vus
+    if (this.filters.viewed && !this.viewedProducts.has(productId)) {
+      return false;
+    }
+    
+    // Filtres rapides
+    if (this.filters.quick === 'popular' && likes < 10) return false;
+    if (this.filters.quick === 'promo' && product.getAttribute('data-promo') !== 'true') return false;
+    if (this.filters.quick === 'new' && (Date.now()/1000 - created) > 2592000) return false; // 30 jours
+    if (this.filters.quick === 'stock' && stock === 'out-of-stock') return false;
+    
+    // Recherche
+    if (this.filters.search) {
+      const searchLower = this.filters.search.toLowerCase();
+      const name = product.querySelector('h3').textContent.toLowerCase();
+      const description = product.querySelector('.product-description').textContent.toLowerCase();
+      
+      if (!name.includes(searchLower) && !description.includes(searchLower)) {
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  updateStats() {
+    const totalProducts = document.querySelectorAll('.product-card').length;
+    const totalLikes = Array.from(document.querySelectorAll('.product-card'))
+      .reduce((sum, card) => sum + parseInt(card.getAttribute('data-likes') || 0), 0);
+    
+    document.getElementById('total-products').textContent = `${totalProducts} produits`;
+    document.getElementById('total-likes').textContent = `${totalLikes} likes`;
+    document.getElementById('total-views').textContent = `${this.viewedProducts.size} vues`;
+  }
+
+  updateFilteredCount(count) {
+    document.getElementById('filtered-count').textContent = `${count} filtrés`;
+  }
+
+  updateActiveFiltersDisplay() {
+    const container = document.getElementById('active-filters');
+    const tags = [];
+    
+    if (this.filters.categories.length > 0) {
+      tags.push(...this.filters.categories.map(cat => 
+        `<div class="filter-tag">Catégorie: ${cat}<button class="filter-tag-remove" data-filter="category" data-value="${cat}">×</button></div>`
+      ));
+    }
+    
+    if (this.filters.quick) {
+      tags.push(`<div class="filter-tag">Filtre: ${this.filters.quick}<button class="filter-tag-remove" data-filter="quick">×</button></div>`);
+    }
+    
+    if (this.filters.search) {
+      tags.push(`<div class="filter-tag">Recherche: "${this.filters.search}"<button class="filter-tag-remove" data-filter="search">×</button></div>`);
+    }
+    
+    container.innerHTML = tags.join('');
+    
+    // Ajouter les écouteurs pour supprimer les filtres
+    container.querySelectorAll('.filter-tag-remove').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const filterType = btn.getAttribute('data-filter');
+        const filterValue = btn.getAttribute('data-value');
+        this.removeFilter(filterType, filterValue);
+      });
+    });
+  }
+
+  removeFilter(type, value) {
+    switch(type) {
+      case 'category':
+        this.filters.categories = this.filters.categories.filter(cat => cat !== value);
+        break;
+      case 'quick':
+        this.filters.quick = null;
+        break;
+      case 'search':
+        this.filters.search = '';
+        document.getElementById('smart-search').value = '';
+        break;
+    }
+    this.updateProductDisplays();
+  }
+
+  setupFilterListeners() {
+    // Catégories
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('[data-category]')) {
+        const category = e.target.getAttribute('data-category');
+        if (e.target.checked) {
+          this.filters.categories.push(category);
+        } else {
+          this.filters.categories = this.filters.categories.filter(cat => cat !== category);
+        }
+        this.updateProductDisplays();
+      }
+    });
+    
+    // Prix
     const minPriceInput = document.getElementById('min-price');
     const maxPriceInput = document.getElementById('max-price');
-    const minRange = rangeInputs[0];
-    const maxRange = rangeInputs[1];
-
-    function updatePriceRange() {
-      const minVal = parseInt(minRange.value);
-      const maxVal = parseInt(maxRange.value);
-      
-      if (maxVal - minVal < 500) {
-        if (minRange === document.activeElement) {
-          minRange.value = maxVal - 500;
-        } else {
-          maxRange.value = minVal + 500;
-        }
-      }
-      
-      minPriceInput.value = minVal;
-      maxPriceInput.value = maxVal;
-      
-      const progressLeft = (minVal / parseInt(minRange.max)) * 100;
-      const progressRight = 100 - (maxVal / parseInt(maxRange.max)) * 100;
-      rangeProgress.style.left = progressLeft + "%";
-      rangeProgress.style.right = progressRight + "%";
-      
-      filterProducts();
-    }
-
-    minRange.addEventListener('input', updatePriceRange);
-    maxRange.addEventListener('input', updatePriceRange);
-
-    minPriceInput.addEventListener('input', function() {
-      minRange.value = this.value;
-      updatePriceRange();
+    
+    [minPriceInput, maxPriceInput].forEach(input => {
+      input.addEventListener('input', this.debounce(() => {
+        this.filters.priceRange = [
+          parseInt(minPriceInput.value) || 0,
+          parseInt(maxPriceInput.value) || 10000
+        ];
+        this.updateProductDisplays();
+      }, 500));
     });
-
-    maxPriceInput.addEventListener('input', function() {
-      maxRange.value = this.value;
-      updatePriceRange();
-    });
-
-    // Filter products function
-    function filterProducts() {
-      const selectedCategories = Array.from(document.querySelectorAll('.filter-option input[data-category]:checked'))
-        .map(cb => cb.getAttribute('data-category'));
-      
-      const minPrice = parseInt(minPriceInput.value) || 0;
-      const maxPrice = parseInt(maxPriceInput.value) || 20000;
-      
-      const stockAvailable = document.getElementById('stock-available').checked;
-      const stockLow = document.getElementById('stock-low').checked;
-      
-      const promoActive = document.getElementById('promo-active').checked;
-      
-      const searchTerm = searchInput.value.toLowerCase();
-
-      productCards.forEach(card => {
-        const cardCategory = card.getAttribute('data-category');
-        const cardPrice = parseInt(card.getAttribute('data-price'));
-        const cardStock = card.getAttribute('data-stock');
-        const cardPromo = card.getAttribute('data-promo');
-        const cardTitle = card.querySelector('h3').textContent.toLowerCase();
-        const cardDescription = card.querySelector('.product-description').textContent.toLowerCase();
-
-        // Check filters
-        const categoryMatch = selectedCategories.length === 0 || 
-          selectedCategories.includes(cardCategory);
-        
-        const priceMatch = cardPrice >= minPrice && cardPrice <= maxPrice;
-        
-        const stockMatch = (!stockAvailable || cardStock === 'available') && 
-          (!stockLow || cardStock === 'low');
-        
-        const promoMatch = !promoActive || cardPromo === 'true';
-        
-        const searchMatch = !searchTerm || 
-          cardTitle.includes(searchTerm) || 
-          cardDescription.includes(searchTerm);
-
-        if (categoryMatch && priceMatch && stockMatch && promoMatch && searchMatch) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-
-    // Event listeners for filters
-    filterCheckboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', filterProducts);
-    });
-
-    priceInputs.forEach(input => {
-      input.addEventListener('input', filterProducts);
-    });
-
-    searchInput.addEventListener('input', filterProducts);
-
-    // Clear filters
-    clearFiltersBtn.addEventListener('click', function() {
-      filterCheckboxes.forEach(checkbox => {
-        checkbox.checked = true;
-      });
-      
-      minPriceInput.value = 0;
-      maxPriceInput.value = 10000;
-      minRange.value = 0;
-      maxRange.value = 10000;
-      updatePriceRange();
-      
-      searchInput.value = '';
-      
-      filterProducts();
-    });
-
-    // Sort functionality
-    sortBtn.addEventListener('click', function() {
-      sortMenu.classList.toggle('show');
-    });
-
-    sortOptions.forEach(option => {
-      option.addEventListener('change', function() {
-        const sortValue = this.value;
-        const productsContainer = document.getElementById('products-container');
-        const productCardsArray = Array.from(productCards);
-
-        productCardsArray.sort((a, b) => {
-          const priceA = parseInt(a.getAttribute('data-price'));
-          const priceB = parseInt(b.getAttribute('data-price'));
-          const ratingA = parseFloat(a.querySelector('.product-rating span').textContent);
-          const ratingB = parseFloat(b.querySelector('.product-rating span').textContent);
-          
-          switch(sortValue) {
-            case 'price-low':
-              return priceA - priceB;
-            
-            case 'price-high':
-              return priceB - priceA;
-            
-            case 'new':
-              // For demo, we'll use a random order
-              return Math.random() - 0.5;
-            
-            case 'popular':
-            default:
-              return ratingB - ratingA;
-          }
-        });
-
-        // Reappend sorted cards
-        productCardsArray.forEach(card => {
-          if (card.style.display !== 'none') {
-            productsContainer.appendChild(card);
-          }
-        });
-
-        sortMenu.classList.remove('show');
-      });
-    });
-
-    // Close sort menu when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
-        sortMenu.classList.remove('show');
+    
+    // Filtres avancés
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('[data-filter]')) {
+        const filter = e.target.getAttribute('data-filter');
+        this.filters[filter] = e.target.checked;
+        this.updateProductDisplays();
       }
     });
+  }
 
-    // Product interaction functionality
-    const favoriteButtons = document.querySelectorAll('.favorite-btn');
-    const shareButtons = document.querySelectorAll('.share-btn');
-    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-    const quantityControls = document.querySelectorAll('.quantity-controls');
+  handleQuickFilter(filterElement) {
+    document.querySelectorAll('.quick-filter').forEach(f => f.classList.remove('active'));
+    filterElement.classList.add('active');
+    
+    this.filters.quick = filterElement.getAttribute('data-filter');
+    this.updateProductDisplays();
+  }
 
-    // Favorite functionality
-    favoriteButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const productId = this.getAttribute('data-product');
-        
-        this.classList.toggle('active');
-        this.querySelector('i').classList.toggle('far');
-        this.querySelector('i').classList.toggle('fas');
-        
-        if (this.classList.contains('active')) {
-          console.log(`Favorited product ${productId}`);
-        } else {
-          console.log(`Unfavorited product ${productId}`);
-        }
-      });
+  saveSearchHistory(query) {
+    this.searchHistory.unshift({
+      query,
+      timestamp: Date.now(),
+      filters: { ...this.filters }
     });
+    
+    // Garder seulement les 10 dernières recherches
+    this.searchHistory = this.searchHistory.slice(0, 10);
+    localStorage.setItem('farmgen_search_history', JSON.stringify(this.searchHistory));
+  }
 
-    // Share functionality
-    shareButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const productId = this.getAttribute('data-product');
-        const productName = this.closest('.product-card').querySelector('h3').textContent;
-        
-        // In a real app, this would open a share dialog
-        if (navigator.share) {
-          navigator.share({
-            title: productName,
-            text: `Découvrez ${productName} sur FarmGen`,
-            url: window.location.href,
-          });
-        } else {
-          alert(`Partager le produit: ${productName}`);
-        }
-      });
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  slugify(text) {
+    return text.toString().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  }
+
+  showToast(message) {
+    // Implémentation simple du toast
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--primary-green);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      z-index: 10000;
+      animation: slideInRight 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+  window.shopSystem = new AdvancedShopSystem();
+  
+  // Animation on scroll (conservée)
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
     });
+  }, { threshold: 0.1 });
 
-    // Quantity controls
-    quantityControls.forEach(control => {
-      const minusBtn = control.querySelector('.minus-btn');
-      const plusBtn = control.querySelector('.plus-btn');
-      const quantityInput = control.querySelector('.quantity-input');
-      const productId = minusBtn.getAttribute('data-product');
-
-      minusBtn.addEventListener('click', function() {
-        let currentValue = parseInt(quantityInput.value);
-        if (currentValue > 1) {
-          quantityInput.value = currentValue - 1;
-        }
-      });
-
-      plusBtn.addEventListener('click', function() {
-        let currentValue = parseInt(quantityInput.value);
-        quantityInput.value = currentValue + 1;
-      });
-    });
-
-    // Add to cart functionality
-    addToCartButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const productId = this.getAttribute('data-product');
-        const quantityInput = this.closest('.product-actions-bottom').querySelector('.quantity-input');
-        const quantity = parseInt(quantityInput.value);
-        
-        cartManager.addToCart(productId, quantity);
-        
-        // Reset quantity
-        quantityInput.value = 1;
-      });
-    });
-
-    // Initialize price range
-    updatePriceRange();
+  document.querySelectorAll(".fade-in").forEach((el) => {
+    observer.observe(el);
   });
+});
 </script>
 {% endblock %}
