@@ -34,6 +34,11 @@
     position: relative;
     overflow: hidden;
   }
+  .couverture{
+    position:absolute;
+    width:100%;
+    z-index:-1;
+  }
 
   .shop-hero::before {
     content: "";
@@ -118,7 +123,9 @@
 
   /* Breadcrumb */
   .breadcrumb {
-    max-width: 1200px;
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    width:100%;
+    
     margin: 0 auto 2rem;
     padding: 0 2rem;
     display: flex;
@@ -379,8 +386,8 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
+    padding: 8px 20px;
+            border-radius: 30px;
     border: 2px solid var(--light-gray);
     background: var(--white);
     color: var(--text-dark);
@@ -610,8 +617,8 @@
 
   .add-to-cart-btn {
     flex: 1;
-    padding: 0.8rem 1.5rem;
-    border-radius: 8px;
+    padding: 8px 20px;
+            border-radius: 30px;
     border: 2px solid var(--primary-green);
     background: var(--primary-green);
     color: var(--white);
@@ -863,6 +870,7 @@
       </p>
     </div>
   </div>
+  <img src="{{ shop.couverture.url }}" alt="produit" class="couverture">
 </section>
 
 <!-- Shop Section -->
@@ -986,8 +994,8 @@
         {% for produit in produits %}
         <div class="product-card fade-in" data-category="legumes" data-price="2500" data-stock="available" data-promo="false">
           <div class="product-image">
-            <img src="{{ produit.produit_image.url}}" alt="Tomates Bio">
-            <div class="product-badge">{{ shop.type }}</div>
+            <img src="{{ produit.images.first.image.url}}" alt="Tomates Bio">
+            <div class="product-badge">{{ shop.type_shop }}</div>
             <div class="product-actions">
               <button class="product-action-btn favorite-btn" data-product="1">
                 <i class="far fa-heart"></i>
