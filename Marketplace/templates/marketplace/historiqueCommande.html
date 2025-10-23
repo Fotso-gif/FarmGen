@@ -1,0 +1,993 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Styles existants étendus */
+    .filters-container {
+        background: white;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow);
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+
+    .filters-title {
+        margin: 0;
+        color: var(--primary);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filters-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .filters-content.show {
+        max-height: 500px;
+        margin-top: 15px;
+    }
+
+    .filter-group {
+        margin-bottom: 0;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 0.9rem;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: var(--radius);
+        background: white;
+        font-size: 0.9rem;
+    }
+
+    .date-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 20px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+    }
+
+    .stat-card.total { border-left-color: var(--primary); }
+    .stat-card.pending { border-left-color: var(--warning); }
+    .stat.card.delivered { border-left-color: var(--success); }
+    .stat-card.cancelled { border-left-color: var(--danger); }
+
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 5px;
+    }
+
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .order-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 0;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+        transition: var(--transition);
+    }
+
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .order-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .order-info {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .order-number {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .order-date {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .order-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .status-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
+    .status-confirmed { background: rgba(0, 123, 255, 0.1); color: #007bff; }
+    .status-processing { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+    .status-shipped { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+    .status-delivered { background: rgba(40, 167, 69, 0.1); color: var(--success); }
+    .status-cancelled { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
+    .status-refunded { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
+
+    .payment-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        background: rgba(40, 167, 69, 0.1);
+        color: var(--success);
+    }
+
+    .payment-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
+    .payment-failed { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
+
+    .order-body {
+        padding: 20px;
+    }
+
+    .order-items {
+        margin-bottom: 15px;
+    }
+
+    .order-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        flex: 1;
+    }
+
+    .item-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 500;
+        margin: 0 0 5px;
+        color: var(--dark);
+    }
+
+    .item-price {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .item-quantity {
+        color: var(--dark);
+        font-weight: 500;
+    }
+
+    .order-totals {
+        background: var(--light);
+        padding: 15px;
+        border-radius: var(--radius);
+        margin-top: 15px;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+    }
+
+    .total-row.final {
+        border-top: 1px solid #ddd;
+        margin-top: 10px;
+        padding-top: 10px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary);
+    }
+
+    .order-footer {
+        padding: 15px 20px;
+        background: var(--light);
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .customer-info {
+        flex: 1;
+    }
+
+    .customer-name {
+        font-weight: 500;
+        margin: 0 0 5px;
+        color: var(--dark);
+    }
+
+    .customer-email {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .order-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .empty-orders {
+        text-align: center;
+        padding: 60px 20px;
+        color: #7f8c8d;
+    }
+
+    .empty-orders i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .export-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .order-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .order-status {
+            align-self: stretch;
+            justify-content: space-between;
+        }
+
+        .order-footer {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .order-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .filters-content {
+            grid-template-columns: 1fr;
+        }
+
+        .date-inputs {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Animation pour le chargement */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+
+<!-- Gradient background circles -->
+<div class="gradient-circles">
+    <div class="gradient-circle circle-1"></div>
+    <div class="gradient-circle circle-2"></div>
+</div>
+
+<!-- Main Content -->
+<main>
+    <div class="profile-container animate__animated animate__fadeIn">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-history"></i> 
+                {% if user.is_superuser %}
+                    Historique des Commandes - Toutes les boutiques
+                {% elif user.user_type == 'seller' %}
+                    Historique des Commandes - {{ shop.title }}
+                {% else %}
+                    Mes Commandes
+                {% endif %}
+            </h3>
+        </div>
+
+        <!-- Statistiques rapides -->
+        <div class="stats-overview">
+            <div class="stat-card total">
+                <div class="stat-number">{{ total_orders }}</div>
+                <div class="stat-label">Total des commandes</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-number">{{ pending_orders }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card delivered">
+                <div class="stat-number">{{ delivered_orders }}</div>
+                <div class="stat-label">Livrées</div>
+            </div>
+            <div class="stat-card cancelled">
+                <div class="stat-number">{{ cancelled_orders }}</div>
+                <div class="stat-label">Annulées</div>
+            </div>
+        </div>
+
+        <!-- Filtres avancés -->
+        <div class="filters-container">
+            <div class="filters-header" onclick="toggleFilters()">
+                <h4 class="filters-title">
+                    <i class="fas fa-filter"></i> Filtres avancés
+                    <span class="badge bg-primary" id="activeFiltersCount">0</span>
+                </h4>
+                <i class="fas fa-chevron-down" id="filtersIcon"></i>
+            </div>
+            <div class="filters-content" id="filtersContent">
+                <div class="filter-group">
+                    <label>Statut de la commande</label>
+                    <select class="filter-select" id="statusFilter" multiple>
+                        <option value="pending">En attente</option>
+                        <option value="confirmed">Confirmée</option>
+                        <option value="processing">En traitement</option>
+                        <option value="shipped">Expédiée</option>
+                        <option value="delivered">Livrée</option>
+                        <option value="cancelled">Annulée</option>
+                        <option value="refunded">Remboursée</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Statut de paiement</label>
+                    <select class="filter-select" id="paymentFilter">
+                        <option value="">Tous</option>
+                        <option value="paid">Payée</option>
+                        <option value="pending">En attente</option>
+                        <option value="failed">Échouée</option>
+                    </select>
+                </div>
+
+                {% if user.is_superuser %}
+                <div class="filter-group">
+                    <label>Boutique</label>
+                    <select class="filter-select" id="shopFilter">
+                        <option value="">Toutes les boutiques</option>
+                        {% for shop in all_shops %}
+                        <option value="{{ shop.id }}">{{ shop.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                {% if user.is_superuser or user.user_type == 'seller' %}
+                <div class="filter-group">
+                    <label>Client</label>
+                    <select class="filter-select" id="customerFilter">
+                        <option value="">Tous les clients</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}">{{ customer.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="filter-group">
+                    <label>Période</label>
+                    <div class="date-inputs">
+                        <input type="date" class="filter-select" id="dateFrom" placeholder="De">
+                        <input type="date" class="filter-select" id="dateTo" placeholder="À">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label>Montant minimum</label>
+                    <input type="number" class="filter-select" id="amountMin" placeholder="Montant min">
+                </div>
+
+                <div class="filter-group">
+                    <label>Montant maximum</label>
+                    <input type="number" class="filter-select" id="amountMax" placeholder="Montant max">
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions d'export -->
+        <div class="export-actions">
+            <button class="btn btn-secondary" onclick="exportOrders('csv')">
+                <i class="fas fa-file-csv"></i> Exporter CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportOrders('pdf')">
+                <i class="fas fa-file-pdf"></i> Exporter PDF
+            </button>
+            <button class="btn btn-primary" onclick="resetFilters()">
+                <i class="fas fa-refresh"></i> Réinitialiser
+            </button>
+        </div>
+
+        <!-- Liste des commandes -->
+        <div id="ordersContainer">
+            {% if orders %}
+                {% for order in orders %}
+                <div class="order-card" data-order-id="{{ order.id }}" 
+                     data-status="{{ order.status }}" 
+                     data-payment-status="{{ order.payment_status }}"
+                     data-shop-id="{{ order.shop.id }}"
+                     data-customer-id="{{ order.user.id }}"
+                     data-amount="{{ order.total_amount }}"
+                     data-date="{{ order.created_at|date:'Y-m-d' }}">
+                    
+                    <!-- En-tête de la commande -->
+                    <div class="order-header">
+                        <div class="order-info">
+                            <h4 class="order-number">#{{ order.order_number }}</h4>
+                            <p class="order-date">
+                                <i class="far fa-calendar"></i> 
+                                {{ order.created_at|date:"d/m/Y à H:i" }}
+                            </p>
+                            {% if user.is_superuser %}
+                            <p class="order-shop">
+                                <i class="fas fa-store"></i> {{ order.shop.title }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="order-status">
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.get_status_display }}
+                            </span>
+                            <span class="payment-badge payment-{{ order.payment_status }}">
+                                {{ order.get_payment_status_display }}
+                            </span>
+                            <strong class="order-amount">{{ order.total_amount }} FCFA</strong>
+                        </div>
+                    </div>
+
+                    <!-- Corps de la commande -->
+                    <div class="order-body">
+                        <div class="order-items">
+                            {% for item in order.items.all %}
+                            <div class="order-item">
+                                <div class="item-info">
+                                    {% if item.product.images.first %}
+                                    <img src="{{ item.product.images.first.image.url }}" 
+                                         alt="{{ item.product.name }}" 
+                                         class="item-image">
+                                    {% else %}
+                                    <div class="item-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="item-details">
+                                        <h5 class="item-name">{{ item.product.name }}</h5>
+                                        <p class="item-price">{{ item.unit_price }} FCFA l'unité</p>
+                                    </div>
+                                </div>
+                                <div class="item-quantity">
+                                    x{{ item.quantity }}
+                                </div>
+                                <div class="item-total">
+                                    <strong>{{ item.total_price }} FCFA</strong>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="order-totals">
+                            <div class="total-row">
+                                <span>Sous-total:</span>
+                                <span>{{ order.total_amount }} FCFA</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Livraison:</span>
+                                <span>0 FCFA</span>
+                            </div>
+                            <div class="total-row final">
+                                <span>Total:</span>
+                                <span>{{ order.total_amount }} FCFA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pied de la commande -->
+                    <div class="order-footer">
+                        <div class="customer-info">
+                            <h5 class="customer-name">
+                                <i class="fas fa-user"></i> 
+                                {{ order.user.get_full_name }}
+                            </h5>
+                            <p class="customer-email">
+                                <i class="fas fa-envelope"></i> {{ order.user.email }}
+                            </p>
+                            {% if order.shipping_address %}
+                            <p class="customer-address">
+                                <i class="fas fa-map-marker-alt"></i> 
+                                {{ order.shipping_address|truncatewords:10 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="order-actions">
+                            {% if user.user_type == 'seller' or user.is_superuser %}
+                            <button class="btn btn-sm btn-primary" 
+                                    onclick="updateOrderStatus({{ order.id }}, 'confirmed')"
+                                    {% if order.status != 'pending' %}disabled{% endif %}>
+                                <i class="fas fa-check"></i> Confirmer
+                            </button>
+                            <button class="btn btn-sm btn-warning" 
+                                    onclick="updateOrderStatus({{ order.id }}, 'processing')"
+                                    {% if order.status != 'confirmed' %}disabled{% endif %}>
+                                <i class="fas fa-cog"></i> Traiter
+                            </button>
+                            <button class="btn btn-sm btn-info" 
+                                    onclick="updateOrderStatus({{ order.id }}, 'shipped')"
+                                    {% if order.status != 'processing' %}disabled{% endif %}>
+                                <i class="fas fa-shipping-fast"></i> Expédier
+                            </button>
+                            <button class="btn btn-sm btn-success" 
+                                    onclick="updateOrderStatus({{ order.id }}, 'delivered')"
+                                    {% if order.status != 'shipped' %}disabled{% endif %}>
+                                <i class="fas fa-box"></i> Livrer
+                            </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-sm btn-secondary" 
+                                    onclick="viewOrderDetails({{ order.id }})">
+                                <i class="fas fa-eye"></i> Détails
+                            </button>
+                            
+                            {% if user.user_type == 'customer' and order.status == 'pending' %}
+                            <button class="btn btn-sm btn-danger" 
+                                    onclick="cancelOrder({{ order.id }})">
+                                <i class="fas fa-times"></i> Annuler
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-orders">
+                    <i class="fas fa-shopping-bag"></i>
+                    <h4>Aucune commande trouvée</h4>
+                    <p>
+                        {% if user.user_type == 'customer' %}
+                        Vous n'avez pas encore passé de commande.
+                        {% else %}
+                        Aucune commande n'a été passée dans votre boutique.
+                        {% endif %}
+                    </p>
+                    {% if user.user_type == 'customer' %}
+                    <a href="{% url 'marketplace' %}" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart"></i> Découvrir la marketplace
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% comment %} {% if orders.has_other_pages %}
+        <nav aria-label="Pagination des commandes">
+            <ul class="pagination justify-content-center">
+                {% if orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.previous_page_number }}">Précédent</a>
+                </li>
+                {% endif %}
+
+                {% for num in orders.paginator.page_range %}
+                <li class="page-item {% if orders.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ orders.next_page_number }}">Suivant</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %} {% endcomment %}
+    </div>
+</main>
+
+<script>
+    // Filtres dynamiques
+    let activeFilters = {
+        status: [],
+        payment: '',
+        shop: '',
+        customer: '',
+        dateFrom: '',
+        dateTo: '',
+        amountMin: '',
+        amountMax: ''
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeFilters();
+        setupFilterListeners();
+    });
+
+    function initializeFilters() {
+        // Récupérer les filtres depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        if (urlParams.get('status')) {
+            activeFilters.status = urlParams.get('status').split(',');
+            document.getElementById('statusFilter').value = activeFilters.status;
+        }
+        
+        if (urlParams.get('payment')) {
+            activeFilters.payment = urlParams.get('payment');
+            document.getElementById('paymentFilter').value = activeFilters.payment;
+        }
+        
+        // Appliquer les filtres initiaux
+        applyFilters();
+    }
+
+    function setupFilterListeners() {
+        // Filtre statut (multiple)
+        document.getElementById('statusFilter').addEventListener('change', function(e) {
+            activeFilters.status = Array.from(e.target.selectedOptions).map(option => option.value);
+            applyFilters();
+        });
+
+        // Filtre paiement
+        document.getElementById('paymentFilter').addEventListener('change', function(e) {
+            activeFilters.payment = e.target.value;
+            applyFilters();
+        });
+
+        // Filtre boutique (admin seulement)
+        const shopFilter = document.getElementById('shopFilter');
+        if (shopFilter) {
+            shopFilter.addEventListener('change', function(e) {
+                activeFilters.shop = e.target.value;
+                applyFilters();
+            });
+        }
+
+        // Filtre client (seller/admin)
+        const customerFilter = document.getElementById('customerFilter');
+        if (customerFilter) {
+            customerFilter.addEventListener('change', function(e) {
+                activeFilters.customer = e.target.value;
+                applyFilters();
+            });
+        }
+
+        // Filtres date
+        document.getElementById('dateFrom').addEventListener('change', function(e) {
+            activeFilters.dateFrom = e.target.value;
+            applyFilters();
+        });
+
+        document.getElementById('dateTo').addEventListener('change', function(e) {
+            activeFilters.dateTo = e.target.value;
+            applyFilters();
+        });
+
+        // Filtres montant
+        document.getElementById('amountMin').addEventListener('input', debounce(function(e) {
+            activeFilters.amountMin = e.target.value;
+            applyFilters();
+        }, 500));
+
+        document.getElementById('amountMax').addEventListener('input', debounce(function(e) {
+            activeFilters.amountMax = e.target.value;
+            applyFilters();
+        }, 500));
+    }
+
+    function applyFilters() {
+        const orders = document.querySelectorAll('.order-card');
+        let visibleCount = 0;
+        let activeFilterCount = 0;
+
+        orders.forEach(order => {
+            let show = true;
+
+            // Filtre statut
+            if (activeFilters.status.length > 0) {
+                const orderStatus = order.getAttribute('data-status');
+                if (!activeFilters.status.includes(orderStatus)) {
+                    show = false;
+                }
+            }
+
+            // Filtre paiement
+            if (activeFilters.payment && activeFilters.payment !== '') {
+                const paymentStatus = order.getAttribute('data-payment-status');
+                if (paymentStatus !== activeFilters.payment) {
+                    show = false;
+                }
+            }
+
+            // Filtre boutique
+            if (activeFilters.shop && activeFilters.shop !== '') {
+                const shopId = order.getAttribute('data-shop-id');
+                if (shopId !== activeFilters.shop) {
+                    show = false;
+                }
+            }
+
+            // Filtre client
+            if (activeFilters.customer && activeFilters.customer !== '') {
+                const customerId = order.getAttribute('data-customer-id');
+                if (customerId !== activeFilters.customer) {
+                    show = false;
+                }
+            }
+
+            // Filtre date
+            if (activeFilters.dateFrom) {
+                const orderDate = order.getAttribute('data-date');
+                if (orderDate < activeFilters.dateFrom) {
+                    show = false;
+                }
+            }
+
+            if (activeFilters.dateTo) {
+                const orderDate = order.getAttribute('data-date');
+                if (orderDate > activeFilters.dateTo) {
+                    show = false;
+                }
+            }
+
+            // Filtre montant
+            if (activeFilters.amountMin) {
+                const orderAmount = parseFloat(order.getAttribute('data-amount'));
+                if (orderAmount < parseFloat(activeFilters.amountMin)) {
+                    show = false;
+                }
+            }
+
+            if (activeFilters.amountMax) {
+                const orderAmount = parseFloat(order.getAttribute('data-amount'));
+                if (orderAmount > parseFloat(activeFilters.amountMax)) {
+                    show = false;
+                }
+            }
+
+            // Afficher/masquer la commande
+            order.style.display = show ? 'block' : 'none';
+            if (show) visibleCount++;
+        });
+
+        // Mettre à jour le compteur de filtres actifs
+        activeFilterCount = Object.values(activeFilters).filter(value => {
+            if (Array.isArray(value)) return value.length > 0;
+            return value !== '';
+        }).length;
+
+        document.getElementById('activeFiltersCount').textContent = activeFilterCount;
+
+        // Afficher message si aucun résultat
+        const ordersContainer = document.getElementById('ordersContainer');
+        const existingEmptyMessage = ordersContainer.querySelector('.no-results-message');
+        
+        if (visibleCount === 0 && !existingEmptyMessage) {
+            const noResults = document.createElement('div');
+            noResults.className = 'empty-orders no-results-message';
+            noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <h4>Aucune commande ne correspond aux filtres</h4>
+                <p>Essayez de modifier vos critères de recherche</p>
+                <button class="btn btn-primary" onclick="resetFilters()">
+                    <i class="fas fa-refresh"></i> Réinitialiser les filtres
+                </button>
+            `;
+            ordersContainer.appendChild(noResults);
+        } else if (existingEmptyMessage && visibleCount > 0) {
+            existingEmptyMessage.remove();
+        }
+    }
+
+    function toggleFilters() {
+        const filtersContent = document.getElementById('filtersContent');
+        const filtersIcon = document.getElementById('filtersIcon');
+        
+        filtersContent.classList.toggle('show');
+        filtersIcon.classList.toggle('fa-chevron-down');
+        filtersIcon.classList.toggle('fa-chevron-up');
+    }
+
+    function resetFilters() {
+        // Réinitialiser les valeurs des filtres
+        document.getElementById('statusFilter').selectedIndex = -1;
+        document.getElementById('paymentFilter').value = '';
+        
+        if (document.getElementById('shopFilter')) {
+            document.getElementById('shopFilter').value = '';
+        }
+        
+        if (document.getElementById('customerFilter')) {
+            document.getElementById('customerFilter').value = '';
+        }
+        
+        document.getElementById('dateFrom').value = '';
+        document.getElementById('dateTo').value = '';
+        document.getElementById('amountMin').value = '';
+        document.getElementById('amountMax').value = '';
+
+        // Réinitialiser l'objet activeFilters
+        activeFilters = {
+            status: [],
+            payment: '',
+            shop: '',
+            customer: '',
+            dateFrom: '',
+            dateTo: '',
+            amountMin: '',
+            amountMax: ''
+        };
+
+        applyFilters();
+    }
+
+    function exportOrders(format) {
+        // Construire l'URL d'export avec les filtres actuels
+        const params = new URLSearchParams();
+        
+        if (activeFilters.status.length > 0) {
+            params.append('status', activeFilters.status.join(','));
+        }
+        
+        if (activeFilters.payment) {
+            params.append('payment', activeFilters.payment);
+        }
+        
+        if (activeFilters.shop) {
+            params.append('shop', activeFilters.shop);
+        }
+        
+        if (activeFilters.dateFrom) {
+            params.append('date_from', activeFilters.dateFrom);
+        }
+        
+        if (activeFilters.dateTo) {
+            params.append('date_to', activeFilters.dateTo);
+        }
+
+        const url = `/orders/export/${format}/?${params.toString()}`;
+        window.open(url, '_blank');
+    }
+
+    function updateOrderStatus(orderId, newStatus) {
+        if (confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
+            fetch(`/api/orders/${orderId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    }
+
+    function viewOrderDetails(orderId) {
+        window.open(`/orders/${orderId}/details/`, '_blank');
+    }
+
+    function cancelOrder(orderId) {
+        if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+            updateOrderStatus(orderId, 'cancelled');
+        }
+    }
+
+    // Utilitaires
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+</script>
+{% endblock %}
