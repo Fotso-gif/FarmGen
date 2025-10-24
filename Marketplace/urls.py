@@ -3,6 +3,10 @@ from django.urls import path
 
 urlpatterns = [
     path('my-shop/', views.shop_dashboard, name='marketplace_list'),
+     path('create-shop/', views.create_shop, name='create_shop'),
+    path('update-shop/', views.update_shop, name='update_shop'),
+    path('create-category/', views.create_category, name='create_category'),
+    path('create-product/', views.create_product, name='create_product'),
     path('history-commande/', views.order_history, name='history'),
     path('shop/<int:shop_id>', views.shop, name='shop'),
     path('favorite/<int:shop_id>/', views.toggle_favorite, name='toggle_favorite'),

@@ -2,12 +2,14 @@ import json
 from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
+from django.utils.text import slugify
+from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .models import Shop, Product, Favorite, Category, ProductImage
-
+from payments.models import Order
 # Create your views here.
 
 
@@ -68,35 +70,162 @@ def get_favorites_status(request):
 @login_required
 def shop_dashboard(request):
     """Tableau de bord de la boutique"""
-    shop = get_object_or_404(Shop, user=request.user)
-    
-    # Statistiques
-    total_products = Product.objects.filter(category__shop=shop).count()
-    total_orders =  0 # À adapter selon votre modèle Order
-    total_views = 0  # À implémenter avec un modèle de vue
-    low_stock_products = Product.objects.filter(category__shop=shop, quantity__lte=5).count()
-    
-    # Données pour les tableaux
-    # products = Product.objects.filter(category__shop=shop).select_related('category').prefetch_related('images')
-    #categories = Category.objects.filter(shop=shop).annotate(product_count=Count('products'))
-    
-    # Analytics
-    # popular_products = products.order_by('-views_count')[:5]  # À adapter
-    #category_stats = categories
-    
-    context = {
-        'shop': shop,
-        'total_products': total_products,
-        'total_orders': total_orders,
-        'total_views': total_views,
-        'low_stock_products': low_stock_products,
-        # 'products': products,
-        # 'categories': categories,
-        # 'popular_products': popular_products,
-        # 'category_stats': category_stats,
-    }
+    try:
+        shop = Shop.objects.get(user=request.user)
+        
+        # Statistiques
+        total_products = Product.objects.filter(category__shop=shop).count()
+        total_orders = 0  # À adapter selon votre modèle Order
+        total_views = 0   # À implémenter avec un modèle de vue
+        low_stock_products = Product.objects.filter(
+            category__shop=shop, 
+            quantity__lte=5
+        ).count()
+        
+        # Données pour les tableaux
+        products = Product.objects.filter(
+            category__shop=shop
+        ).select_related('category').prefetch_related('images')
+        
+        categories = Category.objects.filter(shop=shop).annotate(
+            product_count=Count('products')
+        )
+        
+        context = {
+            'shop': shop,
+            'total_products': total_products,
+            'total_orders': total_orders,
+            'total_views': total_views,
+            'low_stock_products': low_stock_products,
+            'products': products,
+            'categories': categories,
+        }
+        
+    except Shop.DoesNotExist:
+        # Aucune boutique trouvée pour cet utilisateur
+        context = {
+            'shop': None
+        }
     
     return render(request, 'marketplace/index.html', context)
+
+@login_required
+def create_shop(request):
+    """Création d'une nouvelle boutique"""
+    if request.method == 'POST':
+        try:
+            # Vérifier si l'utilisateur a déjà une boutique
+            if Shop.objects.filter(user=request.user).exists():
+                messages.error(request, "Vous avez déjà une boutique.")
+                return redirect('shop_dashboard')
+            
+            shop = Shop.objects.create(
+                user=request.user,
+                title=request.POST['title'],
+                localisation=request.POST['localisation'],
+                type_shop=request.POST['type_shop'],
+                description=request.POST.get('description', ''),
+                note=0.0  # Note par défaut
+            )
+            
+            # Gérer l'image de couverture
+            if 'couverture' in request.FILES:
+                shop.couverture = request.FILES['couverture']
+                shop.save()
+            
+            # Générer le slug automatiquement
+            shop.slug = slugify(shop.title)
+            shop.save()
+            
+            messages.success(request, "Boutique créée avec succès!")
+            return redirect('shop_dashboard')
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la création: {str(e)}")
+    
+    return redirect('shop_dashboard')
+
+@login_required
+def update_shop(request):
+    """Mise à jour des informations de la boutique"""
+    if request.method == 'POST':
+        try:
+            shop = get_object_or_404(Shop, user=request.user)
+            
+            shop.title = request.POST['title']
+            shop.localisation = request.POST['localisation']
+            shop.type_shop = request.POST.get('type_shop', '')
+            shop.description = request.POST.get('description', '')
+            
+            # Gérer l'image de couverture
+            if 'couverture' in request.FILES:
+                shop.couverture = request.FILES['couverture']
+            
+            shop.save()
+            
+            messages.success(request, "Boutique mise à jour avec succès!")
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
+    
+    return redirect('shop_dashboard')
+
+@login_required
+def create_category(request):
+    """Création d'une nouvelle catégorie"""
+    if request.method == 'POST':
+        try:
+            shop = get_object_or_404(Shop, user=request.user)
+            
+            category = Category.objects.create(
+                shop=shop,
+                name=request.POST['name'],
+                description=request.POST.get('description', '')
+            )
+            
+            # Générer le slug automatiquement
+            from django.utils.text import slugify
+            category.slug = slugify(category.name)
+            category.save()
+            
+            messages.success(request, "Catégorie créée avec succès!")
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la création: {str(e)}")
+    
+    return redirect('shop_dashboard')
+
+@login_required
+def create_product(request):
+    """Création d'un nouveau produit"""
+    if request.method == 'POST':
+        try:
+            shop = get_object_or_404(Shop, user=request.user)
+            category = get_object_or_404(Category, id=request.POST['category'], shop=shop)
+            
+            product = Product.objects.create(
+                name=request.POST['name'],
+                category=category,
+                price=request.POST['price'],
+                quantity=request.POST['quantity'],
+                description=request.POST.get('description', ''),
+                expiry_date=request.POST.get('expiry_date') or None
+            )
+            
+            # Gérer les images
+            for image_file in request.FILES.getlist('images'):
+                ProductImage.objects.create(
+                    product=product,
+                    image=image_file,
+                    alt_text=product.name
+                )
+            
+            messages.success(request, "Produit créé avec succès!")
+            
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la création: {str(e)}")
+    
+    return redirect('shop_dashboard')
 
 @login_required
 @csrf_exempt
