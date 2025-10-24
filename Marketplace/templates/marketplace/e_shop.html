@@ -1014,6 +1014,7 @@
   }
 
   .quick-filter {
+    color:#000;
     padding: 0.5rem 1rem;
     border: 2px solid var(--light-gray);
     border-radius: 25px;
@@ -1154,6 +1155,11 @@
         <h4><i class="fas fa-tags"></i> Catégories</h4>
         <div class="filter-options" id="category-filters">
           <!-- Généré dynamiquement -->
+          {% if shop.categuory %}
+            {% for shop.categuory in cat%}
+              <div class="quick-filter" data-filter="{{ cat.name }}">{{ cat.name }}</div>
+            {% endfor %}
+          {% endif %}
         </div>
       </div>
 
@@ -1258,7 +1264,7 @@
       
       <div class="products-grid" id="products-container">
          {% for produit in produits %}
-        <div class="product-card fade-in" 
+        <div class="product-card fade-in visible" 
              data-product-id="{{ produit.id }}"
              data-category="{{ produit.category.name|default:'non-categorise' }}" 
              data-price="{{ produit.price }}"
@@ -1388,9 +1394,7 @@ class AdvancedShopSystem {
 
   async loadCategories() {
     // Simuler le chargement des catégories
-    const categories = [...new Set(Array.from(document.querySelectorAll('.product-card')).map(card => 
-      card.getAttribute('data-category')
-    ))];
+    const categories = [...new Set(Array.from(document.querySelectorAll('.product-card')).map(card => card.getAttribute('data-category')))];
     
     const container = document.getElementById('category-filters');
     container.innerHTML = categories.map(cat => `
