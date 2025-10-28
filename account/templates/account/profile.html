@@ -596,11 +596,11 @@
             <div class="profile-sidebar">
                 <div class="profile-card animate__animated animate__fadeInLeft">
                     <div class="profile-avatar">
-                        {% if user.profile_image or False %}
-                            <img src="{{ user.profile_image.url }}" alt="Profile de {{ user.get_full_name }}">
+                        {% if user and user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile de {{ user.get_full_name }}">
                         {% else %}
-                            <div class="avatar-initials">
-                                <img src="https://images.unsplash.com/photo-1584466779625-0c0f2c4f5c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="avatar">
+                            <div class="avatar-initials">            
+                                {{ user.first_name|first }}{{ user.last_name|first }}
                             </div>
                         {% endif %}
                         <div class="avatar-edit" onclick="document.getElementById('profileImageInput').click()">
