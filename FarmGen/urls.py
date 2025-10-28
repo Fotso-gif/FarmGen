@@ -27,6 +27,7 @@ urlpatterns = [
     path('marketplace/', include('Marketplace.urls')),
     path('blog/', include('Blog.urls')),
     path('payments/', include('payments.urls')),
+    path('contact/', include('contacts.urls')),
     # redirect /checkout/ to the payments checkout UI
     path('checkout/', RedirectView.as_view(url='/payments/checkout/', permanent=False), name='checkout-redirect'),
 ]

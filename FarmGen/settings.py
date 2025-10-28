@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'account',
     'Blog',
     'Marketplace',
+    'contacts',
     # Added apps for API, CORS, storage and JWT
     'corsheaders',
     'rest_framework',
