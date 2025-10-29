@@ -204,6 +204,9 @@
 
   /* User dropdown */
   .user-menu {
+    display:flex;
+    flex-direction:row;
+    gap:1.5rem;
     position: relative;
   }
 
@@ -489,6 +492,209 @@
     animation: float 15s linear infinite;
   }
 
+  .cart-btn {
+
+  background-color: #007bff;
+  color: white;
+  font-size: 22px;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+}
+
+.cart-btn:hover {
+  background-color: #0056b3;
+  transform: scale(1.05);
+}
+
+.cart-btn span {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  background: #ff4757;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.6); }
+  50% { transform: scale(1.1); box-shadow: 0 0 10px 5px rgba(0, 123, 255, 0.3); }
+}
+
+.cart-btn {
+  animation: pulse 2.5s infinite;
+}
+
+/* === Overlay du modal === */
+#cartModal {
+  position: fixed;
+  top:2rem !important;
+  right:0 !important;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  {% comment %} display: none; /* remplacé par .active via JS */ {% endcomment %}
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  transition: opacity 0.3s ease;
+  
+}
+
+#cartModal.active {
+  display: flex;
+  opacity: 1;
+}
+
+/* === Contenu du modal === */
+#cartModal .modal-content {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 550px;
+  padding: 25px 30px;
+  position: relative;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.35s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* === Bouton de fermeture === */
+#closeCartModal {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: #777;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#closeCartModal:hover {
+  color: #111;
+}
+
+/* === Titre du modal === */
+#cartModal h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 15px;
+  text-align: center;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 8px;
+}
+
+/* === Contenu du panier === */
+#cartContent {
+  max-height: 350px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #007bff #f1f1f1;
+  margin-bottom: 15px;
+  padding-right: 5px;
+}
+
+/* Scroll personnalisé */
+#cartContent::-webkit-scrollbar {
+  width: 6px;
+}
+#cartContent::-webkit-scrollbar-thumb {
+  background-color: #007bff;
+  border-radius: 10px;
+}
+#cartContent::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+/* === Ligne produit dans le panier === */
+.cart-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.cart-item img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.cart-item .info {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.cart-item .info p {
+  margin: 2px 0;
+}
+
+.cart-item .remove-btn {
+  color: #ff4d4d;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.cart-item .remove-btn:hover {
+  transform: scale(1.2);
+}
+
+/* === Bouton Commander === */
+#cartModal .checkout-btn {
+  background: linear-gradient(135deg, #007bff, #00c6ff);
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(0, 123, 255, 0.3);
+}
+
+#cartModal .checkout-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+/* === Total === */
+#cartModal .total {
+  text-align: right;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #222;
+  margin-top: 10px;
+}
+
+
+
   @keyframes float {
     0% {
       transform: translateY(100vh) translateX(0);
@@ -505,6 +711,29 @@
       opacity: 0;
     }
   }
+  .empty-cart, .error {
+  text-align: center;
+  color: #666;
+  padding: 1rem;
+}
+
+.cart-item-img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.item-name {
+  font-weight: bold;
+  margin: 2px 0;
+}
+
+.item-desc, .item-price {
+  font-size: 0.85rem;
+  color: #555;
+  margin: 2px 0;
+}
 </style>
 
 <!-- Particules d'arrière-plan -->
@@ -575,6 +804,27 @@
           <a href="{% url 'register_view' %}" class="btn-primary">Inscription</a>
         </div>
       {% endif %}
+      {% if request.resolver_match.url_name == 'shop' or request.resolver_match.url_name == 'cart-page' or request.resolver_match.url_name == 'checkout-page' %}
+        <div class="cart-btn" id="cartBtn">
+            <span id="cartCount">{{ cart_count|default:0 }}</span>
+            <i class="fas fa-cart-arrow-down"></i>
+        </div>
+      {% endif %}
+
+        <!-- MODAL PANIER -->
+        <div id="cartModal" aria-hidden="true" class="hidden">
+            <div class="modal-content">
+              <button id="closeCartModal" aria-label="Fermer le panier">
+                <i class="fas fa-times"></i>
+              </button>
+              <h2>🛒 Mon Panier</h2>
+              <div id="cartContent">Chargement...</div>
+              <div class="total">Total : <span id="cartTotal">0</span> XAF</div>
+              <a href="{% url 'cart-page' %}" class="checkout-btn">Commander</a>
+            </div>
+          </div>
+
+
     </div>
 
     <!-- Burger menu -->
@@ -704,4 +954,209 @@
       }
     });
   });
+</script>
+<script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const cartBtn = document.getElementById("cartBtn");
+    const cartModal = document.getElementById("cartModal");
+    const closeCartModal = document.getElementById("closeCartModal");
+    const cartCountEl = document.getElementById("cartCount");
+    const cartContent = document.getElementById("cartContent");
+    const cartTotalEl = document.getElementById("cartTotal");
+
+    // === Fonction utilitaire : échapper le HTML pour éviter XSS ===
+    function escapeHtml(unsafe) {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // === Mise à jour de l’UI du panier ===
+    function updateCartUI(cart) {
+      cartContent.innerHTML = '';
+      let total = 0;
+
+      if (Object.keys(cart).length === 0) {
+        cartContent.innerHTML = '<p class="empty-cart">Votre panier est vide.</p>';
+        if (cartTotalEl) cartTotalEl.textContent = '0';
+        return;
+      }
+
+      Object.values(cart).forEach(item => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        const lineTotal = price * quantity;
+        total += lineTotal;
+
+        // Création sécurisée des éléments (pas d’innerHTML avec données non échappées)
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'cart-item';
+
+        const img = document.createElement('img');
+        img.src = item.image || '{% static "img/placeholder.png" %}';
+        img.alt = escapeHtml(item.name);
+        img.className = 'cart-item-img';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'info';
+
+        const nameP = document.createElement('p');
+        nameP.className = 'item-name';
+        nameP.textContent = escapeHtml(item.name);
+
+        const descP = document.createElement('p');
+        descP.className = 'item-desc';
+        descP.textContent = escapeHtml(item.description || '');
+
+        const priceP = document.createElement('p');
+        priceP.className = 'item-price';
+        priceP.textContent = `${price.toLocaleString()} XAF x ${quantity}`;
+
+        infoDiv.appendChild(nameP);
+        infoDiv.appendChild(descP);
+        infoDiv.appendChild(priceP);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'remove-btn';
+        removeBtn.setAttribute('data-id', escapeHtml(item.slug));
+        removeBtn.setAttribute('aria-label', `Supprimer ${escapeHtml(item.name)} du panier`);
+        removeBtn.innerHTML = '<i class="fas fa-trash"></i>';
+
+        itemDiv.appendChild(img);
+        itemDiv.appendChild(infoDiv);
+        itemDiv.appendChild(removeBtn);
+
+        cartContent.appendChild(itemDiv);
+      });
+
+      // Mettre à jour le total
+      if (cartTotalEl) {
+        cartTotalEl.textContent = total.toLocaleString();
+      } else {
+        // Si pas d’élément #cartTotal, on met à jour dans le HTML existant
+        const totalDiv = document.createElement('div');
+        totalDiv.className = 'total';
+        totalDiv.innerHTML = `Total : <strong>${total.toLocaleString()} XAF</strong>`;
+        cartContent.appendChild(totalDiv);
+      }
+    }
+
+    // === Récupération du panier ===
+    async function fetchCart() {
+      try {
+        const response = await fetch("#", {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const count = data.cart_count || 0;
+        cartCountEl.textContent = count;
+
+        // Cacher le badge si 0
+        if (count === 0) {
+          cartCountEl.style.display = 'none';
+        } else {
+          cartCountEl.style.display = 'flex';
+        }
+
+        updateCartUI(data.cart || {});
+      } catch (error) {
+        console.error("Erreur lors du chargement du panier :", error);
+        cartContent.innerHTML = '<p class="error">Impossible de charger le panier. Veuillez réessayer.</p>';
+      }
+    }
+
+    // === Gestion du focus dans le modal (accessibilité) ===
+    function trapFocus(modal) {
+      const focusableElements = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstFocusable = focusableElements[0];
+      const lastFocusable = focusableElements[focusableElements.length - 1];
+
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === firstFocusable) {
+            e.preventDefault();
+            lastFocusable.focus();
+          } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+            e.preventDefault();
+            firstFocusable.focus();
+          }
+        }
+        if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      // Focus initial
+      if (firstFocusable) firstFocusable.focus();
+    }
+
+    // === Ouvrir le modal ===
+    function openModal() {
+      cartModal.classList.add('active');
+      cartModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden'; // Empêche le scroll en arrière-plan
+      fetchCart();
+      setTimeout(() => trapFocus(cartModal), 100); // Léger délai pour animation
+    }
+
+    // === Fermer le modal ===
+    function closeModal() {
+      cartModal.classList.remove('active');
+      cartModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = ''; // Restaure le scroll
+    }
+
+    // === Écouteurs d’événements ===
+    if (cartBtn) {
+      cartBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+      });
+    }
+
+    if (closeCartModal) {
+      closeCartModal.addEventListener("click", (e) => {
+        e.preventDefault();
+        closeModal();
+      });
+    }
+
+    // Fermer en cliquant en dehors du contenu
+    cartModal?.addEventListener("click", (e) => {
+      if (e.target === cartModal) {
+        closeModal();
+      }
+    });
+
+    // === Gestion dynamique des boutons "supprimer" (déléguée) ===
+    cartContent?.addEventListener("click", (e) => {
+      if (e.target.closest('.remove-btn')) {
+        const button = e.target.closest('.remove-btn');
+        const slug = button.getAttribute('data-id');
+        if (slug) {
+          // Tu peux ajouter ici un appel AJAX pour supprimer l’article
+          // Exemple :
+          // removeFromCart(slug);
+          console.log("Supprimer l’article :", slug);
+        }
+      }
+    });
+  });
+</script>
 </script>

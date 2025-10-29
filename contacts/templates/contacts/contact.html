@@ -17,21 +17,19 @@
 
     /* Hero Section */
     .contact-hero {
-        background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
-        color: white;
-        text-align: center;
-        padding: 8rem 2rem 5rem;
         position: relative;
-        overflow: hidden;
-    }
-
-    .contact-hero::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: url("https://images.unsplash.com/photo-1581092335875-1e7e55d5b0c3?auto=format&fit=crop&w=2000&q=80") center/cover no-repeat;
-        opacity: 0.15;
-        z-index: 1;
+        background-image: 
+            linear-gradient(90deg, var(--forest-green), var(--primary-green)), 
+            url('https://images.unsplash.com/photo-1500382016252-4c22a65983b3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: left;
     }
 
     .contact-hero-content {
@@ -39,6 +37,7 @@
         z-index: 2;
         max-width: 900px;
         margin: 0 auto;
+        padding: 0 2rem;
     }
 
     .contact-hero h1 {
@@ -50,34 +49,290 @@
     .contact-hero p {
         font-size: 1.2rem;
         opacity: 0.9;
+        border: solid 4px var(--primary-green);
+        padding: 1.5rem;
+        display: inline-block;
     }
 
-    /* Contact Section */
+    /* Coordonnées Section */
     .contact-section {
-        background: var(--light-gray);
-        padding: 6rem 2rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
     }
 
-    .contact-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 3rem;
+    .bg-pattern {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            radial-gradient(circle at 20% 20%, rgba(46, 204, 113, 0.03) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(46, 204, 113, 0.03) 0%, transparent 50%);
+        pointer-events: none;
     }
 
-    .contact-form {
+    .contact-card {
         background: white;
-        border-radius: 16px;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
         padding: 3rem;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.08);
-        border: 1px solid var(--border-color);
     }
 
-    .contact-form h2 {
-        font-size: 2rem;
-        margin-bottom: 2rem;
+    .contact-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--forest-green), var(--primary-green));
+        border-radius: 24px 24px 0 0;
+    }
+
+    .contact-title {
+        color: var(--forest-green);
+        font-weight: 700;
+        position: relative;
+        display: inline-block;
+        letter-spacing: 1px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .contact-subtitle {
+        font-size: 1.1rem;
+        font-weight: 400;
         color: var(--text-dark);
+        max-width: 500px;
+        margin: 0 auto 3rem;
+        text-align: center;
+    }
+
+    .contact-info-wrapper {
+        padding: 20px;
+    }
+
+    .contact-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.6) 100%);
+        border-radius: 16px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(5px);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .contact-info-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(46, 204, 113, 0.1) 0%, transparent 100%);
+        opacity: 0;
+        transition: all 0.4s ease;
+    }
+
+    .contact-info-item:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(46, 204, 113, 0.15), 0 8px 16px rgba(46, 204, 113, 0.1);
+        border-color: rgba(46, 204, 113, 0.2);
+    }
+
+    .contact-info-item:hover::before {
+        opacity: 1;
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--forest-green) 0%, var(--primary-green) 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+    }
+
+    .icon-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+        transition: all 0.4s ease;
+    }
+
+    .icon-wrapper i {
+        color: white;
+        font-size: 1.4rem;
+        z-index: 1;
+        position: relative;
+        transition: all 0.4s ease;
+    }
+
+    .contact-info-item:hover .icon-wrapper {
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 12px 30px rgba(46, 204, 113, 0.4);
+    }
+
+    .contact-info-item:hover .icon-wrapper i {
+        transform: scale(1.1);
+    }
+
+    .info-content {
+        flex: 1;
+        z-index: 1;
+        position: relative;
+    }
+
+    .info-title {
+        color: var(--forest-green);
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-text {
+        color: var(--text-dark);
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 400;
+    }
+
+    .info-link {
+        color: var(--forest-green);
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .info-link::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--forest-green), var(--primary-green));
+        transition: width 0.3s ease;
+    }
+
+    .info-link:hover {
+        color: var(--dark-green);
+        transform: translateX(5px);
+    }
+
+    .info-link:hover::after {
+        width: 100%;
+    }
+
+    /* Map wrapper */
+    .map-wrapper {
+        position: relative;
+        height: 100%;
+        min-height: 550px;
+    }
+
+    .map-container {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        position: relative;
+        transition: all 0.4s ease;
+    }
+
+    .map-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15), 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    .map-overlay {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+    }
+
+    .map-badge {
+        background: linear-gradient(135deg, var(--forest-green) 0%, var(--primary-green) 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        box-shadow: 0 8px 20px rgba(46, 204, 113, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .map-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(46, 204, 113, 0.4);
+    }
+
+    .map-badge i {
+        font-size: 1rem;
+    }
+
+    /* Form Section */
+    .form-section {
+        padding: 80px 0;
+        background: white;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04);
+        padding: 3rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .form-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--forest-green), var(--primary-green));
+        border-radius: 24px 24px 0 0;
+    }
+
+    .form-title {
+        color: var(--forest-green);
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
     }
 
     .form-group {
@@ -109,7 +364,7 @@
         border-color: var(--primary-green);
     }
 
-    .contact-form button {
+    .form-card button {
         background: var(--primary-green);
         color: white;
         border: none;
@@ -118,226 +373,471 @@
         font-weight: 600;
         cursor: pointer;
         transition: all 0.3s ease;
+        width: 100%;
     }
 
-    .contact-form button:hover {
+    .form-card button:hover {
         background: var(--dark-green);
         transform: translateY(-2px);
     }
 
-    /* Contact Info */
-    .contact-info {
-        background: white;
-        border-radius: 16px;
-        padding: 2.5rem;
-        box-shadow: 0 6px 25px rgba(0,0,0,0.08);
-        border: 1px solid var(--border-color);
-    }
-
-    .contact-info h3 {
-        font-size: 1.5rem;
-        color: var(--text-dark);
-        margin-bottom: 1.5rem;
-    }
-
-    .info-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.2rem;
-        color: var(--text-dark);
-    }
-
-    .info-item i {
-        background: var(--primary-green);
-        color: white;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-    }
-
-    .social-links {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1rem;
-    }
-
-    .social-links a {
-        background: var(--light-gray);
-        color: var(--text-dark);
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-    }
-
-    .social-links a:hover {
-        background: var(--primary-green);
-        color: white;
-        transform: translateY(-3px);
-    }
-
     /* Témoignages Section */
     .testimonials-section {
-        padding: 6rem 2rem;
-        background: white;
+        padding: 80px 20px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        margin: 40px;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     }
 
-    .testimonials-section h2 {
+    .testimonials-title {
         text-align: center;
-        color: var(--text-dark);
-        font-size: 2.5rem;
-        margin-bottom: 3rem;
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--forest-green);
+        margin-bottom: 60px;
     }
 
-    .testimonials {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 2rem;
-        max-width: 1100px;
+    .carousel-container {
+        position: relative;
+        max-width: 1200px;
         margin: 0 auto;
+        overflow: hidden;
+        border-radius: 20px;
+    }
+
+    .carousel-track {
+        display: flex;
+        transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        gap: 30px;
+        padding: 20px 0;
     }
 
     .testimonial-card {
-        background: var(--light-gray);
-        padding: 2rem;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
+        min-width: 350px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 20px;
+        padding: 40px 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
     }
 
     .testimonial-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-10px);
+        box-shadow: 0 25px 50px rgba(46, 204, 113, 0.15);
+    }
+
+    .testimonial-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--forest-green), var(--primary-green));
+    }
+
+    .client-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--forest-green), var(--primary-green));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .client-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+    }
+
+    .client-role {
+        color: var(--forest-green);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        font-weight: 500;
     }
 
     .testimonial-text {
+        color: #4a5568;
+        line-height: 1.7;
+        font-size: 1rem;
         font-style: italic;
-        margin-bottom: 1.5rem;
-        color: var(--text-dark);
     }
 
-    .testimonial-author {
+    .carousel-nav {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 40px;
+    }
+
+    .nav-btn {
+        width: 60px;
+        height: 60px;
+        border: none;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--forest-green), var(--primary-green));
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
+        justify-content: center;
     }
 
-    .testimonial-author img {
-        width: 50px;
-        height: 50px;
+    .nav-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 10px 25px rgba(46, 204, 113, 0.3);
+    }
+
+    .carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 30px;
+    }
+
+    .dot {
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        margin-right: 1rem;
+        background: #cbd5e0;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .author-info strong {
-        color: var(--text-dark);
-        display: block;
+    .dot.active {
+        background: var(--forest-green);
+        transform: scale(1.3);
     }
 
-    .author-info span {
-        font-size: 0.9rem;
-        color: gray;
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
-    @media (max-width: 900px) {
-        .contact-container {
-            grid-template-columns: 1fr;
+    .testimonial-card,
+    .contact-content > * {
+        animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .testimonial-card:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .testimonial-card:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .contact-hero {
+            height: auto;
+            padding: 6rem 2rem;
+        }
+        
+        .contact-hero h1 {
+            font-size: 2rem;
+        }
+        
+        .contact-card,
+        .form-card {
+            padding: 2rem 1.5rem;
+            margin: 0 1rem;
+        }
+        
+        .testimonials-section {
+            margin: 20px;
+            padding: 40px 20px;
+        }
+        
+        .testimonials-title {
+            font-size: 2rem;
+        }
+        
+        .testimonial-card {
+            min-width: 280px;
+        }
+        
+        .map-wrapper {
+            min-height: 350px;
+            margin-top: 30px;
         }
     }
 </style>
 {% endblock %}
 
 {% block main %}
-<!-- Breadcrumb -->
-
 <!-- Hero -->
 <section class="contact-hero">
     <div class="contact-hero-content">
         <h1>Contactez-nous</h1>
-        <p>Une question, une suggestion ou un partenariat ? Écrivez-nous, nous serons ravis d’échanger avec vous.</p>
+        <p>Vous avez une question, un besoin agricole ou souhaitez discuter d'un partenariat ? <br>
+        Remplissez le formulaire ci-dessous ou contactez-nous directement. Nous vous répondons dans un délai de 24 à 48h ouvrables.</p>
     </div>
 </section>
 
-<!-- Contact Section -->
+<!-- Coordonnées Section -->
 <section class="contact-section">
-    <div class="contact-container">
-        <div class="contact-form">
-            <h2>Envoyez-nous un message</h2>
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-group">
-                    <label>Nom complet</label>
-                    <input type="text" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Sujet</label>
-                    <input type="text" name="subject">
-                </div>
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea name="message" rows="5" required></textarea>
-                </div>
-                <button type="submit">Envoyer le message</button>
-            </form>
-        </div>
+    <div class="bg-pattern"></div>
+    <div class="container">
+        <div class="contact-card">
+            <div class="text-center mb-5">
+                <h1 class="contact-title">Nos Coordonnées</h1>
+                <p class="contact-subtitle">Nous sommes à votre disposition pour répondre à toutes vos questions sur l'agriculture et l'élevage</p>
+            </div>
 
-        <div class="contact-info">
-            <h3>Nos coordonnées</h3>
-            <div class="info-item"><i class="fas fa-map-marker-alt"></i> <span>Yaoundé, Cameroun</span></div>
-            <div class="info-item"><i class="fas fa-phone"></i> <span>+237 699 XX XX XX</span></div>
-            <div class="info-item"><i class="fas fa-envelope"></i> <span>contact@farmgen.com</span></div>
-            <div class="social-links">
-                <a href="#"><i class="fab fa-facebook-f"></i></a>
-                <a href="#"><i class="fab fa-instagram"></i></a>
-                <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            <div class="row g-5 align-items-stretch">
+                <div class="col-lg-6">
+                    <div class="contact-info-wrapper">
+                        <div class="contact-info-item">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6 class="info-title">Adresse</h6>
+                                <p class="info-text">Yaoundé, Cameroun</p>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6 class="info-title">Téléphone</h6>
+                                <a href="tel:+237699XXXXXX" class="info-link">+237 699 XX XX XX</a>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <div class="icon-wrapper">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6 class="info-title">WhatsApp</h6>
+                                <a href="https://wa.me/237699XXXXXX" class="info-link">Envoyer un message</a>
+                            </div>
+                        </div>
+
+                        <div class="contact-info-item">
+                            <div class="icon-wrapper">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="info-content">
+                                <h6 class="info-title">Email</h6>
+                                <a href="mailto:contact@farmgen.com" class="info-link">contact@farmgen.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="map-wrapper">
+                        <div class="map-container">
+                            <iframe class="w-100 h-100"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d127438.973032405!2d11.454660949999999!3d3.8480325!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x108bcf7a5c5b5d7d%3A0x6b5f8c2d2b5f5d5d!2sYaound%C3%A9%2C%20Cameroun!5e0!3m2!1sfr!2sfr!4v1645546789016!5m2!1sfr!2sfr"
+                                frameborder="0" style="min-height: 100%; border:0;" allowfullscreen=""
+                                aria-hidden="false" tabindex="0"></iframe>
+                        </div>
+                        <div class="map-overlay">
+                            <div class="map-badge">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Yaoundé, Cameroun</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Témoignages -->
+<!-- Form Section -->
+<section class="form-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-card">
+                    <h2 class="form-title">Envoyez-nous un message</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sujet</label>
+                            <input type="text" name="subject">
+                        </div>
+                        <div class="form-group">
+                            <label>Message</label>
+                            <textarea name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit">Envoyer le message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Témoignages Section -->
 <section class="testimonials-section">
-    <h2>Ils nous font confiances</h2>
-    <div class="testimonials">
-        <div class="testimonial-card">
-            <p class="testimonial-text">“Grâce à FarmGen, j’ai amélioré ma production et trouvé de nouveaux débouchés pour mes produits. Une équipe très à l’écoute !”</p>
-            <div class="testimonial-author">
-                <img src="" alt="Amina">
-                <div class="author-info">
-                    <strong>Amina Ndongo</strong>
-                    <span>Productrice de maïs, Bertoua</span>
-                </div>
+    <h2 class="testimonials-title">Ils nous font confiance</h2>
+    <div class="carousel-container">
+        <div class="carousel-track" id="carouselTrack">
+            <div class="testimonial-card">
+                <div class="client-logo">A</div>
+                <h3 class="client-name">Amina Ndongo</h3>
+                <p class="client-role">Productrice de maïs, Bertoua</p>
+                <p class="testimonial-text">"Grâce à FarmGen, j'ai amélioré ma production et trouvé de nouveaux débouchés pour mes produits. Une équipe très à l'écoute !"</p>
+            </div>
+            <div class="testimonial-card">
+                <div class="client-logo">S</div>
+                <h3 class="client-name">Samuel Nkoa</h3>
+                <p class="client-role">Éleveur, Bafoussam</p>
+                <p class="testimonial-text">"Des conseils pratiques et un accompagnement de qualité. FarmGen, c'est plus qu'un service, c'est une communauté."</p>
+            </div>
+            <div class="testimonial-card">
+                <div class="client-logo">J</div>
+                <h3 class="client-name">Jean Tchinda</h3>
+                <p class="client-role">Technicien agricole, Douala</p>
+                <p class="testimonial-text">"J'ai pu automatiser une partie de ma ferme grâce à leurs formations et conseils !"</p>
             </div>
         </div>
-        <div class="testimonial-card">
-            <p class="testimonial-text">“Des conseils pratiques et un accompagnement de qualité. FarmGen, c’est plus qu’un service, c’est une communauté.”</p>
-            <div class="testimonial-author">
-                <img src="" alt="Samuel">
-                <div class="author-info">
-                    <strong>Samuel Nkoa</strong>
-                    <span>Éleveur, Bafoussam</span>
-                </div>
-            </div>
+        <div class="carousel-nav">
+            <button class="nav-btn" id="prevBtn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="nav-btn" id="nextBtn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
-        <div class="testimonial-card">
-            <p class="testimonial-text">“J’ai pu automatiser une partie de ma ferme grâce à leurs formations et conseils !”</p>
-            <div class="testimonial-author">
-                <img src="" alt="Jean">
-                <div class="author-info">
-                    <strong>Jean Tchinda</strong>
-                    <span>Technicien agricole, Douala</span>
-                </div>
-            </div>
+        <div class="carousel-dots">
+            <div class="dot active"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add staggered animation to contact items
+        const contactItems = document.querySelectorAll('.contact-info-item');
+
+        contactItems.forEach((item, index) => {
+            item.style.setProperty('--animation-order', index);
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(40px)';
+
+            setTimeout(() => {
+                item.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                item.style.opacity = '1';
+                item.style.transform = 'translateY(0)';
+            }, index * 100 + 200);
+        });
+
+        // Add parallax effect to background
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const parallax = scrolled * 0.5;
+
+            const bgPattern = document.querySelector('.bg-pattern');
+            if (bgPattern) {
+                bgPattern.style.transform = `translateY(${parallax}px)`;
+            }
+        });
+
+        // Carousel functionality
+        const track = document.getElementById('carouselTrack');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dots = document.querySelectorAll('.dot');
+        let currentIndex = 0;
+        const cardWidth = document.querySelector('.testimonial-card').offsetWidth + 30; // including gap
+
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < 2) { // Assuming 3 cards visible at a time
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                currentIndex = index;
+                updateCarousel();
+            });
+        });
+
+        // Auto-scroll carousel
+        let autoScroll = setInterval(() => {
+            if (currentIndex < 2) {
+                currentIndex++;
+            } else {
+                currentIndex = 0;
+            }
+            updateCarousel();
+        }, 5000);
+
+        // Pause auto-scroll on hover
+        const carouselContainer = document.querySelector('.carousel-container');
+        carouselContainer.addEventListener('mouseenter', () => {
+            clearInterval(autoScroll);
+        });
+
+        carouselContainer.addEventListener('mouseleave', () => {
+            autoScroll = setInterval(() => {
+                if (currentIndex < 2) {
+                    currentIndex++;
+                } else {
+                    currentIndex = 0;
+                }
+                updateCarousel();
+            }, 5000);
+        });
+    });
+</script>
 {% endblock %}

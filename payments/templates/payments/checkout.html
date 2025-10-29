@@ -1,0 +1,1361 @@
+{% extends "client/layout/main.html" %}
+{% load static %}
+{% block css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+    :root {
+        --primary-gradient: linear-gradient(90deg, var(--forest-green), var(--primary-green));
+        --whatsapp-gradient: linear-gradient(135deg, #25D366, #128C7E);
+        --orange-gradient: linear-gradient(135deg, #FF7900, #FF5E00);
+        --mtn-gradient: linear-gradient(135deg, #FFCD00, #FFA700);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --text-primary: #2d3748;
+        --border-radius: 16px;
+        --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Hero Section */
+    .hero-section {
+        background: var(--primary-gradient);
+        padding: 80px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="120" fill="url(%23a)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .hero-title {
+        font-size: 3rem;
+        font-weight: 700;
+        color: white;
+        text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Progress Steps */
+    .progress-container {
+        margin: 40px 0;
+    }
+
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-bottom: 30px;
+    }
+
+    .progress-steps::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+
+    .progress-bar {
+        position: absolute;
+        top: 15px;
+        left: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        z-index: 2;
+        transition: width 0.5s ease;
+    }
+
+    .step {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        width: 70px;
+    }
+
+    .step-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #6c757d;
+        transition: var(--transition);
+    }
+
+    .step.active .step-icon {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .step.completed .step-icon {
+        background: var(--success-gradient);
+        color: white;
+    }
+
+    .step-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .step.active .step-label {
+        color: var(--text-primary);
+    }
+
+    /* Glass Cards */
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        transition: var(--transition);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(31, 38, 135, 0.5);
+    }
+
+    .card-header-custom {
+        background: rgba(255, 255, 255, 0.1);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px;
+    }
+
+    .card-header-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-body-custom {
+        padding: 24px;
+    }
+
+    /* Form Styles */
+    .form-group-modern {
+        margin-bottom: 20px;
+    }
+
+    .form-label-modern {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .form-control-modern {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 15px;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Payment Options */
+    .payment-option {
+        background: rgba(255, 255, 255, 0.8);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .payment-option:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+    }
+
+    .payment-option.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+
+    .payment-method-label {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .payment-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    .payment-icon img{
+        border-radius:12px;
+        width:100%;
+    }
+
+    .payment-icon.whatsapp {
+        background: var(--whatsapp-gradient);
+    }
+
+    .payment-icon.orange {
+        background: var(--orange-gradient);
+    }
+
+    .payment-icon.mtn {
+        background: var(--mtn-gradient);
+    }
+
+    /* Course Items */
+    .course-item {
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .course-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+
+    /* Total Summary */
+    .total-summary {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border-radius: 12px;
+        padding: 20px;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .total-row:last-child {
+        border-bottom: none;
+        font-size: 1.2rem;
+        font-weight: 800;
+    }
+
+    .total-amount {
+        color: #667eea;
+        font-weight: 800;
+    }
+
+    /* Buttons */
+    .btn-modern {
+        border: none;
+        border-radius: 50px;
+        padding: 15px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-primary-modern {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+    .btn-primary-success {
+        background: #28a745;
+        color: white;
+        box-shadow: 0 8px 25px rgba(102, 234, 144, 0.3);
+    }
+    
+    .btn-primary-success:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(102, 234, 144, 0.4);
+    }
+
+    .btn-primary-modern:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Confirmation Section */
+    .confirmation-section {
+        display: none;
+        margin-top: 30px;
+    }
+
+    .upload-area {
+        border: 2px dashed #667eea;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        background: rgba(102, 126, 234, 0.05);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .upload-area:hover {
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+
+    .preview-container {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 12px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+
+    /* qrcode */
+    /* Conteneur des étapes */
+.step-account {
+    width:100%;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    max-width: 500px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Titre de l'étape */
+.step-account h4 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+/* Conteneur du QR Code */
+#qrcode-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px dashed #ddd;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+}
+
+#qrcode-image {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Code USSD */
+#ussd-code {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    color: #e74c3c;
+    letter-spacing: 1px;
+    font-size: 1.2em;
+}
+
+/* Instructions de paiement */
+.payment-instructions {
+    margin-top: 25px;
+    padding: 20px;
+    background-color: #f1f8ff;
+    border-radius: 10px;
+    border-left: 4px solid #3498db;
+}
+
+.payment-instructions h5 {
+    color: #2980b9;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* Liste ordonnée stylisée */
+.payment-instructions ol {
+    counter-reset: step-counter;
+    list-style: none;
+    padding-left: 10px;
+    color: #2c3e50;
+}
+
+.payment-instructions ol li {
+    position: relative;
+    padding: 10px 15px 10px 40px;
+    margin-bottom: 12px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    font-size: 0.95em;
+    counter-increment: step-counter;
+    transition: background-color 0.2s ease;
+}
+
+.payment-instructions ol li:hover {
+    background-color: #f5f9ff;
+}
+.payment-instructions ol li::before {
+    content: "✓";
+    background-color: #27ae60;
+    /* reste identique */
+}
+/* Puces numérotées personnalisées */
+.payment-instructions ol li::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 22px;
+    height: 22px;
+    background-color: #3498db;
+    color: white;
+    font-size: 0.8em;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Icône d'info */
+.payment-instructions i {
+    color: #3498db;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .step {
+        padding: 15px;
+    }
+
+    #qrcode-image {
+        width: 180px;
+        height: 180px;
+    }
+
+    .payment-instructions ol li {
+        padding: 10px 12px 10px 36px;
+        font-size: 0.9em;
+    }
+
+    #ussd-code {
+        font-size: 1.1em;
+    }
+}
+    
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .step {
+            width: 50px;
+        }
+        
+        .step-label {
+            font-size: 10px;
+        }
+    }
+
+    /* Loading Spinner */
+    .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="text-center">
+            <h1 class="hero-title">
+                <i class="fas fa-credit-card me-3"></i>Finalisation de Commande
+            </h1>
+            <p class="text-white-50">Procédez au paiement de vos formations en toute sécurité</p>
+        </div>
+    </div>
+</section>
+
+<!-- Progress Steps -->
+<div class="container progress-container">
+    <div class="progress-steps">
+        <div class="progress-bar" id="progress-bar"></div>
+        
+        <div class="step active" data-step="1">
+            <div class="step-icon">1</div>
+            <div class="step-label">Informations</div>
+        </div>
+        
+        <div class="step" data-step="2">
+            <div class="step-icon">2</div>
+            <div class="step-label">Paiement</div>
+        </div>
+        
+        <div class="step" data-step="3">
+            <div class="step-icon">3</div>
+            <div class="step-label">Confirmation</div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+    <div class="row">
+        <!-- Left Column - Form -->
+        <div class="col-lg-8">
+            <!-- Step 1: Information Form -->
+            <div class="glass-card" id="step-1">
+                <div class="card-header-custom">
+                    <h2 class="card-header-title">
+                        <i class="fas fa-user-circle"></i>Informations Personnelles
+                    </h2>
+                </div>
+                <div class="card-body-custom">
+                    <form id="checkout-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Prénom</label>
+                                    <input type="text" name="first_name" class="form-control-modern" 
+                                           value="{{ user.first_name|default:'' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Nom</label>
+                                    <input type="text" name="last_name" class="form-control-modern" 
+                                           value="{{ user.last_name|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Email</label>
+                                    <input type="email" name="email" class="form-control-modern" 
+                                           value="{{ user.email|default:'' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Téléphone</label>
+                                    <input type="tel" name="phone" class="form-control-modern" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        
+                        
+                        <div class="text-end">
+                            <button type="button" class="btn btn-primary-modern" onclick="nextStep(2)">
+                                Suivant <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Step 2: Payment Method -->
+            <div class="glass-card" id="step-2" style="display: none;">
+                <div class="card-header-custom">
+                    <h2 class="card-header-title">
+                        <i class="fas fa-credit-card"></i>Méthode de Paiement
+                    </h2>
+                </div>
+                <div class="card-body-custom">
+                    <!-- WhatsApp Payment -->
+                    <div class="payment-option selected" data-method="whatsapp">
+                        <label class="payment-method-label">
+                            <input type="radio" name="payment_method" value="whatsapp" checked class="d-none">
+                            <div class="payment-icon whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <div>
+                                <div>Paiement WhatsApp</div>
+                                <small class="text-muted">Payez directement via WhatsApp</small>
+                            </div>
+                        </label>
+                        
+                        <div class="mt-3" id="whatsapp-form">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Vous recevrez un message WhatsApp avec les instructions de paiement
+                            </div>
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Numéro WhatsApp</label>
+                                <input type="tel" name="whatsapp_number" class="form-control-modern" 
+                                       placeholder="77 123 45 67" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Orange Money -->
+                    <div class="payment-option" data-method="om">
+                        <label class="payment-method-label">
+                            <input type="radio" name="payment_method" value="om" class="d-none">
+                            <div class="payment-icon orange">
+                                <img src="{% static './paiement/OM.png' %}" alt="OM">
+                            </div>
+                            <div>
+                                <div>Orange Money</div>
+                                <small class="text-muted">Paiement mobile via Orange Money</small>
+                            </div>
+                        </label>
+                        
+                        <div class="mt-3 d-none" id="om-form">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Numéro Orange Money</label>
+                                <input type="tel" name="om_number" class="form-control-modern" 
+                                       placeholder="77 123 45 67">
+                            </div>
+                        </div>
+                        <!-- Étape 2: Affichage du QR Code -->
+                        <div class="step-account d-none" id="step1">
+                            <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                            
+                            <div id="qrcode-container">
+                                <img id="qrcode-image-om" src="" alt="QR Code de paiement">
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <p class="mb-1">Code USSD: <strong id="ussd-code-om"></strong></p>
+                                <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                            </div>
+                            
+                            <div class="payment-instructions">
+                                <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                <ol class="mt-3">
+                                    <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                    <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                    <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                    <li>Attendez la confirmation du paiement</li>
+                                </ol>
+                            </div>
+                            <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
+                        </div>
+                    </div>
+
+                    <!-- MTN Mobile Money -->
+                    <div class="payment-option" data-method="momo">
+                        <label class="payment-method-label">
+                            <input type="radio" name="payment_method" value="momo" class="d-none">
+                            <div class="payment-icon mtn">
+                                <img src="{% static './paiement/MOMO.png' %}" alt="MOMO">
+                            </div>
+                            <div>
+                                <div>MTN Mobile Money</div>
+                                <small class="text-muted">Paiement mobile via MTN MoMo</small>
+                            </div>
+                        </label>
+                        
+                        <div class="mt-3 d-none" id="momo-form">
+                            <div class="form-group-modern">
+                                <label class="form-label-modern">Numéro MTN MoMo</label>
+                                <input type="tel" name="momo_number" class="form-control-modern" 
+                                       placeholder="675 123 456">
+                            </div>
+                        </div>
+                        {% comment %} Validation {% endcomment %}
+                        <!-- Étape 2: Affichage du QR Code -->
+                        <div class="step-account d-none" id="step2">
+                            <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                            
+                            <div id="qrcode-container">
+                                <img id="qrcode-image-momo" src="" alt="QR Code de paiement">
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <p class="mb-1">Code USSD: <strong id="ussd-code-momo"></strong></p>
+                                <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                            </div>
+                            
+                            <div class="payment-instructions">
+                                <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                <ol class="mt-3">
+                                    <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                    <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                    <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                    <li>Attendez la confirmation du paiement</li>
+                                </ol>
+                            </div>
+                            <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
+                            <i class="fas fa-arrow-left me-2"></i> Retour
+                        </button>
+                        <button type="button" class="btn btn-primary-modern" id="nowpay" onclick="processPayment()">
+                            Payer Maintenant <i class="fas fa-lock ms-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Confirmation -->
+            <div class="confirmation-section" id="step-3">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <h2 class="card-header-title">
+                            <i class="fas fa-check-circle"></i>Confirmation de Paiement
+                        </h2>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Votre paiement a été initié avec succès! Veuillez envoyer la capture de la transaction.
+                        </div>
+                        
+                        <div class="upload-area" id="upload-area">
+                            <label for="payment-proof">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h5>Déposer votre capture de paiement</h5>
+                                <p class="text-muted">Glissez-déposez une image ou cliquez pour sélectionner</p>
+                            </label>
+                            <input type="file" id="payment-proof" accept="image/*" class="d-none">
+                        </div>
+                        
+                        <div class="preview-container">
+                            <img id="preview-image" class="preview-image">
+                            <button id="submit-proof" class="btn btn-primary-modern mt-3" style="display: none;">
+                                <i class="fas fa-paper-plane me-2"></i> Confirmer le Paiement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="orderId" style="display:none;"></div>
+
+        <!-- Right Column - Order Summary -->
+        <div class="col-lg-4">
+            <div class="glass-card">
+                <div class="card-header-custom">
+                    <h2 class="card-header-title">
+                        <i class="fas fa-shopping-bag"></i>Récapitulatif
+                    </h2>
+                </div>
+                <div class="card-body-custom">
+                    {% for item in cart_items %}
+                    <div class="course-item">
+                        <h3 class="course-title">{{ item.product.title }}</h3>
+                        <div class="text-end">
+                            <strong>{{ item.quantity }} x {{ item.product.price }} FCFA</strong>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="total-summary mt-4">
+                        <div class="total-row">
+                            <span>Sous-total</span>
+                            <span>{{ cart.get_total }} FCFA</span>
+                        </div>
+                        
+                        <div class="total-row">
+                            <strong>Total</strong>
+                            <strong class="total-amount" id="total-amount">{{ cart.get_total_with_tax|floatformat:0 }} FCFA</strong>
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-4">
+                        <input class="form-check-input" type="checkbox" id="terms-agree" required>
+                        <label class="form-check-label" for="terms-agree">
+                            J'accepte les <a href="#" class="text-primary">conditions générales</a>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// Initialize SweetAlert2
+const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+});
+
+// Step management
+let currentStep = 1;
+const totalSteps = 3;
+
+function updateProgressBar() {
+    const progressBar = document.getElementById('progress-bar');
+    const percentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    progressBar.style.width = `${percentage}%`;
+    
+    // Update step classes
+    document.querySelectorAll('.step').forEach((step, index) => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        
+        if (stepNum < currentStep) {
+            step.classList.add('completed');
+        } else if (stepNum === currentStep) {
+            step.classList.add('active');
+        }
+    });
+}
+
+function showStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('[id^="step-"]').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Show current step
+    document.getElementById(`step-${stepNumber}`).style.display = 'block';
+    
+    // Show confirmation section if it's step 3
+    if (stepNumber === 3) {
+        document.getElementById('step-3').style.display = 'block';
+    }
+    
+    currentStep = stepNumber;
+    updateProgressBar();
+}
+
+function nextStep(step) {
+    if (step === 2) {
+        // Validate step 1
+        const form = document.getElementById('checkout-form');
+        const requiredFields = form.querySelectorAll('[required]');
+        let valid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                valid = false;
+                field.style.borderColor = 'red';
+            } else {
+                field.style.borderColor = '';
+            }
+        });
+        
+        if (!valid) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez remplir tous les champs obligatoires'
+            });
+            return;
+        }
+    }
+    
+    showStep(step);
+}
+
+function prevStep(step) {
+    showStep(step);
+}
+
+// Payment method selection
+document.querySelectorAll('.payment-option').forEach(option => {
+    option.addEventListener('click', function() {
+        // Remove selected class from all options
+        document.querySelectorAll('.payment-option').forEach(el => {
+            el.classList.remove('selected');
+            const method = el.getAttribute('data-method');
+            const form = document.getElementById(`${method}-form`);
+            if (form) form.classList.add('d-none');
+        });
+        
+        // Add selected class to clicked option
+        this.classList.add('selected');
+        const method = this.getAttribute('data-method');
+        const form = document.getElementById(`${method}-form`);
+        if (form) form.classList.remove('d-none');
+        
+        // Update radio button
+        this.querySelector('input[type="radio"]').checked = true;
+    });
+});
+
+// Delivery zone change
+document.querySelector('select[name="delivery_zone"]').addEventListener('change', function() {
+    const zoneId = this.value;
+    if (zoneId) {
+        // In a real implementation, you would fetch this from an API
+        const deliveryFees = {
+            '1': 2000,
+            '2': 3000,
+            '3': 1500
+        };
+        
+        const fee = deliveryFees[zoneId] || 0;
+        document.getElementById('delivery-fee').textContent = `${fee} FCFA`;
+        
+        const subtotal = parseFloat({{ cart.get_total }});
+        const total = subtotal + fee;
+        document.getElementById('total-amount').textContent = `${total} FCFA`;
+    } else {
+        document.getElementById('delivery-fee').textContent = '0 FCFA';
+        document.getElementById('total-amount').textContent = `${parseFloat({{ cart.get_total }})} FCFA`;
+    }
+});
+
+// Process payment
+function processPayment() {
+    if (!document.getElementById('terms-agree').checked) {
+        Toast.fire({
+            icon: 'error',
+            title: 'Veuillez accepter les conditions générales'
+        });
+        return;
+    }
+    
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+    const formData = new FormData(document.getElementById('checkout-form'));
+    
+    // Ajouter la méthode de paiement
+    formData.append('payment_method', paymentMethod);
+    
+    //Whatsapp
+    if (paymentMethod === 'whatsapp') {
+        const whatsappNumber = document.querySelector('input[name="whatsapp_number"]').value;
+        if (!whatsappNumber) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez entrer votre numéro WhatsApp'
+            });
+            return;
+        }
+        formData.append('whatsapp_number', whatsappNumber);
+    }
+    //OM
+     if (paymentMethod === 'om') {
+        const OMNumber = document.querySelector('input[name="om_number"]').value;
+        if (!OMNumber) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez entrer votre numéro Orange'
+            });
+            return;
+        }
+        formData.append('om_number', OMNumber);
+    }
+    //MOMO
+     if (paymentMethod === 'momo') {
+        const MomoNumber = document.querySelector('input[name="momo_number"]').value;
+        if (!MomoNumber) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez entrer votre numéro MTN'
+            });
+            return;
+        }
+        formData.append('momo_number', MomoNumber);
+    }
+    
+    
+    Swal.fire({
+        title: 'Confirmation de paiement',
+        text: `Vous allez recevoir une demande de paiement sur ${paymentMethod === 'whatsapp' ? 'WhatsApp' : paymentMethod === 'om' ? 'Orange Money' : 'MTN Mobile Money'}.`,
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonColor: '#667eea',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Continuer',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Envoyer la requête AJAX
+            fetch(`/checkout/${ paymentMethod }/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('nowpay').classList.add('d-none')
+                    document.getElementById('orderId').innerText = data.order_id;
+                    if(data.ussd_code){
+                        // Sauvegarder les données de paiement
+                        paymentData = data;
+                        if(data.paiementMethod ='momo'){
+                            // Afficher le QR Code
+                            const interfaceMomo = document.getElementById('step2');
+                            const MomoNumber = document.getElementById('momo-form');
+                            const qrCodeImageMomo = document.getElementById('qrcode-image-momo');
+                            const ussdCodeElementMomo = document.getElementById('ussd-code-momo');
+
+                            interfaceMomo.classList.remove('d-none');
+                            MomoNumber.classList.add('d-none');
+                            qrCodeImageMomo.src = 'data:image/png;base64,' + data.qrcode;
+                            ussdCodeElementMomo.textContent = data.ussd_code;
+                        }else{
+                            // Afficher le QR Code
+                            const interfaceOm = document.getElementById('step1');
+                            const OmNumber = document.getElementById('om-form');
+                            const qrCodeImageOm = document.getElementById('qrcode-image-om');
+                            const ussdCodeElementOm = document.getElementById('ussd-code-om');
+
+                            interfaceOm.classList.remove('d-none');
+                            OmNumber.classList.add('d-none');
+                            qrCodeImageOm.src = 'data:image/png;base64,' + data.qrcode;
+                            ussdCodeElementOm.textContent = data.ussd_code;
+                        }
+                        
+                        
+                    }
+                    
+                    if(data.whatsapp_link){
+                        nextStep(3);
+                        window.open(data.whatsapp_link, '_blank');
+                    }
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Demande de paiement envoyée sur WhatsApp!'
+                    });
+                } else {
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Erreur: ' + data.message
+                    });
+                }
+            })
+            .catch(error => {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Erreur de connexion'
+                });
+            });
+        }
+    });
+}
+// File upload handling
+document.getElementById('upload-area').addEventListener('click', function() {
+    document.getElementById('payment-proof').click();
+});
+
+document.getElementById('payment-proof').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        // Vérifier le type de fichier
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            Swal.fire({
+                title: 'Format non supporté',
+                text: 'Veuillez uploader une image JPEG ou PNG.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        
+        // Vérifier la taille (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({
+                title: 'Fichier trop volumineux',
+                text: 'La taille maximale est de 5MB.',
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('preview-image');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            document.getElementById('submit-proof').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Drag and drop functionality
+const uploadArea = document.getElementById('upload-area');
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, highlight, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+    uploadArea.addEventListener(eventName, unhighlight, false);
+});
+
+function highlight() {
+    uploadArea.classList.add('highlight');
+}
+
+function unhighlight() {
+    uploadArea.classList.remove('highlight');
+}
+
+uploadArea.addEventListener('drop', handleDrop, false);
+
+function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    if (files.length) {
+        document.getElementById('payment-proof').files = files;
+        const event = new Event('change');
+        document.getElementById('payment-proof').dispatchEvent(event);
+    }
+}
+
+// Submit payment proof
+document.getElementById('submit-proof').addEventListener('click', function() {
+    const fileInput = document.getElementById('payment-proof');
+    if (!fileInput.files.length) {
+        Swal.fire({
+            title: 'Aucun fichier',
+            text: 'Veuillez sélectionner une capture d\'écran.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Confirmer la soumission',
+        text: 'Êtes-vous sûr de vouloir soumettre cette capture pour vérification?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#667eea',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Oui, soumettre',
+        cancelButtonText: 'Annuler'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            submitPaymentProof();
+        }
+    });
+});
+
+function submitPaymentProof() {
+    const fileInput = document.getElementById('payment-proof');
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('payment_proof', file);
+    
+    // Récupérer l'order_id depuis l'URL ou un data attribute
+    const orderId = document.getElementById('orderId').textContent ?? 1; // Adaptez selon votre structure
+    
+    Swal.fire({
+        title: 'Analyse en cours',
+        text: 'Vérification de votre capture d\'écran...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch(`/check-paiement/${orderId}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.verified) {
+                Swal.fire({
+                    title: 'Succès!',
+                    html: `
+                        <div class="text-success">
+                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                            <p>${data.message}</p>
+                        </div>
+                        <div class="text-start mt-3">
+                            <p><strong>Montant:</strong> ${data.data.montant} XAF</p>
+                            ${data.data.destinataire ? `<p><strong>Destinataire:</strong> ${data.data.destinataire}</p>` : ''}
+                            ${data.data.transaction_id ? `<p><strong>Référence:</strong> ${data.data.transaction_id}</p>` : ''}
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonText: 'Continuer'
+                }).then(() => {
+                    window.location.href = "#";
+                });
+            } else {
+                Swal.fire({
+                    title: 'Attention',
+                    html: `
+                        <div class="text-warning">
+                            <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                            <p>${data.message}</p>
+                        </div>
+                        <div class="text-start mt-3">
+                            <p><strong>Montant détecté:</strong> ${data.data.montant} XAF</p>
+                            <p class="text-muted">Si cette information est incorrecte, veuillez soumettre une image plus claire.</p>
+                        </div>
+                    `,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Soumettre quand même',
+                    cancelButtonText: 'Changer l\'image'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Forcer la validation
+                        forceVerification(orderId, data.data);
+                    }
+                });
+            }
+        } else {
+            Swal.fire({
+                title: 'Erreur',
+                text: data.message,
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            title: 'Erreur de connexion',
+            text: 'Veuillez réessayer plus tard.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    });
+}
+
+function forceVerification(orderId, data) {
+    // Fonction pour forcer la validation manuellement
+    fetch(`/force-verification/${orderId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                title: 'Paiement confirmé!',
+                text: 'Votre paiement a été validé manuellement.',
+                icon: 'success',
+                confirmButtonText: 'Continuer'
+            }).then(() => {
+                window.location.href = "{% url 'home' %}";
+            });
+        }
+    });
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+// Initialize progress bar
+updateProgressBar();
+</script>
+{% endblock %}
