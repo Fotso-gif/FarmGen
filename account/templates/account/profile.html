@@ -596,18 +596,19 @@
             <div class="profile-sidebar">
                 <div class="profile-card animate__animated animate__fadeInLeft">
                     <div class="profile-avatar">
-                        {% if user and user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="Profile de {{ user.get_full_name }}">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profil de {{ user.get_full_name }}">
                         {% else %}
-                            <div class="avatar-initials">            
-                                {{ user.first_name|first }}{{ user.last_name|first }}
-                            </div>
+                        <div class="avatar-initials">
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        </div>
                         {% endif %}
                         <div class="avatar-edit" onclick="document.getElementById('profileImageInput').click()">
                             <i class="fas fa-camera"></i>
                         </div>
                     </div>
-                    
+
+
                     <h2 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h2>
                     <p class="profile-role">
                         {% if user.account_type == 'seller' %}
@@ -623,7 +624,7 @@
                             Amateur de produits agricoles frais et locaux.
                         {% endif %}
                     </p>
-                    
+
                     <div class="profile-stats">
                         <div class="stat-item">
                             <div class="stat-value">
@@ -666,7 +667,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     {% if user.user_type == 'seller' and user.shop %}
                     <div class="shop-info">
                         <h4><i class="fas fa-store"></i> {{ user.shop.name }}</h4>
@@ -687,7 +688,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <form id="profileImageForm" method="post" enctype="multipart/form-data" style="display: none;">
                         {% csrf_token %}
                         <input type="file" id="profileImageInput" name="profile_image" accept="image/*" onchange="this.form.submit()">
@@ -1019,11 +1020,11 @@
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const tabId = tab.getAttribute('data-tab');
-                
+
                 // Désactiver tous les onglets
                 tabs.forEach(t => t.classList.remove('active'));
                 tabContents.forEach(tc => tc.classList.remove('active'));
-                
+
                 // Activer l'onglet cliqué
                 tab.classList.add('active');
                 document.getElementById(tabId).classList.add('active');
@@ -1034,7 +1035,7 @@
         let isEditing = false;
         const editButtons = document.querySelectorAll('.info-edit');
         const cancelButton = document.getElementById('cancelEdit');
-        
+
         function toggleEditMode(enable) {
             const inputs = document.querySelectorAll('input, textarea, select');
             inputs.forEach(input => {
@@ -1048,14 +1049,14 @@
                     }
                 }
             });
-            
+
             isEditing = enable;
             cancelButton.style.display = enable ? 'flex' : 'none';
         }
 
         editButtons.forEach(button => {
             if (button.id !== 'editPersonalInfo' && button.id !== 'editAddress') return;
-            
+
             button.addEventListener('click', function() {
                 toggleEditMode(true);
             });
@@ -1104,7 +1105,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         document.body.appendChild(notification);
-        
+
         // Auto-remove after 5 seconds
         setTimeout(() => {
             if (notification.parentNode) {
