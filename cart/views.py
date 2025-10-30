@@ -29,6 +29,7 @@ def add_to_cart(request, product_id):
         else:
             cart[product_id_str] = {
                 'name': product.name,
+                'shop_id': product.category.shop.id,
                 'slug': f'{product.name}-farm-{product.id}',
                 'price': float(product.price),
                 'quantity': quantity,

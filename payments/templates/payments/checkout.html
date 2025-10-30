@@ -1358,4 +1358,42 @@ function getCookie(name) {
 // Initialize progress bar
 updateProgressBar();
 </script>
+<script>
+// Dans la fonction processPayment(), remplacez l'URL :
+fetch(`/checkout/process/${paymentMethod}/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest'
+    }
+})
+
+// Dans submitPaymentProof(), remplacez l'URL :
+fetch(`/checkout/upload-proof/${orderId}/`, {
+    method: 'POST',
+    body: formData,
+    headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+    }
+})
+
+// Ajoutez cette fonction pour vérifier le statut de la commande
+function checkOrderStatus(orderId) {
+    fetch(`/order/status/${orderId}/`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.payment_verified) {
+            Swal.fire({
+                title: 'Paiement Confirmé!',
+                text: 'Votre paiement a été vérifié et confirmé.',
+                icon: 'success',
+                confirmButtonText: 'Continuer'
+            }).then(() => {
+                window.location.href = "{% url 'home' %}";
+            });
+        }
+    });
+}
+</script>
 {% endblock %}
