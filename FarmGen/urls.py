@@ -26,6 +26,7 @@ urlpatterns = [
     path('account/', include('account.urls')),
     path('marketplace/', include('Marketplace.urls')),
     path('blog/', include('Blog.urls')),
+    path('cart/', include('cart.urls')),
     path('payments/', include('payments.urls')),
     path('contact/', include('contacts.urls')),
     # redirect /checkout/ to the payments checkout UI

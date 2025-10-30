@@ -1305,7 +1305,15 @@
             <div class="product-actions-bottom">
               <div class="quantity-controls">
                 <button class="quantity-btn minus-btn" data-product-id="{{ produit.id }}">-</button>
-                <input type="text" class="quantity-input" value="1" data-product-id="{{ produit.id }}" readonly>
+                <input 
+                  type="number"
+                  class="quantity-input"
+                  value="1"
+                  min="1"
+                  max="{{ produit.quantity }}"
+                  data-product-id="{{ produit.id }}"
+                  readonly
+                >
                 <button class="quantity-btn plus-btn" data-product-id="{{ produit.id }}">+</button>
               </div>
               <button class="add-to-cart-btn" data-product-id="{{ produit.id }}">
@@ -1355,6 +1363,7 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Système de gestion avancé
 class AdvancedShopSystem {
@@ -1920,4 +1929,69 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+<script>
+// Gestion des boutons + et -
+document.querySelectorAll('.quantity-controls').forEach(control => {
+    const minusBtn = control.querySelector('.minus-btn');
+    const plusBtn = control.querySelector('.plus-btn');
+    const input = control.querySelector('.quantity-input');
+
+    // Récupération des bornes
+    const min = parseInt(input.min) || 1;
+    const max = parseInt(input.max) || Infinity;
+
+    // Bouton +
+    plusBtn.addEventListener('click', () => {
+        let current = parseInt(input.value) || min;
+        if (current < max) {
+            input.value = current + 1;
+        } else {
+            showWarningToast(`Stock maximal atteint (${max})`);
+            input.classList.add('shake');
+            setTimeout(() => input.classList.remove('shake'), 300);
+        }
+    });
+
+    // Bouton -
+    minusBtn.addEventListener('click', () => {
+        let current = parseInt(input.value) || min;
+        if (current > min) {
+            input.value = current - 1;
+        } else {
+            input.classList.add('shake');
+            setTimeout(() => input.classList.remove('shake'), 300);
+        }
+    });
+});
+
+// Petite animation visuelle
+const style = document.createElement('style');
+style.innerHTML = `
+  .shake { animation: shake 0.3s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+`;
+document.head.appendChild(style);
+
+// Toast SweetAlert2 (si non déjà défini)
+function showWarningToast(message) {
+  if (typeof Swal !== 'undefined') {
+      Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'warning',
+          title: message,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+          background: '#1e293b',
+          color: '#fff',
+      });
+  }
+}
+</script>
+
 {% endblock %}

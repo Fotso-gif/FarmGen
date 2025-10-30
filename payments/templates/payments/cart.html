@@ -375,11 +375,12 @@
 
         .empty-icon {
             font-size: 8rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 30px;
-            animation: float 3s ease-in-out infinite;
+            animation: slideInUp 3s ease-in-out 1;
+            
         }
 
         /* Toast amélioré */
@@ -488,7 +489,7 @@
 
 <!-- Cart Content -->
 <div class="container main-container">
-    {% if cart_items %}
+    {% if cart.items %}
     <div class="row">
         <!-- Cart Items -->
         <div class="col-lg-8">
@@ -499,84 +500,84 @@
                     </div>
                 </div>
                 <div>
-                    <h4 class="mb-1 fw-bold" style="color: var(--primary-color);">Votre Panier</h4>
+                    <h4 class="mb-1 fw-bold" style="color: var(--primary-green);">Votre Panier</h4>
                     <small class="text-muted">{{ cart.get_total_quantity }} article(s) • Total: {{ cart.get_total_with_tax|floatformat:0 }} FCFA</small>
                 </div>
             </div>
 
-            {% for item in cart_items %}
-            <div class="cart-item-card" data-item-id="{{ item.id }}">
-                <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <!-- Product Image -->
-                        <div class="col-md-3 mb-3 mb-md-0">
-                            <div class="product-image-wrapper">
-                                {% if item.product.image %}
-                                <img src="{{ item.product.image.url }}" class="product-image" alt="{{ item.product.title }}">
-                                {% else %}
-                                <div class="placeholder-image">
-                                    <i class="fas fa-graduation-cap"></i>
+            {% for product_id, item in cart.items %}
+                <div class="cart-item-card" data-product-id="{{ product_id }}">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <!-- Product Image -->
+                            <div class="col-md-3 mb-3 mb-md-0">
+                                <div class="product-image-wrapper">
+                                    {% if item.image %}
+                                    <img src="{{ item.image }}" class="product-image" alt="{{ item.name }}">
+                                    {% else %}
+                                    <div class="placeholder-image">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    {% endif %}
+                                    <span class="quantity-badge">{{ item.quantity }}</span>
                                 </div>
-                                {% endif %}
-                                <span class="quantity-badge">{{ item.quantity }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Product Details -->
-                        <div class="col-md-6">
-                            <h5 class="card-title fw-bold mb-3">{{ item.product.title }}</h5>
-                            
-                            <!-- Product Options -->
-                            <div class="mb-3">
-                                {% if item.options.certificat %}
-                                <span class="option-badge boisson-badge">
-                                    <i class="fas fa-certificate"></i>Certificat inclus
-                                </span>
-                                {% endif %}
-                                
-                                {% if item.options.support %}
-                                <span class="option-badge sauce-badge">
-                                    <i class="fas fa-users"></i>Support communauté
-                                </span>
-                                {% endif %}
-                                
-                                {% if item.options.videos %}
-                                <span class="option-badge supplement-badge">
-                                    <i class="fas fa-video"></i>Vidéos HD
-                                </span>
-                                {% endif %}
                             </div>
 
-                            <div class="text-muted">
-                                <small><i class="fas fa-clock me-1"></i>Durée: {{ item.product.duration }} heures</small>
-                            </div>
-                        </div>
-
-                        <!-- Price & Actions -->
-                        <div class="col-md-3">
-                            <div class="text-center">
-                                <h4 class="text-primary fw-bold mb-4">{{ item.get_total|floatformat:0 }} FCFA</h4>
+                            <!-- Product Details -->
+                            <div class="col-md-6">
+                                <h5 class="card-title fw-bold mb-3" style="color:var(--primary-green);">{{ item.name }}</h5>
                                 
-                                <!-- Quantity Controls -->
-                                <div class="quantity-controls d-flex align-items-center justify-content-center mb-4">
-                                    <button class="quantity-btn me-2" data-action="decrement" data-item-id="{{ item.id }}">
-                                        <i class="fas fa-minus"></i>
-                                    </button>
-                                    <input type="text" value="{{ item.quantity }}" class="quantity-display" readonly>
-                                    <button class="quantity-btn ms-2" data-action="increment" data-item-id="{{ item.id }}">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
+                                <!-- Product Options -->
+                                <div class="mb-3">
+                                    {% if item.certificat %}
+                                    <span class="option-badge boisson-badge">
+                                        <i class="fas fa-certificate"></i>Certificat inclus
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if item.support %}
+                                    <span class="option-badge sauce-badge">
+                                        <i class="fas fa-users"></i>Support communauté
+                                    </span>
+                                    {% endif %}
+                                    
+                                    {% if item.videos %}
+                                    <span class="option-badge supplement-badge">
+                                        <i class="fas fa-video"></i>Vidéos HD
+                                    </span>
+                                    {% endif %}
                                 </div>
 
-                                <!-- Delete Button -->
-                                <button class="btn btn-danger-modern btn-sm delete-item-btn" data-item-id="{{ item.id }}">
-                                    <i class="fas fa-trash me-1"></i>Supprimer
-                                </button>
+                                <div class="text-muted">
+                                    <small><i class="fas fa-tag me-1"></i>Prix unitaire: {{ item.price|floatformat:0 }} FCFA</small>
+                                </div>
+                            </div>
+
+                            <!-- Price & Actions -->
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h4 class="text-primary fw-bold mb-4">{{ item.total|floatformat:0 }} FCFA</h4>
+                                    
+                                    <!-- Quantity Controls -->
+                                    <div class="quantity-controls d-flex align-items-center justify-content-center mb-4">
+                                        <button class="quantity-btn me-2" data-action="decrement" data-product-id="{{ product_id }}">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="text" value="{{ item.quantity }}" class="quantity-display" style="color:#000;" readonly>
+                                        <button class="quantity-btn ms-2" data-action="increment" data-product-id="{{ product_id }}">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Delete Button -->
+                                    <button class="btn btn-danger-modern btn-sm delete-item-btn" data-product-id="{{ product_id }}">
+                                        <i class="fas fa-trash me-1"></i>Supprimer
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
             {% endfor %}
         </div>
 
@@ -592,45 +593,28 @@
                 <div class="summary-body">
                     <div class="summary-row">
                         <span>Sous-total</span>
-                        <span class="fw-bold" data-summary="subtotal">{{ cart.get_total|floatformat:0 }} FCFA</span>
+                        <span class="fw-bold" data-summary="subtotal">{{ cart_total|floatformat:0 }} FCFA</span>
                     </div>
                     
-                    {% comment %} <div class="summary-row">
-                        <span>Livraison</span>
-                        <span class="fw-bold text-success">Gratuite</span>
-                    </div>
-                     {% endcomment %}
                     <div class="summary-row">
                         <span>Frais de consultation (10%)</span>
-                        <span class="fw-bold" data-summary="tax">{{ cart.get_tax|floatformat:0 }} FCFA</span>
+                        <span class="fw-bold" data-summary="tax">{{ tax|floatformat:0 }} FCFA</span>
                     </div>
                     
                     <div class="total-row">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Total à payer</h5>
-                            <h3 class="mb-0 text-primary fw-bold" data-summary="total">{{ cart.get_total_with_tax|floatformat:0 }} FCFA</h3>
+                            <h3 class="mb-0 text-primary fw-bold" data-summary="total">{{ total_with_tax|floatformat:0 }} FCFA</h3>
                         </div>
                     </div>
 
                     <div class="d-grid gap-3">
-                        <a href="{% url 'checkout' %}" class="btn btn-primary-modern btn-modern">
+                        <a href="{% url 'checkout-page' %}" class="btn btn-primary-modern btn-modern">
                             <i class="fas fa-credit-card me-2"></i>Procéder au paiement
                         </a>
-                        <a href="{% url 'marketplace' %}" class="btn btn-outline-modern btn-modern">
+                        <a href="{% url 'marketplace' %}" class="btn btn-outline-modern btn-modern" style="color:#000;">
                             <i class="fas fa-arrow-left me-2"></i>Continuer mes achats
                         </a>
-                    </div>
-
-                    <div class="mt-4 text-center">
-                        <div class="d-flex align-items-center justify-content-center text-muted">
-                            <i class="fas fa-shield-alt me-2"></i>
-                            <small>Paiement 100% sécurisé</small>
-                        </div>
-                        <div class="mt-2 d-flex justify-content-center gap-2">
-                            <i class="fab fa-cc-visa fa-2x text-muted"></i>
-                            <i class="fab fa-cc-mastercard fa-2x text-muted"></i>
-                            <i class="fas fa-mobile-alt fa-2x text-muted"></i>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -680,7 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.quantity-btn').forEach(button => {
         button.addEventListener('click', function() {
             const action = this.dataset.action;
-            const itemId = this.dataset.itemId;
+            const productId = this.dataset.productId;
             const itemElement = this.closest('.cart-item-card');
             const quantityElement = itemElement.querySelector('.quantity-display');
             const quantityBadge = itemElement.querySelector('.quantity-badge');
@@ -690,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalHtml = this.innerHTML;
             this.innerHTML = '<div class="spinner"></div>';
             
-            fetch(`#`.replace('0', itemId), {
+            fetch(`/cart/update/${productId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -703,23 +687,27 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     // Update UI
-                    quantityElement.value = data.quantity;
-                    quantityBadge.textContent = data.quantity;
-                    itemElement.querySelector('.text-primary').textContent = `${data.item_total.toLocaleString()} FCFA`;
+                    if (data.quantity > 0) {
+                        quantityElement.value = data.quantity;
+                        quantityBadge.textContent = data.quantity;
+                        itemElement.querySelector('.text-primary').textContent = `${data.item_total.toLocaleString()} FCFA`;
+                    } else {
+                        // Remove item if quantity is 0
+                        itemElement.style.transition = 'all 0.4s ease';
+                        itemElement.style.opacity = '0';
+                        itemElement.style.height = '0';
+                        itemElement.style.margin = '0';
+                        itemElement.style.padding = '0';
+                        
+                        setTimeout(() => {
+                            itemElement.remove();
+                        }, 300);
+                    }
                     
                     // Update summary
-                    document.querySelectorAll('[data-summary="subtotal"]').forEach(el => {
-                        el.textContent = `${data.cart_total.toLocaleString()} FCFA`;
-                    });
-                    
-                    // Calculate tax and total
-                    const tax = Math.round(data.cart_total * 0.18);
-                    const total = data.cart_total + tax;
-                    
-                    document.querySelector('[data-summary="tax"]').textContent = `${tax.toLocaleString()} FCFA`;
-                    document.querySelectorAll('[data-summary="total"]').forEach(el => {
-                        el.textContent = `${total.toLocaleString()} FCFA`;
-                    });
+                    document.querySelector('[data-summary="subtotal"]').textContent = `${data.cart_total.toLocaleString()} FCFA`;
+                    document.querySelector('[data-summary="tax"]').textContent = `${data.tax.toLocaleString()} FCFA`;
+                    document.querySelector('[data-summary="total"]').textContent = `${data.total_with_tax.toLocaleString()} FCFA`;
                     
                     showToast('Quantité mise à jour');
                 } else {
@@ -742,14 +730,14 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             if (!confirm('Supprimer cet article du panier ?')) return;
             
-            const itemId = this.dataset.itemId;
+            const productId = this.dataset.productId;
             const itemElement = this.closest('.cart-item-card');
             
             // Show loading
             this.innerHTML = '<div class="spinner"></div>';
             this.disabled = true;
             
-            fetch(`#`.replace('0', itemId), {
+            fetch(`/cart/remove/${productId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -772,18 +760,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         showToast('Article supprimé');
                         
                         // Update summary
-                        document.querySelectorAll('[data-summary="subtotal"]').forEach(el => {
-                            el.textContent = `${data.cart_total.toLocaleString()} FCFA`;
-                        });
-                        
-                        // Calculate tax and total
-                        const tax = Math.round(data.cart_total * 0.18);
-                        const total = data.cart_total + tax;
-                        
-                        document.querySelector('[data-summary="tax"]').textContent = `${tax.toLocaleString()} FCFA`;
-                        document.querySelectorAll('[data-summary="total"]').forEach(el => {
-                            el.textContent = `${total.toLocaleString()} FCFA`;
-                        });
+                        document.querySelector('[data-summary="subtotal"]').textContent = `${data.cart_total.toLocaleString()} FCFA`;
+                        document.querySelector('[data-summary="tax"]').textContent = `${data.tax.toLocaleString()} FCFA`;
+                        document.querySelector('[data-summary="total"]').textContent = `${data.total_with_tax.toLocaleString()} FCFA`;
                         
                         // If cart is empty, reload
                         if (data.cart_total === 0) {
