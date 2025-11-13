@@ -26,6 +26,7 @@ class Order(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
@@ -78,10 +79,18 @@ class PaymentVerification(models.Model):
         return f"Verification for {self.order.id}"
 
 class MethodPaid(models.Model):
+
+    PAYMENT_METHODS = [
+        ('om', 'Orange Money'),
+        ('momo', 'MTN Mobile Money'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     shop = models.ForeignKey(Shop, related_name="qrcodes", on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
     nom = models.CharField(max_length=255, null=True, blank=True)
+    number = models.IntegerField()
     pathimg = models.ImageField(upload_to="QrCodes/%Y/%m/%d/")
     created_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(auto_now_add=True)

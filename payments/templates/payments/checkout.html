@@ -235,6 +235,8 @@
     .payment-icon img{
         border-radius:12px;
         width:100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .payment-icon.whatsapp {
@@ -386,7 +388,7 @@
 }
 
 /* Conteneur du QR Code */
-#qrcode-container {
+.qrcode-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -398,7 +400,7 @@
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
 }
 
-#qrcode-image {
+.qrcode-image {
     width: 220px;
     height: 220px;
     object-fit: contain;
@@ -407,7 +409,7 @@
 }
 
 /* Code USSD */
-#ussd-code {
+.ussd-code {
     font-family: 'Courier New', monospace;
     font-weight: bold;
     color: #e74c3c;
@@ -453,11 +455,7 @@
 .payment-instructions ol li:hover {
     background-color: #f5f9ff;
 }
-.payment-instructions ol li::before {
-    content: "✓";
-    background-color: #27ae60;
-    /* reste identique */
-}
+
 /* Puces numérotées personnalisées */
 .payment-instructions ol li::before {
     content: counter(step-counter);
@@ -488,7 +486,7 @@
         padding: 15px;
     }
 
-    #qrcode-image {
+    .qrcode-image {
         width: 180px;
         height: 180px;
     }
@@ -498,7 +496,7 @@
         font-size: 0.9em;
     }
 
-    #ussd-code {
+    .ussd-code {
         font-size: 1.1em;
     }
 }
@@ -544,7 +542,7 @@
             <h1 class="hero-title">
                 <i class="fas fa-credit-card me-3"></i>Finalisation de Commande
             </h1>
-            <p class="text-white-50">Procédez au paiement de vos formations en toute sécurité</p>
+            <p class="text-white-50">Procédez au paiement de vos produits en toute sécurité</p>
         </div>
     </div>
 </section>
@@ -590,14 +588,14 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group-modern">
-                                    <label class="form-label-modern">Prénom</label>
+                                    <label class="form-label-modern">Prénom *</label>
                                     <input type="text" name="first_name" class="form-control-modern" 
                                            value="{{ user.first_name|default:'' }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group-modern">
-                                    <label class="form-label-modern">Nom</label>
+                                    <label class="form-label-modern">Nom *</label>
                                     <input type="text" name="last_name" class="form-control-modern" 
                                            value="{{ user.last_name|default:'' }}" required>
                                 </div>
@@ -607,23 +605,22 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group-modern">
-                                    <label class="form-label-modern">Email</label>
+                                    <label class="form-label-modern">Email *</label>
                                     <input type="email" name="email" class="form-control-modern" 
                                            value="{{ user.email|default:'' }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group-modern">
-                                    <label class="form-label-modern">Téléphone</label>
-                                    <input type="tel" name="phone" class="form-control-modern" required>
+                                    <label class="form-label-modern">Téléphone *</label>
+                                    <input type="tel" name="phone" class="form-control-modern" 
+                                           value="{{ user.phone|default:'' }}" required>
                                 </div>
                             </div>
                         </div>
                         
-                        
-                        
                         <div class="text-end">
-                            <button type="button" class="btn btn-primary-modern" onclick="nextStep(2)">
+                            <button type="button" class="btn btn-primary-modern nextstep-2" onclick="nextStep(2)">
                                 Suivant <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
@@ -633,298 +630,303 @@
 
             <!-- Step 2: Payment Method -->
             <div class="glass-card" id="step-2" style="display: none;">
-    <div class="card-header-custom">
-        <h2 class="card-header-title">
-            <i class="fas fa-credit-card"></i>Méthode de Paiement
-        </h2>
-    </div>
-    <div class="card-body-custom">
-        <!-- Afficher un message si des méthodes de paiement sont disponibles -->
-        {% if payment_methods %}
-        <div class="alert alert-info mb-4">
-            <i class="fas fa-store me-2"></i>
-            Méthodes de paiement disponibles pour cette boutique:
-            {% for method in payment_methods %}
-            <span class="badge bg-primary ms-2">{{ method.nom }}</span>
-            {% endfor %}
-        </div>
-        {% endif %}
+                <div class="card-header-custom">
+                    <h2 class="card-header-title">
+                        <i class="fas fa-credit-card"></i>Méthode de Paiement
+                    </h2>
+                </div>
+                <div class="card-body-custom">
+                    <!-- Afficher un message si des méthodes de paiement sont disponibles -->
+                    {% if payment_methods %}
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-store me-2"></i>
+                        Méthodes de paiement disponibles pour cette boutique
+                    </div>
+                    {% endif %}
 
-        <!-- WhatsApp Payment -->
-        {% if payment_methods and payment_methods|length > 0 %}
-            {% with whatsapp_available=payment_methods|dictsort:"nom"|join:""|stringformat:"s"|cut:" " %}
-            {% if "WhatsApp" in whatsapp_available or "whatsapp" in whatsapp_available %}
-            <div class="payment-option {% if payment_methods|length == 1 %}selected{% endif %}" data-method="whatsapp">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="whatsapp" {% if payment_methods|length == 1 %}checked{% endif %} class="d-none">
-                    <div class="payment-icon whatsapp">
-                        <i class="fab fa-whatsapp"></i>
-                    </div>
-                    <div>
-                        <div>Paiement WhatsApp</div>
-                        <small class="text-muted">Payez directement via WhatsApp</small>
-                    </div>
-                </label>
-                
-                <div class="mt-3" id="whatsapp-form">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Vous recevrez un message WhatsApp avec les instructions de paiement
-                    </div>
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro WhatsApp</label>
-                        <input type="tel" name="whatsapp_number" class="form-control-modern" 
-                               placeholder="77 123 45 67" required>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
-        {% else %}
-            <!-- WhatsApp Payment (par défaut si aucune méthode spécifique) -->
-            <div class="payment-option selected" data-method="whatsapp">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="whatsapp" checked class="d-none">
-                    <div class="payment-icon whatsapp">
-                        <i class="fab fa-whatsapp"></i>
-                    </div>
-                    <div>
-                        <div>Paiement WhatsApp</div>
-                        <small class="text-muted">Payez directement via WhatsApp</small>
-                    </div>
-                </label>
-                
-                <div class="mt-3" id="whatsapp-form">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Vous recevrez un message WhatsApp avec les instructions de paiement
-                    </div>
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro WhatsApp</label>
-                        <input type="tel" name="whatsapp_number" class="form-control-modern" 
-                               placeholder="77 123 45 67" required>
-                    </div>
-                </div>
-            </div>
-        {% endif %}
+                    <!-- WhatsApp Payment -->
+                    {% if payment_methods %}
+                        {% for method in payment_methods %}
+                            {% if method.payment_method == 'whatsapp' %}
+                            <div class="payment-option selected" data-method="whatsapp">
+                                <label class="payment-method-label">
+                                    <input type="radio" name="payment_method" value="whatsapp" {% if forloop.first %}checked{% endif %} class="d-none">
+                                    <div class="payment-icon whatsapp">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </div>
+                                    <div>
+                                        <div>Paiement WhatsApp</div>
+                                        <small class="text-muted">Payez directement via WhatsApp</small>
+                                    </div>
+                                </label>
+                                
+                                <div class="mt-3" id="whatsapp-form">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Vous recevrez un message WhatsApp avec les instructions de paiement
+                                    </div>
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">Numéro WhatsApp *</label>
+                                        <input type="tel" name="whatsapp_number" class="form-control-modern" 
+                                               placeholder="77 123 45 67" required>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- WhatsApp Payment (par défaut si aucune méthode spécifique) -->
+                        <div class="payment-option selected" data-method="whatsapp">
+                            <label class="payment-method-label">
+                                <input type="radio" name="payment_method" value="whatsapp" checked class="d-none">
+                                <div class="payment-icon whatsapp">
+                                    <i class="fab fa-whatsapp"></i>
+                                </div>
+                                <div>
+                                    <div>Paiement WhatsApp</div>
+                                    <small class="text-muted">Payez directement via WhatsApp</small>
+                                </div>
+                            </label>
+                            
+                            <div class="mt-3" id="whatsapp-form">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Vous recevrez un message WhatsApp avec les instructions de paiement
+                                </div>
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Numéro WhatsApp *</label>
+                                    <input type="tel" name="whatsapp_number" class="form-control-modern" 
+                                           placeholder="77 123 45 67" required>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
 
-        <!-- Orange Money -->
-        {% if payment_methods and payment_methods|length > 0 %}
-            {% with om_available=payment_methods|dictsort:"nom"|join:""|stringformat:"s"|cut:" " %}
-            {% if "Orange" in om_available or "orange" in om_available or "OM" in om_available or "om" in om_available %}
-            <div class="payment-option {% if payment_methods|length == 1 and not whatsapp_available %}selected{% endif %}" data-method="om">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="om" {% if payment_methods|length == 1 and not whatsapp_available %}checked{% endif %} class="d-none">
-                    <div class="payment-icon orange">
-                        <img src="{% static './paiement/OM.png' %}" alt="OM">
-                    </div>
-                    <div>
-                        <div>Orange Money</div>
-                        <small class="text-muted">Paiement mobile via Orange Money</small>
-                    </div>
-                </label>
-                
-                <div class="mt-3 d-none" id="om-form">
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro Orange Money</label>
-                        <input type="tel" name="om_number" class="form-control-modern" 
-                               placeholder="77 123 45 67">
-                    </div>
-                </div>
-                <!-- Étape 2: Affichage du QR Code -->
-                <div class="step-account d-none" id="step1">
-                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
-                    
-                    <div id="qrcode-container">
-                        <img id="qrcode-image-om" src="" alt="QR Code de paiement">
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <p class="mb-1">Code USSD: <strong id="ussd-code-om"></strong></p>
-                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
-                    </div>
-                    
-                    <div class="payment-instructions">
-                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
-                        <ol class="mt-3">
-                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
-                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
-                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
-                            <li>Attendez la confirmation du paiement</li>
-                        </ol>
-                    </div>
-                    <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
-        {% else %}
-            <!-- Orange Money (par défaut si aucune méthode spécifique) -->
-            <div class="payment-option" data-method="om">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="om" class="d-none">
-                    <div class="payment-icon orange">
-                        <img src="{% static './paiement/OM.png' %}" alt="OM">
-                    </div>
-                    <div>
-                        <div>Orange Money</div>
-                        <small class="text-muted">Paiement mobile via Orange Money</small>
-                    </div>
-                </label>
-                
-                <div class="mt-3 d-none" id="om-form">
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro Orange Money</label>
-                        <input type="tel" name="om_number" class="form-control-modern" 
-                               placeholder="77 123 45 67">
-                    </div>
-                </div>
-                <!-- Étape 2: Affichage du QR Code -->
-                <div class="step-account d-none" id="step1">
-                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
-                    
-                    <div id="qrcode-container">
-                        <img id="qrcode-image-om" src="" alt="QR Code de paiement">
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <p class="mb-1">Code USSD: <strong id="ussd-code-om"></strong></p>
-                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
-                    </div>
-                    
-                    <div class="payment-instructions">
-                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
-                        <ol class="mt-3">
-                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
-                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
-                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
-                            <li>Attendez la confirmation du paiement</li>
-                        </ol>
-                    </div>
-                    <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
-                </div>
-            </div>
-        {% endif %}
+                    <!-- Orange Money -->
+                    {% if payment_methods %}
+                        {% for method in payment_methods %}
+                            {% if method.payment_method == 'om' %}
+                            <div class="payment-option selected" data-method="om">
+                                <label class="payment-method-label">
+                                    <input type="radio" name="payment_method" value="om" checked class="d-none">
+                                    <div class="payment-icon orange">
+                                        <img src="{% static './paiement/OM.png' %}" alt="OM">
+                                    </div>
+                                    <div>
+                                        <div>Orange Money</div>
+                                        <small class="text-muted">Paiement mobile via Orange Money</small>
+                                    </div>
+                                </label>
+                                
+                                <div class="mt-3 d-none" id="om-form">
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">Numéro Orange Money *</label>
+                                        <input type="tel" name="om_number" class="form-control-modern" 
+                                               placeholder="77 123 45 67" required>
+                                    </div>
+                                </div>
+                                <!-- Étape 2: Affichage du QR Code -->
+                                <div class="step-account d-none" id="om-payment-interface">
+                                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                                    
+                                    <div class="qrcode-container">
+                                        <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                    </div>
+                                    
+                                    <div class="text-center mt-3">
+                                        <p class="mb-1">Code USSD: <strong id="ussd-code-om" class="ussd-code"></strong></p>
+                                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                                    </div>
+                                    
+                                    <div class="payment-instructions">
+                                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                        <ol class="mt-3">
+                                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                            <li>Attendez la confirmation du paiement</li>
+                                        </ol>
+                                    </div>
+                                    <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)">
+                                        <i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- Orange Money (par défaut si aucune méthode spécifique) -->
+                        <div class="payment-option" data-method="om">
+                            <label class="payment-method-label">
+                                <input type="radio" name="payment_method" value="om" class="d-none">
+                                <div class="payment-icon orange">
+                                    <img src="{% static './paiement/OM.png' %}" alt="OM">
+                                </div>
+                                <div>
+                                    <div>Orange Money</div>
+                                    <small class="text-muted">Paiement mobile via Orange Money</small>
+                                </div>
+                            </label>
+                            
+                            <div class="mt-3 d-none" id="om-form">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Numéro Orange Money *</label>
+                                    <input type="tel" name="om_number" class="form-control-modern" 
+                                           placeholder="77 123 45 67" required>
+                                </div>
+                            </div>
+                            <!-- Étape 2: Affichage du QR Code -->
+                            <div class="step-account d-none" id="om-payment-interface">
+                                <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                                
+                                <div class="qrcode-container">
+                                    <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <p class="mb-1">Code USSD: <strong id="ussd-code-om" class="ussd-code"></strong></p>
+                                    <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                                </div>
+                                
+                                <div class="payment-instructions">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                    <ol class="mt-3">
+                                        <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                        <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                        <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                        <li>Attendez la confirmation du paiement</li>
+                                    </ol>
+                                </div>
+                                <button type="button" class="btn btn-primary-success nextstep-3" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)">
+                                    <i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
 
-        <!-- MTN Mobile Money -->
-        {% if payment_methods and payment_methods|length > 0 %}
-            {% with momo_available=payment_methods|dictsort:"nom"|join:""|stringformat:"s"|cut:" " %}
-            {% if "MTN" in momo_available or "mtn" in momo_available or "MOMO" in momo_available or "momo" in momo_available %}
-            <div class="payment-option {% if payment_methods|length == 1 and not whatsapp_available and not om_available %}selected{% endif %}" data-method="momo">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="momo" {% if payment_methods|length == 1 and not whatsapp_available and not om_available %}checked{% endif %} class="d-none">
-                    <div class="payment-icon mtn">
-                        <img src="{% static './paiement/MOMO.png' %}" alt="MOMO">
+                    <!-- MTN Mobile Money -->
+                    {% if payment_methods %}
+                        {% for method in payment_methods %}
+                            {% if method.payment_method == 'momo' %}
+                            <div class="payment-option" data-method="momo">
+                                <label class="payment-method-label">
+                                    <input type="radio" name="payment_method" value="momo" class="d-none">
+                                    <div class="payment-icon mtn">
+                                        <img src="{% static './paiement/MOMO.png' %}" alt="MOMO">
+                                    </div>
+                                    <div>
+                                        <div>MTN Mobile Money</div>
+                                        <small class="text-muted">Paiement mobile via MTN MoMo</small>
+                                    </div>
+                                </label>
+                                
+                                <div class="mt-3 d-none" id="momo-form">
+                                    <div class="form-group-modern">
+                                        <label class="form-label-modern">Numéro MTN MoMo *</label>
+                                        <input type="tel" name="momo_number" class="form-control-modern" 
+                                               placeholder="675 123 456" required>
+                                    </div>
+                                </div>
+                                <!-- Étape 2: Affichage du QR Code -->
+                                <div class="step-account d-none" id="momo-payment-interface">
+                                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                                    
+                                    <div class="qrcode-container">
+                                        <img id="qrcode-image-momo" src="" alt="QR Code de paiement" class="qrcode-image">
+                                    </div>
+                                    
+                                    <div class="text-center mt-3">
+                                        <p class="mb-1">Code USSD: <strong id="ussd-code-momo" class="ussd-code"></strong></p>
+                                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                                    </div>
+                                    
+                                    <div class="payment-instructions">
+                                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                        <ol class="mt-3">
+                                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                            <li>Attendez la confirmation du paiement</li>
+                                        </ol>
+                                    </div>
+                                    <button type="button" class="btn btn-primary-success nextstep-3" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)">
+                                        <i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <!-- MTN Mobile Money (par défaut si aucune méthode spécifique) -->
+                        <div class="payment-option" data-method="momo">
+                            <label class="payment-method-label">
+                                <input type="radio" name="payment_method" value="momo" class="d-none">
+                                <div class="payment-icon mtn">
+                                    <img src="{% static './paiement/MOMO.png' %}" alt="MOMO">
+                                </div>
+                                <div>
+                                    <div>MTN Mobile Money</div>
+                                    <small class="text-muted">Paiement mobile via MTN MoMo</small>
+                                </div>
+                            </label>
+                            
+                            <div class="mt-3 d-none" id="momo-form">
+                                <div class="form-group-modern">
+                                    <label class="form-label-modern">Numéro MTN MoMo *</label>
+                                    <input type="tel" name="momo_number" class="form-control-modern" 
+                                           placeholder="675 123 456" required>
+                                </div>
+                            </div>
+                            <!-- Étape 2: Affichage du QR Code -->
+                            <div class="step-account d-none" id="momo-payment-interface">
+                                <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
+                                
+                                <div class="qrcode-container">
+                                    <img id="qrcode-image-momo" src="" alt="QR Code de paiement" class="qrcode-image">
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <p class="mb-1">Code USSD: <strong id="ussd-code-momo" class="ussd-code"></strong></p>
+                                    <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
+                                </div>
+                                
+                                <div class="payment-instructions">
+                                    <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
+                                    <ol class="mt-3">
+                                        <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
+                                        <li>Ou composez le code USSD affiché sur votre téléphone</li>
+                                        <li>Confirmez la transaction lorsque vous y êtes invité</li>
+                                        <li>Attendez la confirmation du paiement</li>
+                                    </ol>
+                                </div>
+                                <button type="button" class="btn btn-primary-success nextstep-3" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)">
+                                    <i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Message si aucune méthode de paiement n'est disponible -->
+                    {% if payment_methods and payment_methods|length == 0 %}
+                    <div class="alert alert-warning text-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Aucune méthode de paiement n'est actuellement disponible pour cette boutique.
+                        <br>
+                        <small>Veuillez contacter le vendeur pour plus d'informations.</small>
                     </div>
-                    <div>
-                        <div>MTN Mobile Money</div>
-                        <small class="text-muted">Paiement mobile via MTN MoMo</small>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
+                            <i class="fas fa-arrow-left me-2"></i> Retour
+                        </button>
+                        <button type="button" class="btn btn-primary-modern" id="nowpay" onclick="processPayment()" 
+                                {% if payment_methods and payment_methods|length == 0 %}disabled{% endif %}>
+                            Payer Maintenant <i class="fas fa-lock ms-2"></i>
+                        </button>
                     </div>
-                </label>
-                
-                <div class="mt-3 d-none" id="momo-form">
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro MTN MoMo</label>
-                        <input type="tel" name="momo_number" class="form-control-modern" 
-                               placeholder="675 123 456">
-                    </div>
-                </div>
-                <!-- Étape 2: Affichage du QR Code -->
-                <div class="step-account d-none" id="step2">
-                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
-                    
-                    <div id="qrcode-container">
-                        <img id="qrcode-image-momo" src="" alt="QR Code de paiement">
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <p class="mb-1">Code USSD: <strong id="ussd-code-momo"></strong></p>
-                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
-                    </div>
-                    
-                    <div class="payment-instructions">
-                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
-                        <ol class="mt-3">
-                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
-                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
-                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
-                            <li>Attendez la confirmation du paiement</li>
-                        </ol>
-                    </div>
-                    <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
                 </div>
             </div>
-            {% endif %}
-            {% endwith %}
-        {% else %}
-            <!-- MTN Mobile Money (par défaut si aucune méthode spécifique) -->
-            <div class="payment-option" data-method="momo">
-                <label class="payment-method-label">
-                    <input type="radio" name="payment_method" value="momo" class="d-none">
-                    <div class="payment-icon mtn">
-                        <img src="{% static './paiement/MOMO.png' %}" alt="MOMO">
-                    </div>
-                    <div>
-                        <div>MTN Mobile Money</div>
-                        <small class="text-muted">Paiement mobile via MTN MoMo</small>
-                    </div>
-                </label>
-                
-                <div class="mt-3 d-none" id="momo-form">
-                    <div class="form-group-modern">
-                        <label class="form-label-modern">Numéro MTN MoMo</label>
-                        <input type="tel" name="momo_number" class="form-control-modern" 
-                               placeholder="675 123 456">
-                    </div>
-                </div>
-                <!-- Étape 2: Affichage du QR Code -->
-                <div class="step-account d-none" id="step2">
-                    <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
-                    
-                    <div id="qrcode-container">
-                        <img id="qrcode-image-momo" src="" alt="QR Code de paiement">
-                    </div>
-                    
-                    <div class="text-center mt-3">
-                        <p class="mb-1">Code USSD: <strong id="ussd-code-momo"></strong></p>
-                        <p class="text-muted">Composez ce code sur votre téléphone pour payer</p>
-                    </div>
-                    
-                    <div class="payment-instructions">
-                        <h5><i class="fas fa-info-circle me-2"></i>Instructions de paiement</h5>
-                        <ol class="mt-3">
-                            <li>Scannez le QR Code avec l'application mobile money de votre opérateur</li>
-                            <li>Ou composez le code USSD affiché sur votre téléphone</li>
-                            <li>Confirmez la transaction lorsque vous y êtes invité</li>
-                            <li>Attendez la confirmation du paiement</li>
-                        </ol>
-                    </div>
-                    <button type="button" class="btn btn-primary-success" style="background:#28a745;margin-top:1rem; margin-left:75%;" onclick="nextStep(3)"><i class="fas fa-check" style="margin:.5rem;"></i>J'ai payé</button>
-                </div>
-            </div>
-        {% endif %}
-
-        <!-- Message si aucune méthode de paiement n'est disponible -->
-        {% if payment_methods and payment_methods|length == 0 %}
-        <div class="alert alert-warning text-center">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            Aucune méthode de paiement n'est actuellement disponible pour cette boutique.
-            <br>
-            <small>Veuillez contacter le vendeur pour plus d'informations.</small>
-        </div>
-        {% endif %}
-
-        <div class="d-flex justify-content-between mt-4">
-            <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
-                <i class="fas fa-arrow-left me-2"></i> Retour
-            </button>
-            <button type="button" class="btn btn-primary-modern" id="nowpay" onclick="processPayment()" 
-                    {% if payment_methods and payment_methods|length == 0 %}disabled{% endif %}>
-                Payer Maintenant <i class="fas fa-lock ms-2"></i>
-            </button>
-        </div>
-    </div>
-</div>
 
             <!-- Step 3: Confirmation -->
             <div class="confirmation-section" id="step-3">
@@ -941,7 +943,7 @@
                         </div>
                         
                         <div class="upload-area" id="upload-area">
-                            <label for="payment-proof">
+                            <label for="payment-proof" style="cursor: pointer;">
                                 <div class="upload-icon">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                 </div>
@@ -962,6 +964,7 @@
             </div>
         </div>
 
+        <!-- Hidden order ID -->
         <div id="orderId" style="display:none;"></div>
 
         <!-- Right Column - Order Summary -->
@@ -973,11 +976,11 @@
                     </h2>
                 </div>
                 <div class="card-body-custom">
-                    {% for item in cart_items %}
+                    {% for key, item in cart.items %}
                     <div class="course-item">
-                        <h3 class="course-title">{{ item.product.title }}</h3>
+                        <h3 class="course-title">{{ item.name }}</h3>
                         <div class="text-end">
-                            <strong>{{ item.quantity }} x {{ item.product.price }} FCFA</strong>
+                            <strong>{{ item.quantity }} x {{ item.price }} FCFA</strong>
                         </div>
                     </div>
                     {% endfor %}
@@ -985,12 +988,15 @@
                     <div class="total-summary mt-4">
                         <div class="total-row">
                             <span>Sous-total</span>
-                            <span>{{ cart.get_total }} FCFA</span>
+                            <span>{{ cart_total }} FCFA</span>
                         </div>
-                        
+                        <div class="total-row">
+                            <span>Taxes (10%)</span>
+                            <span>{{ tax|floatformat:0 }} FCFA</span>
+                        </div>
                         <div class="total-row">
                             <strong>Total</strong>
-                            <strong class="total-amount" id="total-amount">{{ cart.get_total_with_tax|floatformat:0 }} FCFA</strong>
+                            <strong class="total-amount" id="total-amount">{{ total_with_tax|floatformat:0 }} FCFA</strong>
                         </div>
                     </div>
 
@@ -1010,17 +1016,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Initialize SweetAlert2
-const Toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    didOpen: (toast) => {
-        toast.addEventListener('mouseenter', Swal.stopTimer)
-        toast.addEventListener('mouseleave', Swal.resumeTimer)
-    }
-});
 
 // Step management
 let currentStep = 1;
@@ -1051,11 +1046,17 @@ function showStep(stepNumber) {
     });
     
     // Show current step
-    document.getElementById(`step-${stepNumber}`).style.display = 'block';
+    const currentStepElement = document.getElementById(`step-${stepNumber}`);
+    if (currentStepElement) {
+        currentStepElement.style.display = 'block';
+    }
     
     // Show confirmation section if it's step 3
     if (stepNumber === 3) {
-        document.getElementById('step-3').style.display = 'block';
+        const confirmationSection = document.getElementById('step-3');
+        if (confirmationSection) {
+            confirmationSection.style.display = 'block';
+        }
     }
     
     currentStep = stepNumber;
@@ -1103,6 +1104,10 @@ document.querySelectorAll('.payment-option').forEach(option => {
             const method = el.getAttribute('data-method');
             const form = document.getElementById(`${method}-form`);
             if (form) form.classList.add('d-none');
+            
+            // Hide payment interfaces
+            const paymentInterface = document.getElementById(`${method}-payment-interface`);
+            if (paymentInterface) paymentInterface.classList.add('d-none');
         });
         
         // Add selected class to clicked option
@@ -1112,31 +1117,9 @@ document.querySelectorAll('.payment-option').forEach(option => {
         if (form) form.classList.remove('d-none');
         
         // Update radio button
-        this.querySelector('input[type="radio"]').checked = true;
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) radio.checked = true;
     });
-});
-
-// Delivery zone change
-document.querySelector('select[name="delivery_zone"]').addEventListener('change', function() {
-    const zoneId = this.value;
-    if (zoneId) {
-        // In a real implementation, you would fetch this from an API
-        const deliveryFees = {
-            '1': 2000,
-            '2': 3000,
-            '3': 1500
-        };
-        
-        const fee = deliveryFees[zoneId] || 0;
-        document.getElementById('delivery-fee').textContent = `${fee} FCFA`;
-        
-        const subtotal = parseFloat({{ cart.get_total }});
-        const total = subtotal + fee;
-        document.getElementById('total-amount').textContent = `${total} FCFA`;
-    } else {
-        document.getElementById('delivery-fee').textContent = '0 FCFA';
-        document.getElementById('total-amount').textContent = `${parseFloat({{ cart.get_total }})} FCFA`;
-    }
 });
 
 // Process payment
@@ -1149,53 +1132,63 @@ function processPayment() {
         return;
     }
     
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+    const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+    if (!selectedPayment) {
+        Toast.fire({
+            icon: 'error',
+            title: 'Veuillez sélectionner une méthode de paiement'
+        });
+        return;
+    }
+    
+    const paymentMethod = selectedPayment.value;
     const formData = new FormData(document.getElementById('checkout-form'));
     
-    // Ajouter la méthode de paiement
+    // Ajouter la méthode de paiement et les données du panier
     formData.append('payment_method', paymentMethod);
+    formData.append('shop_id', '{{ shop_id }}');
+    formData.append('total_amount', '{{ total_with_tax|floatformat:0 }}');
     
-    //Whatsapp
+    // Validation des numéros selon la méthode
     if (paymentMethod === 'whatsapp') {
-        const whatsappNumber = document.querySelector('input[name="whatsapp_number"]').value;
-        if (!whatsappNumber) {
+        const whatsappNumber = document.querySelector('input[name="whatsapp_number"]');
+        if (!whatsappNumber || !whatsappNumber.value) {
             Toast.fire({
                 icon: 'error',
                 title: 'Veuillez entrer votre numéro WhatsApp'
             });
             return;
         }
-        formData.append('whatsapp_number', whatsappNumber);
-    }
-    //OM
-     if (paymentMethod === 'om') {
-        const OMNumber = document.querySelector('input[name="om_number"]').value;
-        if (!OMNumber) {
-            Toast.fire({
-                icon: 'error',
-                title: 'Veuillez entrer votre numéro Orange'
-            });
-            return;
-        }
-        formData.append('om_number', OMNumber);
-    }
-    //MOMO
-     if (paymentMethod === 'momo') {
-        const MomoNumber = document.querySelector('input[name="momo_number"]').value;
-        if (!MomoNumber) {
-            Toast.fire({
-                icon: 'error',
-                title: 'Veuillez entrer votre numéro MTN'
-            });
-            return;
-        }
-        formData.append('momo_number', MomoNumber);
+        formData.append('payment_phone', whatsappNumber.value);
     }
     
+    if (paymentMethod === 'om') {
+        const omNumber = document.querySelector('input[name="om_number"]');
+        if (!omNumber || !omNumber.value) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez entrer votre numéro Orange Money'
+            });
+            return;
+        }
+        formData.append('payment_phone', omNumber.value);
+    }
+    
+    if (paymentMethod === 'momo') {
+        const momoNumber = document.querySelector('input[name="momo_number"]');
+        if (!momoNumber || !momoNumber.value) {
+            Toast.fire({
+                icon: 'error',
+                title: 'Veuillez entrer votre numéro MTN Mobile Money'
+            });
+            return;
+        }
+        formData.append('payment_phone', momoNumber.value);
+    }
     
     Swal.fire({
         title: 'Confirmation de paiement',
-        text: `Vous allez recevoir une demande de paiement sur ${paymentMethod === 'whatsapp' ? 'WhatsApp' : paymentMethod === 'om' ? 'Orange Money' : 'MTN Mobile Money'}.`,
+        text: `Vous allez être redirigé vers ${paymentMethod === 'whatsapp' ? 'WhatsApp' : paymentMethod === 'om' ? 'Orange Money' : 'MTN Mobile Money'} pour finaliser votre paiement.`,
         icon: 'info',
         showCancelButton: true,
         confirmButtonColor: '#667eea',
@@ -1204,8 +1197,18 @@ function processPayment() {
         cancelButtonText: 'Annuler'
     }).then((result) => {
         if (result.isConfirmed) {
+            // Afficher le loading
+            Swal.fire({
+                title: 'Traitement en cours',
+                text: 'Création de votre commande...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
             // Envoyer la requête AJAX
-            fetch(`/checkout/${ paymentMethod }/`, {
+            fetch(`/payments/process/${paymentMethod}/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -1213,65 +1216,83 @@ function processPayment() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau: ' + response.status);
+                }
+                return response.json();
+            })
             .then(data => {
+                Swal.close();
+                
                 if (data.success) {
-                    document.getElementById('nowpay').classList.add('d-none')
                     document.getElementById('orderId').innerText = data.order_id;
-                    if(data.ussd_code){
-                        // Sauvegarder les données de paiement
-                        paymentData = data;
-                        if(data.paiementMethod ='momo'){
-                            // Afficher le QR Code
-                            const interfaceMomo = document.getElementById('step2');
-                            const MomoNumber = document.getElementById('momo-form');
-                            const qrCodeImageMomo = document.getElementById('qrcode-image-momo');
-                            const ussdCodeElementMomo = document.getElementById('ussd-code-momo');
-
-                            interfaceMomo.classList.remove('d-none');
-                            MomoNumber.classList.add('d-none');
-                            qrCodeImageMomo.src = 'data:image/png;base64,' + data.qrcode;
-                            ussdCodeElementMomo.textContent = data.ussd_code;
-                        }else{
-                            // Afficher le QR Code
-                            const interfaceOm = document.getElementById('step1');
-                            const OmNumber = document.getElementById('om-form');
+                    
+                    // Gestion selon la méthode de paiement
+                    if (paymentMethod === 'om' || paymentMethod === 'momo') {
+                        // Masquer le bouton "Payer Maintenant"
+                        document.getElementById('nowpay').classList.add('d-none');
+                        
+                        // Afficher l'interface QR Code/USSD
+                        if (paymentMethod === 'om') {
+                            const interfaceOm = document.getElementById('om-payment-interface');
+                            const omForm = document.getElementById('om-form');
                             const qrCodeImageOm = document.getElementById('qrcode-image-om');
                             const ussdCodeElementOm = document.getElementById('ussd-code-om');
-
-                            interfaceOm.classList.remove('d-none');
-                            OmNumber.classList.add('d-none');
-                            qrCodeImageOm.src = 'data:image/png;base64,' + data.qrcode;
-                            ussdCodeElementOm.textContent = data.ussd_code;
+                            
+                            if (interfaceOm && data.qrcode) {
+                                interfaceOm.classList.remove('d-none');
+                                if (omForm) omForm.classList.add('d-none');
+                                if (qrCodeImageOm) qrCodeImageOm.src = 'data:image/png;base64,' + data.qrcode;
+                                if (ussdCodeElementOm && data.ussd_code) ussdCodeElementOm.textContent = data.ussd_code;
+                            }
+                        } else if (paymentMethod === 'momo') {
+                            const interfaceMomo = document.getElementById('momo-payment-interface');
+                            const momoForm = document.getElementById('momo-form');
+                            const qrCodeImageMomo = document.getElementById('qrcode-image-momo');
+                            const ussdCodeElementMomo = document.getElementById('ussd-code-momo');
+                            
+                            if (interfaceMomo && data.qrcode) {
+                                interfaceMomo.classList.remove('d-none');
+                                if (momoForm) momoForm.classList.add('d-none');
+                                if (qrCodeImageMomo) qrCodeImageMomo.src = 'data:image/png;base64,' + data.qrcode;
+                                if (ussdCodeElementMomo && data.ussd_code) ussdCodeElementMomo.textContent = data.ussd_code;
+                            }
                         }
                         
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Instructions de paiement générées!'
+                        });
                         
-                    }
-                    
-                    if(data.whatsapp_link){
+                    } else if (paymentMethod === 'whatsapp' && data.whatsapp_link) {
+                        // Redirection WhatsApp
                         nextStep(3);
                         window.open(data.whatsapp_link, '_blank');
+                        
+                        Toast.fire({
+                            icon: 'success',
+                            title: 'Redirection vers WhatsApp!'
+                        });
                     }
-                    Toast.fire({
-                        icon: 'success',
-                        title: 'Demande de paiement envoyée sur WhatsApp!'
-                    });
                 } else {
                     Toast.fire({
                         icon: 'error',
-                        title: 'Erreur: ' + data.message
+                        title: 'Erreur: ' + (data.message || 'Erreur lors du traitement')
                     });
                 }
             })
             .catch(error => {
+                Swal.close();
                 Toast.fire({
                     icon: 'error',
-                    title: 'Erreur de connexion'
+                    title: 'Erreur de connexion: ' + error.message
                 });
             });
         }
     });
 }
+
 // File upload handling
 document.getElementById('upload-area').addEventListener('click', function() {
     document.getElementById('payment-proof').click();
@@ -1388,8 +1409,17 @@ function submitPaymentProof() {
     const formData = new FormData();
     formData.append('payment_proof', file);
     
-    // Récupérer l'order_id depuis l'URL ou un data attribute
-    const orderId = document.getElementById('orderId').textContent ?? 1; // Adaptez selon votre structure
+    // Récupérer l'order_id
+    const orderId = document.getElementById('orderId').textContent;
+    if (!orderId) {
+        Swal.fire({
+            title: 'Erreur',
+            text: 'ID de commande non trouvé. Veuillez rafraîchir la page.',
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
     
     Swal.fire({
         title: 'Analyse en cours',
@@ -1400,7 +1430,7 @@ function submitPaymentProof() {
         }
     });
     
-    fetch(`/check-paiement/${orderId}/`, {
+    fetch(`/payments/upload-proof/${orderId}/`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -1427,7 +1457,7 @@ function submitPaymentProof() {
                     icon: 'success',
                     confirmButtonText: 'Continuer'
                 }).then(() => {
-                    window.location.href = "#";
+                    window.location.href = "{% url 'home' %}";
                 });
             } else {
                 Swal.fire({
@@ -1474,7 +1504,7 @@ function submitPaymentProof() {
 
 function forceVerification(orderId, data) {
     // Fonction pour forcer la validation manuellement
-    fetch(`/force-verification/${orderId}/`, {
+    fetch(`/payments/force-verification/${orderId}/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1512,32 +1542,10 @@ function getCookie(name) {
     }
     return cookieValue;
 }
-// Initialize progress bar
-updateProgressBar();
-</script>
-<script>
-// Dans la fonction processPayment(), remplacez l'URL :
-fetch(`/payments/checkout/process/${paymentMethod}/`, {
-    method: 'POST',
-    body: formData,
-    headers: {
-        'X-CSRFToken': '{{ csrf_token }}',
-        'X-Requested-With': 'XMLHttpRequest'
-    }
-})
-
-// Dans submitPaymentProof(), remplacez l'URL :
-fetch(`/payments/checkout/upload-proof/${orderId}/`, {
-    method: 'POST',
-    body: formData,
-    headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-    }
-})
 
 // Ajoutez cette fonction pour vérifier le statut de la commande
 function checkOrderStatus(orderId) {
-    fetch(`/payments/order/status/${orderId}/`)
+    fetch(`/payments/order-status/${orderId}/`)
     .then(response => response.json())
     .then(data => {
         if (data.success && data.payment_verified) {
@@ -1552,5 +1560,20 @@ function checkOrderStatus(orderId) {
         }
     });
 }
+
+// Initialize progress bar
+updateProgressBar();
+{% comment %} const Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer)
+        toast.addEventListener('mouseleave', Swal.resumeTimer)
+    }
+}); {% endcomment %}
+
 </script>
 {% endblock %}

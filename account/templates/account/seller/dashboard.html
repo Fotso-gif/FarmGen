@@ -9,6 +9,10 @@
         gap: 20px;
         margin-bottom: 30px;
     }
+
+    .btn-outline-primary{
+        color: var(--primary);
+    }
     
     .stat-card {
         background: white;
@@ -16,6 +20,12 @@
         border-radius: var(--radius);
         box-shadow: var(--shadow);
         text-align: center;
+        position: relative;
+        transition: transform 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
     }
     
     .stat-card.primary { border-top: 4px solid var(--primary); }
@@ -45,6 +55,7 @@
         text-align: center;
         text-decoration: none;
         transition: var(--transition);
+        cursor: pointer;
     }
     
     .action-btn:hover {
@@ -52,20 +63,139 @@
         color: white;
         transform: translateY(-2px);
     }
+    
+    .payment-methods {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+    
+    .payment-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        font-size: 14px;
+        color: #6c757d;
+    }
+    
+    .payment-icon.active {
+        background: var(--success);
+        color: white;
+        border-color: var(--success);
+    }
+    
+    .order-item {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 15px;
+        align-items: center;
+        background: white;
+        padding: 15px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 10px;
+    }
+    
+    .shop-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+    
+    .shop-info {
+        flex: 1;
+    }
+    
+    .shop-status {
+        text-align: right;
+    }
+    
+    .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: var(--radius);
+    }
+    
+    .modal-xl-custom {
+        max-width: 900px;
+    }
+    
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        margin: 10px 0;
+    }
+    
+    .stock-low {
+        color: #dc3545;
+        font-weight: 500;
+    }
+    
+    .stock-good {
+        color: #198754;
+        font-weight: 500;
+    }
 </style>
 
 <div class="dashboard-content">
     <!-- En-tête de la boutique -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 style="color: var(--primary); margin: 0;">{{ shop.name }}</h2>
-            <p class="text-muted mb-0">Votre boutique agricole</p>
+    <div class="shop-header">
+        <div class="shop-info">
+            <h2 style="color: var(--primary); margin: 0 0 5px 0;">{{ shop.title }}</h2>
+            <p class="text-muted mb-1">
+                <i class="fas fa-map-marker-alt me-1"></i>{{ shop.localisation }}
+            </p>
+            <p class="text-muted mb-0">{{ shop.type_shop }}</p>
+            
+            <!-- Méthodes de paiement -->
+            {% if payment_methods %}
+            <div class="payment-methods" style="justify-content: flex-start; margin-top: 10px;">
+                {% for method in payment_methods %}
+                <div class="payment-icon active" title="{{ method.get_payment_method_display }}">
+                    {% if method.payment_method == 'om' %}
+                    <i class="fas fa-money-bill-wave"></i>
+                    {% elif method.payment_method == 'momo' %}
+                    <i class="fas fa-mobile-alt"></i>
+                    {% elif method.payment_method == 'whatsapp' %}
+                    <i class="fab fa-whatsapp"></i>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-        <div class="text-end">
+        
+        <div class="shop-status">
             <div class="badge bg-success fs-6">
                 <i class="fas fa-circle me-1"></i> En ligne
             </div>
-            <p class="text-muted mb-0 mt-1">Depuis {{ shop.created_at|date:"d/m/Y" }}</p>
+            <p class="text-muted mb-0 mt-1">
+                <small>Depuis {{ shop.created_at|date:"d/m/Y" }}</small>
+            </p>
+            
+            <!-- Note de la boutique -->
+            <div class="mt-2">
+                <div class="star-rating">
+                    {% with rating=shop.note|floatformat:0 %}
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= rating %}
+                        <i class="fas fa-star text-warning"></i>
+                        {% else %}
+                        <i class="far fa-star text-warning"></i>
+                        {% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                    <small class="text-muted ms-1">({{ shop.note }})</small>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -73,47 +203,53 @@
     <div class="stats-grid">
         <div class="stat-card primary">
             <i class="fas fa-chart-line fa-2x" style="color: var(--primary);"></i>
-            <div class="stat-value" style="color: var(--primary);">{{ total_sales|default:0 }}</div>
-            <div class="stat-label">Ventes ce mois</div>
+            <div class="stat-value" style="color: var(--primary);">
+                {{ total_sales|default:0 }} FCFA
+            </div>
+            <div class="stat-label">Chiffre d'affaires</div>
+            <small class="text-muted">Ce mois</small>
         </div>
         
         <div class="stat-card success">
             <i class="fas fa-shopping-cart fa-2x" style="color: var(--success);"></i>
             <div class="stat-value" style="color: var(--success);">{{ total_orders }}</div>
             <div class="stat-label">Commandes</div>
+            <small class="text-muted">Ce mois</small>
         </div>
         
         <div class="stat-card warning">
             <i class="fas fa-seedling fa-2x" style="color: var(--warning);"></i>
             <div class="stat-value" style="color: var(--warning);">{{ total_products }}</div>
             <div class="stat-label">Produits</div>
+            <small class="text-muted">En catalogue</small>
         </div>
         
         <div class="stat-card info">
             <i class="fas fa-star fa-2x" style="color: var(--accent);"></i>
             <div class="stat-value" style="color: var(--accent);">{{ average_rating|default:"0.0" }}</div>
             <div class="stat-label">Note moyenne</div>
+            <small class="text-muted">Sur 5</small>
         </div>
     </div>
 
     <!-- Actions rapides -->
     <div class="quick-actions">
-        <a href="#" class="action-btn">
+        <button class="action-btn" data-bs-toggle="modal" data-bs-target="#addProductModal">
             <i class="fas fa-plus-circle fa-2x mb-2"></i><br>
             Nouveau produit
-        </a>
-        <a href="#" class="action-btn">
+        </button>
+        <button class="action-btn" data-bs-toggle="modal" data-bs-target="#manageShopModal">
             <i class="fas fa-edit fa-2x mb-2"></i><br>
-            Nouvel article
-        </a>
-        <a href="#" class="action-btn">
+            Gérer boutique
+        </button>
+        <button class="action-btn" data-bs-toggle="modal" data-bs-target="#viewOrdersModal">
             <i class="fas fa-shopping-cart fa-2x mb-2"></i><br>
             Voir commandes
-        </a>
-        <a href="#" class="action-btn">
+        </button>
+        <button class="action-btn" data-bs-toggle="modal" data-bs-target="#statisticsModal">
             <i class="fas fa-chart-bar fa-2x mb-2"></i><br>
             Statistiques
-        </a>
+        </button>
     </div>
 
     <!-- Produits récents -->
@@ -122,18 +258,17 @@
             <h4 style="color: var(--primary); margin: 0;">
                 <i class="fas fa-seedling"></i> Produits récents
             </h4>
-            <a href="#" class="btn btn-sm btn-outline-primary">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewProductsModal">
                 Voir tous
-            </a>
+            </button>
         </div>
         
         <div class="row">
-            {% if product %}
             {% for product in recent_products %}
             <div class="col-lg-4 col-md-6 mb-3">
                 <div class="card h-100">
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 120px; object-fit: cover;">
+                    {% if product.images.first %}
+                    <img src="{{ product.images.first.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 120px; object-fit: cover;">
                     {% else %}
                     <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 120px; background: #f8f9fa;">
                         <i class="fas fa-seedling fa-2x text-muted"></i>
@@ -143,16 +278,29 @@
                         <h6 class="card-title">{{ product.name }}</h6>
                         <p class="card-text text-success fw-bold mb-1">{{ product.price }} FCFA</p>
                         <p class="card-text mb-1">
-                            <small class="text-muted">Stock: {{ product.quantity }}</small>
+                            <small class="{% if product.is_low_stock %}stock-low{% else %}stock-good{% endif %}">
+                                Stock: {{ product.quantity }}
+                            </small>
                         </p>
+                        {% if product.is_low_stock %}
+                        <p class="card-text mb-1">
+                            <small class="stock-low">
+                                <i class="fas fa-exclamation-triangle"></i> Stock faible
+                            </small>
+                        </p>
+                        {% endif %}
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge {% if product.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                {{ product.is_active|yesno:"Actif,Inactif" }}
+                            <span class="badge {% if product.quantity > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ product.quantity|yesno:"Disponible,En rupture" }}
                             </span>
                             <div>
-                                <a href="{% url 'product_edit' product.id %}" class="btn btn-sm btn-outline-primary">
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editProductModal"
+                                        data-product-id="{{ product.id }}"
+                                        onclick="loadProductData({{ product.id }})">
                                     <i class="fas fa-edit"></i>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -162,12 +310,11 @@
             <div class="col-12 text-center py-4">
                 <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
                 <p class="text-muted">Aucun produit pour le moment</p>
-                <a href="{% url 'product_create' %}" class="btn btn-primary">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
                     <i class="fas fa-plus"></i> Ajouter votre premier produit
-                </a>
+                </button>
             </div>
             {% endfor %}
-            {% endif %}
         </div>
     </div>
 
@@ -177,19 +324,24 @@
             <h4 style="color: var(--primary); margin: 0;">
                 <i class="fas fa-clock"></i> Commandes en attente
             </h4>
-            <a href="#" class="btn btn-sm btn-outline-primary">
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewOrdersModal">
                 Voir toutes
-            </a>
+            </button>
         </div>
-        {% if order %}
+        
         {% for order in pending_orders %}
         <div class="order-item">
             <div class="order-info">
-                <h6 style="margin: 0; color: var(--dark);">Commande #{{ order.id }}</h6>
-                <small class="text-muted">{{ order.client.get_full_name }} • {{ order.created_at|date:"d/m/Y H:i" }}</small>
+                <h6 style="margin: 0; color: var(--dark);">Commande #{{ order.id|stringformat:".8s" }}</h6>
+                <small class="text-muted">
+                    {{ order.customer_first_name }} {{ order.customer_last_name }} • 
+                    {{ order.created_at|date:"d/m/Y H:i" }}
+                </small>
                 <div class="mt-1">
-                    {% for item in order.items.all %}
-                    <small class="text-muted">{{ item.product.name }} (x{{ item.quantity }})</small><br>
+                    {% for item in order.cart_items %}
+                    <small class="text-muted">
+                        {{ item.name }} (x{{ item.quantity }}) - {{ item.price }} FCFA
+                    </small><br>
                     {% endfor %}
                 </div>
             </div>
@@ -197,12 +349,16 @@
                 <span class="badge bg-warning">{{ order.get_status_display }}</span>
             </div>
             <div class="order-amount">
-                <strong>{{ order.total_amount }} FCFA</strong>
+                <strong>{{ order.final_amount }} FCFA</strong>
             </div>
             <div class="order-actions">
-                <a href="{% url 'process_order' order.id %}" class="btn btn-sm btn-success">
+                <button class="btn btn-sm btn-success" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#processOrderModal"
+                        data-order-id="{{ order.id }}"
+                        onclick="loadOrderData('{{ order.id }}')">
                     Traiter
-                </a>
+                </button>
             </div>
         </div>
         {% empty %}
@@ -211,7 +367,425 @@
             <p class="text-muted">Aucune commande en attente</p>
         </div>
         {% endfor %}
-        {% endif %}
     </div>
 </div>
+
+<!-- Modal Ajout Produit -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl-custom">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>Ajouter un nouveau produit
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Nom du produit *</label>
+                                <input type="text" class="form-control" id="productName" name="name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">Catégorie *</label>
+                                <select class="form-select" id="productCategory" name="category" required>
+                                    <option value="">Sélectionnez une catégorie</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="productPrice" class="form-label">Prix (FCFA) *</label>
+                                <input type="number" class="form-control" id="productPrice" name="price" step="0.01" min="0" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="productQuantity" class="form-label">Quantité en stock *</label>
+                                <input type="number" class="form-control" id="productQuantity" name="quantity" min="0" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productExpiry" class="form-label">Date de péremption (optionnel)</label>
+                                <input type="date" class="form-control" id="productExpiry" name="expiry_date">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="productDescription" name="description" rows="4"></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="productImages" class="form-label">Images du produit</label>
+                                <input type="file" class="form-control" id="productImages" name="images" multiple accept="image/*">
+                                <div class="form-text">Vous pouvez sélectionner plusieurs images</div>
+                            </div>
+                            
+                            <div id="imagePreview" class="mb-3"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Enregistrer le produit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Édition Produit -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl-custom">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editProductModalLabel">
+                    <i class="fas fa-edit me-2"></i>Modifier le produit
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div id="editProductContent">
+                        <!-- Contenu chargé dynamiquement -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i>Mettre à jour
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Gestion Boutique -->
+<div class="modal fade" id="manageShopModal" tabindex="-1" aria-labelledby="manageShopModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="manageShopModalLabel">
+                    <i class="fas fa-store me-2"></i>Gérer ma boutique
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <i class="fas fa-info-circle fa-3x text-info mb-3"></i>
+                                <h5>Informations boutique</h5>
+                                <p class="text-muted">Modifier les informations de base</p>
+                                <button class="btn btn-outline-info" onclick="editShopInfo()">
+                                    <i class="fas fa-edit me-1"></i>Modifier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-body text-center">
+                                <i class="fas fa-credit-card fa-3x text-success mb-3"></i>
+                                <h5>Méthodes de paiement</h5>
+                                <p class="text-muted">Gérer les moyens de paiement</p>
+                                <button class="btn btn-outline-success" onclick="managePaymentMethods()">
+                                    <i class="fas fa-cog me-1"></i>Configurer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Voir Commandes -->
+<div class="modal fade" id="viewOrdersModal" tabindex="-1" aria-labelledby="viewOrdersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="viewOrdersModalLabel">
+                    <i class="fas fa-shopping-cart me-2"></i>Toutes les commandes
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="ordersListContent">
+                    <!-- Liste des commandes chargée dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Traiter Commande -->
+<div class="modal fade" id="processOrderModal" tabindex="-1" aria-labelledby="processOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="processOrderModalLabel">
+                    <i class="fas fa-cog me-2"></i>Traiter la commande
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="processOrderContent">
+                    <!-- Détails de la commande chargés dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Voir Produits -->
+<div class="modal fade" id="viewProductsModal" tabindex="-1" aria-labelledby="viewProductsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewProductsModalLabel">
+                    <i class="fas fa-seedling me-2"></i>Tous les produits
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="productsListContent">
+                    <!-- Liste des produits chargée dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Statistiques -->
+<div class="modal fade" id="statisticsModal" tabindex="-1" aria-labelledby="statisticsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="statisticsModalLabel">
+                    <i class="fas fa-chart-bar me-2"></i>Statistiques détaillées
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="statisticsContent">
+                    <!-- Statistiques détaillées chargées dynamiquement -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion de l'aperçu des images
+document.getElementById('productImages').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '';
+    
+    for (let file of e.target.files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'image-preview me-2 mb-2';
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+// Chargement des données du produit pour édition
+function loadProductData(productId) {
+    fetch(`/api/products/${productId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="editProductName" class="form-label">Nom du produit</label>
+                            <input type="text" class="form-control" id="editProductName" name="name" value="${data.name}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editProductCategory" class="form-label">Catégorie</label>
+                            <select class="form-select" id="editProductCategory" name="category" required>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" ${data.category == {{ category.id }} ? 'selected' : ''}>{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editProductPrice" class="form-label">Prix (FCFA)</label>
+                            <input type="number" class="form-control" id="editProductPrice" name="price" value="${data.price}" step="0.01" min="0" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editProductQuantity" class="form-label">Quantité en stock</label>
+                            <input type="number" class="form-control" id="editProductQuantity" name="quantity" value="${data.quantity}" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="editProductExpiry" class="form-label">Date de péremption</label>
+                            <input type="date" class="form-control" id="editProductExpiry" name="expiry_date" value="${data.expiry_date || ''}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editProductDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editProductDescription" name="description" rows="4">${data.description || ''}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="editProductImages" class="form-label">Nouvelles images</label>
+                            <input type="file" class="form-control" id="editProductImages" name="images" multiple accept="image/*">
+                        </div>
+                        
+                        <div class="current-images">
+                            <h6>Images actuelles:</h6>
+                            ${data.images ? data.images.map(img => 
+                                `<img src="${img.image}" class="image-preview me-2 mb-2" alt="${img.alt_text || 'Product image'}">`
+                            ).join('') : 'Aucune image'}
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" name="product_id" value="${productId}">
+            `;
+            document.getElementById('editProductContent').innerHTML = content;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('editProductContent').innerHTML = '<div class="alert alert-danger">Erreur lors du chargement des données</div>';
+        });
+}
+
+// Chargement des données de commande
+function loadOrderData(orderId) {
+    fetch(`/api/orders/${orderId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const content = `
+                <div class="order-details">
+                    <h5>Détails de la commande #${orderId}</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Client:</strong> ${data.customer_first_name} ${data.customer_last_name}<br>
+                            <strong>Email:</strong> ${data.customer_email}<br>
+                            <strong>Téléphone:</strong> ${data.customer_phone}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Méthode de paiement:</strong> ${data.payment_method}<br>
+                            <strong>Statut:</strong> <span class="badge bg-warning">${data.status_display}</span><br>
+                            <strong>Total:</strong> ${data.final_amount} FCFA
+                        </div>
+                    </div>
+                    
+                    <h6>Articles commandés:</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Quantité</th>
+                                    <th>Prix</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.cart_items.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${item.price} FCFA</td>
+                                        <td>${item.price * item.quantity} FCFA</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="orderStatus" class="form-label">Changer le statut:</label>
+                        <select class="form-select" id="orderStatus">
+                            <option value="paid" ${data.status === 'paid' ? 'selected' : ''}>Payé</option>
+                            <option value="payment_verified" ${data.status === 'payment_verified' ? 'selected' : ''}>Paiement vérifié</option>
+                            <option value="failed" ${data.status === 'failed' ? 'selected' : ''}>Échec</option>
+                            <option value="refunded" ${data.status === 'refunded' ? 'selected' : ''}>Remboursé</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            document.getElementById('processOrderContent').innerHTML = content;
+        });
+}
+
+// Gestion de la soumission du formulaire d'ajout de produit
+document.getElementById('addProductForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/api/products/create/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Fermer le modal et recharger la page
+            bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+            location.reload();
+        } else {
+            alert('Erreur: ' + (data.error || 'Erreur lors de l\'ajout du produit'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Erreur lors de l\'ajout du produit');
+    });
+});
+
+// Fonction utilitaire pour récupérer le token CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Fonctions placeholder pour les autres modales
+function editShopInfo() {
+    alert('Fonctionnalité de modification boutique à implémenter');
+}
+
+function managePaymentMethods() {
+    alert('Fonctionnalité de gestion des paiements à implémenter');
+}
+</script>
 {% endblock %}

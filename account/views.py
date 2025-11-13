@@ -8,12 +8,19 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 import json
 from .models import User, SellerProfile, ClientProfile, PasswordResetToken, EmailVerificationToken
+from django.db.models import Count, Avg, Sum, Q
+from django.utils import timezone
+from datetime import timedelta
+from Marketplace.models import Shop, Product, Category, ProductImage
+from payments.models import Order as OrderModel, MethodPaid
+
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from FarmGen import settings
 import uuid
+
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -249,12 +256,141 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    # Redirection selon le type de compte
-    if request.user.is_seller:
-        return render(request, 'account/seller/dashboard.html')
-    else:
+    if not request.user.is_seller:
         return render(request, 'account/client/dashboard.html')
     
+    try:
+        # Récupération de la boutique de l'utilisateur
+        shop = Shop.objects.get(user=request.user)
+        
+        # Calcul des dates pour les statistiques du mois
+        today = timezone.now()
+        first_day_month = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Statistiques des ventes du mois
+        monthly_sales = OrderModel.objects.filter(
+            shop_id=shop.id,
+            status__in=['paid', 'payment_verified'],
+            created_at__gte=first_day_month
+        ).aggregate(
+            total_sales=Sum('final_amount'),
+            total_orders=Count('id')
+        )
+        
+        # Produits de la boutique
+        total_products = Product.objects.filter(category__shop=shop).count()
+        
+        # Produits récents (6 derniers)
+        recent_products = Product.objects.filter(category__shop=shop).order_by('-created_at')[:6]
+        
+        # Commandes en attente
+        pending_orders = OrderModel.objects.filter(
+            shop_id=shop.id,
+            status__in=['pending', 'waiting_payment']
+        ).order_by('-created_at')[:5]
+        
+        # Note moyenne de la boutique
+        average_rating = shop.note
+        
+        # Méthodes de paiement configurées
+        payment_methods = MethodPaid.objects.filter(shop=shop, status=True)
+        
+        # Catégories pour le formulaire
+        categories = Category.objects.filter(shop=shop)
+        
+        context = {
+            'shop': shop,
+            'total_sales': monthly_sales['total_sales'] or 0,
+            'total_orders': monthly_sales['total_orders'] or 0,
+            'total_products': total_products,
+            'average_rating': average_rating,
+            'recent_products': recent_products,
+            'pending_orders': pending_orders,
+            'payment_methods': payment_methods,
+            'categories': categories,
+        }
+        
+        return render(request, 'account/seller/dashboard.html', context)
+        
+    except Shop.DoesNotExist:
+        # Rediriger vers la création de boutique si aucune trouvée
+        return redirect('shop_create')
+
+# API pour récupérer les données produit
+def get_product_data(request, product_id):
+    try:
+        product = Product.objects.get(id=product_id)
+        data = {
+            'id': product.id,
+            'name': product.name,
+            'category': product.category.id,
+            'price': float(product.price),
+            'quantity': product.quantity,
+            'expiry_date': product.expiry_date.isoformat() if product.expiry_date else None,
+            'description': product.description,
+            'images': [
+                {
+                    'image': image.image.url,
+                    'alt_text': image.alt_text
+                } for image in product.images.all()
+            ]
+        }
+        return JsonResponse(data)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Produit non trouvé'}, status=404)
+
+# API pour créer un produit
+def create_product(request):
+    if request.method == 'POST':
+        try:
+            # Récupération de la boutique de l'utilisateur
+            shop = Shop.objects.get(user=request.user)
+            
+            # Création du produit
+            product = Product.objects.create(
+                name=request.POST['name'],
+                category_id=request.POST['category'],
+                price=request.POST['price'],
+                quantity=request.POST['quantity'],
+                description=request.POST.get('description', ''),
+                expiry_date=request.POST.get('expiry_date') or None
+            )
+            
+            # Gestion des images
+            for file in request.FILES.getlist('images'):
+                ProductImage.objects.create(
+                    product=product,
+                    image=file,
+                    alt_text=product.name
+                )
+            
+            return JsonResponse({'success': True, 'product_id': product.id})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+
+# API pour récupérer les données de commande
+def get_order_data(request, order_id):
+    try:
+        order = OrderModel.objects.get(id=order_id)
+        data = {
+            'id': str(order.id),
+            'customer_first_name': order.customer_first_name,
+            'customer_last_name': order.customer_last_name,
+            'customer_email': order.customer_email,
+            'customer_phone': order.customer_phone,
+            'payment_method': order.get_payment_method_display(),
+            'status': order.status,
+            'status_display': order.get_status_display(),
+            'final_amount': order.final_amount,
+            'cart_items': order.cart_items
+        }
+        return JsonResponse(data)
+    except OrderModel.DoesNotExist:
+        return JsonResponse({'error': 'Commande non trouvée'}, status=404)
+            
 @csrf_exempt
 @require_http_methods(["POST"])
 def forgot_password_api(request):

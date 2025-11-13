@@ -1,6 +1,6 @@
 {% extends 'account/layout/base_dashboard.html' %}
 {% load static %}
-
+{% comment %} {% load custom_filters %} {% endcomment %}
 {% block content %}
 <style>
     /* Styles existants étendus */
@@ -381,101 +381,89 @@
         </div>
 
         <!-- Statistiques rapides -->
-        <div class="stats-overview">
-            <div class="stat-card total">
-                <div class="stat-number">{{ total_orders }}</div>
-                <div class="stat-label">Total des commandes</div>
-            </div>
-            <div class="stat-card pending">
-                <div class="stat-number">{{ pending_orders }}</div>
-                <div class="stat-label">En attente</div>
-            </div>
-            <div class="stat-card delivered">
-                <div class="stat-number">{{ delivered_orders }}</div>
-                <div class="stat-label">Livrées</div>
-            </div>
-            <div class="stat-card cancelled">
-                <div class="stat-number">{{ cancelled_orders }}</div>
-                <div class="stat-label">Annulées</div>
-            </div>
-        </div>
+<div class="stats-overview">
+    <div class="stat-card total">
+        <div class="stat-number">{{ total_orders }}</div>
+        <div class="stat-label">Total des commandes</div>
+    </div>
+    <div class="stat-card pending">
+        <div class="stat-number">{{ pending_orders }}</div>
+        <div class="stat-label">En attente</div>
+    </div>
+    <div class="stat-card delivered">
+        <div class="stat-number">{{ delivered_orders }}</div>
+        <div class="stat-label">Payées</div>  <!-- Changé de "Livrées" à "Payées" -->
+    </div>
+    <div class="stat-card cancelled">
+        <div class="stat-number">{{ cancelled_orders }}</div>
+        <div class="stat-label">Annulées/Échouées</div>  <!-- Adapté -->
+    </div>
+</div>
 
         <!-- Filtres avancés -->
-        <div class="filters-container">
-            <div class="filters-header" onclick="toggleFilters()">
-                <h4 class="filters-title">
-                    <i class="fas fa-filter"></i> Filtres avancés
-                    <span class="badge bg-primary" id="activeFiltersCount">0</span>
-                </h4>
-                <i class="fas fa-chevron-down" id="filtersIcon"></i>
-            </div>
-            <div class="filters-content" id="filtersContent">
-                <div class="filter-group">
-                    <label>Statut de la commande</label>
-                    <select class="filter-select" id="statusFilter" multiple>
-                        <option value="pending">En attente</option>
-                        <option value="confirmed">Confirmée</option>
-                        <option value="processing">En traitement</option>
-                        <option value="shipped">Expédiée</option>
-                        <option value="delivered">Livrée</option>
-                        <option value="cancelled">Annulée</option>
-                        <option value="refunded">Remboursée</option>
-                    </select>
-                </div>
+        <div class="filters-content" id="filtersContent">
+    <div class="filter-group">
+        <label>Statut de la commande</label>
+        <select class="filter-select" id="statusFilter" multiple>
+            <option value="pending">En attente</option>
+            <option value="waiting_payment">En attente de paiement</option>
+            <option value="payment_verified">Paiement vérifié</option>
+            <option value="paid">Payée</option>
+            <option value="failed">Échec</option>
+            <option value="refunded">Remboursée</option>
+        </select>
+    </div>
 
-                <div class="filter-group">
-                    <label>Statut de paiement</label>
-                    <select class="filter-select" id="paymentFilter">
-                        <option value="">Tous</option>
-                        <option value="paid">Payée</option>
-                        <option value="pending">En attente</option>
-                        <option value="failed">Échouée</option>
-                    </select>
-                </div>
+    <div class="filter-group">
+        <label>Statut de paiement</label>
+        <select class="filter-select" id="paymentFilter">
+            <option value="">Tous</option>
+            <option value="paid">Payée</option>
+            <option value="pending">En attente</option>
+            <option value="failed">Échouée</option>
+        </select>
+    </div>
 
-                {% if user.is_superuser %}
-                <div class="filter-group">
-                    <label>Boutique</label>
-                    <select class="filter-select" id="shopFilter">
-                        <option value="">Toutes les boutiques</option>
-                        {% for shop in all_shops %}
-                        <option value="{{ shop.id }}">{{ shop.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% endif %}
+    {% if user.is_superuser %}
+    <div class="filter-group">
+        <label>Boutique</label>
+        <select class="filter-select" id="shopFilter">
+            <option value="">Toutes les boutiques</option>
+            {% for shop in all_shops %}
+            <option value="{{ shop.id }}">{{ shop.title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    {% endif %}
 
-                {% if user.is_superuser or user.user_type == 'seller' %}
-                <div class="filter-group">
-                    <label>Client</label>
-                    <select class="filter-select" id="customerFilter">
-                        <option value="">Tous les clients</option>
-                        {% for customer in customers %}
-                        <option value="{{ customer.id }}">{{ customer.get_full_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                {% endif %}
+    <div class="filter-group">
+        <label>Méthode de paiement</label>
+        <select class="filter-select" id="paymentMethodFilter">
+            <option value="">Toutes</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="om">Orange Money</option>
+            <option value="momo">MTN Mobile Money</option>
+        </select>
+    </div>
 
-                <div class="filter-group">
-                    <label>Période</label>
-                    <div class="date-inputs">
-                        <input type="date" class="filter-select" id="dateFrom" placeholder="De">
-                        <input type="date" class="filter-select" id="dateTo" placeholder="À">
-                    </div>
-                </div>
-
-                <div class="filter-group">
-                    <label>Montant minimum</label>
-                    <input type="number" class="filter-select" id="amountMin" placeholder="Montant min">
-                </div>
-
-                <div class="filter-group">
-                    <label>Montant maximum</label>
-                    <input type="number" class="filter-select" id="amountMax" placeholder="Montant max">
-                </div>
-            </div>
+    <div class="filter-group">
+        <label>Période</label>
+        <div class="date-inputs">
+            <input type="date" class="filter-select" id="dateFrom" placeholder="De">
+            <input type="date" class="filter-select" id="dateTo" placeholder="À">
         </div>
+    </div>
+
+    <div class="filter-group">
+        <label>Montant minimum</label>
+        <input type="number" class="filter-select" id="amountMin" placeholder="Montant min" min="0">
+    </div>
+
+    <div class="filter-group">
+        <label>Montant maximum</label>
+        <input type="number" class="filter-select" id="amountMax" placeholder="Montant max" min="0">
+    </div>
+</div>
 
         <!-- Actions d'export -->
         <div class="export-actions">
@@ -491,164 +479,187 @@
         </div>
 
         <!-- Liste des commandes -->
-        <div id="ordersContainer">
-            {% if orders %}
-                {% for order in orders %}
-                <div class="order-card" data-order-id="{{ order.id }}" 
-                     data-status="{{ order.status }}" 
-                     data-payment-status="{{ order.payment_status }}"
-                     data-shop-id="{{ order.shop.id }}"
-                     data-customer-id="{{ order.user.id }}"
-                     data-amount="{{ order.total_amount }}"
-                     data-date="{{ order.created_at|date:'Y-m-d' }}">
-                    
-                    <!-- En-tête de la commande -->
-                    <div class="order-header">
-                        <div class="order-info">
-                            <h4 class="order-number">#{{ order.order_number }}</h4>
-                            <p class="order-date">
-                                <i class="far fa-calendar"></i> 
-                                {{ order.created_at|date:"d/m/Y à H:i" }}
-                            </p>
-                            {% if user.is_superuser %}
-                            <p class="order-shop">
-                                <i class="fas fa-store"></i> {{ order.shop.title }}
-                            </p>
-                            {% endif %}
+        <!-- Liste des commandes -->
+<div id="ordersContainer">
+    {% if orders %}
+        {% for order in orders %}
+        <div class="order-card" data-order-id="{{ order.id }}" 
+             data-status="{{ order.status }}" 
+             data-payment-status="{{ order.payment_status }}"
+             data-shop-id="{{ order.shop.id|default:'' }}"
+             data-customer-email="{{ order.customer_email }}"
+             data-amount="{{ order.total_amount }}"
+             data-date="{{ order.created_at|date:'Y-m-d' }}"
+             data-payment-method="{{ order.payment_method }}">
+            
+            <!-- En-tête de la commande -->
+            <div class="order-header">
+                <div class="order-info">
+                    <h4 class="order-number">#{{ order.order_number }}</h4>
+                    <p class="order-date">
+                        <i class="far fa-calendar"></i> 
+                        {{ order.created_at|date:"d/m/Y à H:i" }}
+                    </p>
+                    {% if user.is_superuser and order.shop %}
+                    <p class="order-shop">
+                        <i class="fas fa-store"></i> {{ order.shop.title }}
+                    </p>
+                    {% endif %}
+                    <p class="order-items-count">
+                        <i class="fas fa-cube"></i> {{ order.total_items }} article(s)
+                    </p>
+                </div>
+                <div class="order-status">
+                    <span class="status-badge status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                    <span class="payment-badge payment-{{ order.payment_method }}">
+                        {{ order.get_payment_method_display }}
+                    </span>
+                    <strong class="order-amount">{{ order.total_amount }} FCFA</strong>
+                </div>
+            </div>
+
+            <!-- Corps de la commande -->
+            <div class="order-body">
+                <div class="order-items">
+                    {% for item in order.cart_items %}
+                    <div class="order-item">
+                        <div class="item-info">
+                            <div class="item-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 8px;">
+                                <i class="fas fa-cube text-muted"></i>
+                            </div>
+                            <div class="item-details">
+                                <h5 class="item-name">{{ item.name }}</h5>
+                                <p class="item-price">{{ item.price }} FCFA l'unité</p>
+                                {% if item.expiry_date %}
+                                <p class="item-expiry">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> 
+                                        Expire le {{ item.expiry_date }}
+                                    </small>
+                                </p>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div class="order-status">
-                            <span class="status-badge status-{{ order.status }}">
-                                {{ order.get_status_display }}
-                            </span>
-                            <span class="payment-badge payment-{{ order.payment_status }}">
-                                {{ order.get_payment_status_display }}
-                            </span>
-                            <strong class="order-amount">{{ order.total_amount }} FCFA</strong>
+
+                        <div class="item-quantity">
+                            x{{ item.quantity }}
+                        </div>
+                        <div class="item-total">
+                            <strong>{{ item.price }} FCFA</strong>
                         </div>
                     </div>
+                    {% endfor %}
+                </div>
 
-                    <!-- Corps de la commande -->
-                    <div class="order-body">
-                        <div class="order-items">
-                            {% for item in order.items.all %}
-                            <div class="order-item">
-                                <div class="item-info">
-                                    {% if item.product.images.first %}
-                                    <img src="{{ item.product.images.first.image.url }}" 
-                                         alt="{{ item.product.name }}" 
-                                         class="item-image">
-                                    {% else %}
-                                    <div class="item-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                                        <i class="fas fa-image text-muted"></i>
-                                    </div>
-                                    {% endif %}
-                                    <div class="item-details">
-                                        <h5 class="item-name">{{ item.product.name }}</h5>
-                                        <p class="item-price">{{ item.unit_price }} FCFA l'unité</p>
-                                    </div>
-                                </div>
-                                <div class="item-quantity">
-                                    x{{ item.quantity }}
-                                </div>
-                                <div class="item-total">
-                                    <strong>{{ item.total_price }} FCFA</strong>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="order-totals">
-                            <div class="total-row">
-                                <span>Sous-total:</span>
-                                <span>{{ order.total_amount }} FCFA</span>
-                            </div>
-                            <div class="total-row">
-                                <span>Livraison:</span>
-                                <span>0 FCFA</span>
-                            </div>
-                            <div class="total-row final">
-                                <span>Total:</span>
-                                <span>{{ order.total_amount }} FCFA</span>
-                            </div>
-                        </div>
+                <div class="order-totals">
+                    <div class="total-row">
+                        <span>Sous-total:</span>
+                        <span>{{ order.total_amount }} FCFA</span>
                     </div>
+                    <div class="total-row">
+                        <span>Taxes:</span>
+                        <span>{{ order.tax_amount }} FCFA</span>
+                    </div>
+                    <div class="total-row final">
+                        <span>Total:</span>
+                        <span>{{ order.final_amount }} FCFA</span>
+                    </div>
+                </div>
 
-                    <!-- Pied de la commande -->
-                    <div class="order-footer">
-                        <div class="customer-info">
-                            <h5 class="customer-name">
-                                <i class="fas fa-user"></i> 
-                                {{ order.user.get_full_name }}
-                            </h5>
-                            <p class="customer-email">
-                                <i class="fas fa-envelope"></i> {{ order.user.email }}
-                            </p>
-                            {% if order.shipping_address %}
-                            <p class="customer-address">
-                                <i class="fas fa-map-marker-alt"></i> 
-                                {{ order.shipping_address|truncatewords:10 }}
-                            </p>
-                            {% endif %}
+                <!-- Informations de paiement -->
+                <div class="payment-info mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
+                    <h6><i class="fas fa-credit-card"></i> Informations de paiement</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Méthode:</strong> {{ order.get_payment_method_display }}<br>
+                            <strong>Statut:</strong> 
+                            <span class="badge {% if order.payment_verified %}bg-success{% else %}bg-warning{% endif %}">
+                                {{ order.payment_verified|yesno:"Vérifié,En attente" }}
+                            </span>
                         </div>
-                        <div class="order-actions">
-                            {% if user.user_type == 'seller' or user.is_superuser %}
-                            <button class="btn btn-sm btn-primary" 
-                                    onclick="updateOrderStatus({{ order.id }}, 'confirmed')"
-                                    {% if order.status != 'pending' %}disabled{% endif %}>
-                                <i class="fas fa-check"></i> Confirmer
-                            </button>
-                            <button class="btn btn-sm btn-warning" 
-                                    onclick="updateOrderStatus({{ order.id }}, 'processing')"
-                                    {% if order.status != 'confirmed' %}disabled{% endif %}>
-                                <i class="fas fa-cog"></i> Traiter
-                            </button>
-                            <button class="btn btn-sm btn-info" 
-                                    onclick="updateOrderStatus({{ order.id }}, 'shipped')"
-                                    {% if order.status != 'processing' %}disabled{% endif %}>
-                                <i class="fas fa-shipping-fast"></i> Expédier
-                            </button>
-                            <button class="btn btn-sm btn-success" 
-                                    onclick="updateOrderStatus({{ order.id }}, 'delivered')"
-                                    {% if order.status != 'shipped' %}disabled{% endif %}>
-                                <i class="fas fa-box"></i> Livrer
-                            </button>
+                        <div class="col-md-6">
+                            {% if order.payment_phone %}
+                            <strong>Téléphone:</strong> {{ order.payment_phone }}<br>
                             {% endif %}
-                            
-                            <button class="btn btn-sm btn-secondary" 
-                                    onclick="viewOrderDetails({{ order.id }})">
-                                <i class="fas fa-eye"></i> Détails
-                            </button>
-                            
-                            {% if user.user_type == 'customer' and order.status == 'pending' %}
-                            <button class="btn btn-sm btn-danger" 
-                                    onclick="cancelOrder({{ order.id }})">
-                                <i class="fas fa-times"></i> Annuler
-                            </button>
+                            {% if order.payment_verified_at %}
+                            <strong>Vérifié le:</strong> {{ order.payment_verified_at|date:"d/m/Y H:i" }}
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-orders">
-                    <i class="fas fa-shopping-bag"></i>
-                    <h4>Aucune commande trouvée</h4>
-                    <p>
-                        {% if user.user_type == 'customer' %}
-                        Vous n'avez pas encore passé de commande.
-                        {% else %}
-                        Aucune commande n'a été passée dans votre boutique.
-                        {% endif %}
+            </div>
+
+            <!-- Pied de la commande -->
+            <div class="order-footer">
+                <div class="customer-info">
+                    <h5 class="customer-name">
+                        <i class="fas fa-user"></i> 
+                        {{ order.customer_name }}
+                    </h5>
+                    <p class="customer-email">
+                        <i class="fas fa-envelope"></i> {{ order.customer_email }}
                     </p>
-                    {% if user.user_type == 'customer' %}
-                    <a href="{% url 'marketplace' %}" class="btn btn-primary">
-                        <i class="fas fa-shopping-cart"></i> Découvrir la marketplace
-                    </a>
+                    <p class="customer-phone">
+                        <i class="fas fa-phone"></i> {{ order.customer_phone }}
+                    </p>
+                </div>
+                <div class="order-actions">
+                    {% if user.user_type == 'seller' or user.is_superuser %}
+                    <button class="btn btn-sm btn-success" 
+                            onclick="updateOrderStatus('{{ order.id }}', 'payment_verified')"
+                            {% if order.status != 'waiting_payment' %}disabled{% endif %}>
+                        <i class="fas fa-check-circle"></i> Vérifier paiement
+                    </button>
+                    {% comment %} <button class="btn btn-sm btn-primary"  
+                            onclick="updateOrderStatus('{{ order.id }}', 'paid')"
+                            {% if order.status not in ['pending', 'payment_verified'] %}disabled{% endif %}>
+                        <i class="fas fa-check"></i> Marquer payée
+                    </button>{% endcomment %}
+                    {% endif %}
+                    
+                    <button class="btn btn-sm btn-info" 
+                            onclick="viewOrderDetails('{{ order.id }}')">
+                        <i class="fas fa-eye"></i> Détails
+                    </button>
+                    
+                    {% comment %} {% if user.user_type == 'customer' and order.status in ['pending', 'waiting_payment'] %}
+                    <button class="btn btn-sm btn-danger" 
+                            onclick="cancelOrder('{{ order.id }}')">
+                        <i class="fas fa-times"></i> Annuler
+                    </button>
+                    {% endif %} {% endcomment %}
+
+                    {% if order.payment_proof %}
+                    <button class="btn btn-sm btn-warning" 
+                            onclick="viewPaymentProof('{{ order.id }}')">
+                        <i class="fas fa-receipt"></i> Preuve
+                    </button>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-orders">
+            <i class="fas fa-shopping-bag"></i>
+            <h4>Aucune commande trouvée</h4>
+            <p>
+                {% if user.user_type == 'customer' %}
+                Vous n'avez pas encore passé de commande.
+                {% else %}
+                Aucune commande n'a été passée.
+                {% endif %}
+            </p>
+            {% if user.user_type == 'customer' %}
+            <a href="{% url 'marketplace' %}" class="btn btn-primary">
+                <i class="fas fa-shopping-cart"></i> Découvrir la marketplace
+            </a>
             {% endif %}
         </div>
-
+    {% endif %}
+</div>
         <!-- Pagination -->
         {% comment %} {% if orders.has_other_pages %}
         <nav aria-label="Pagination des commandes">
@@ -764,6 +775,12 @@
             activeFilters.amountMax = e.target.value;
             applyFilters();
         }, 500));
+
+         // Filtre méthode de paiement
+        document.getElementById('paymentMethodFilter').addEventListener('change', function(e) {
+            activeFilters.paymentMethod = e.target.value;
+            applyFilters();
+        });
     }
 
     function applyFilters() {
@@ -836,9 +853,19 @@
                 }
             }
 
+            
+
+            // Filtre méthode de paiement
+            if (activeFilters.paymentMethod && activeFilters.paymentMethod !== '') {
+                const paymentMethod = order.getAttribute('data-payment-method');
+                if (paymentMethod !== activeFilters.paymentMethod) {
+                    show = false;
+                }
+            }
+
             // Afficher/masquer la commande
             order.style.display = show ? 'block' : 'none';
-            if (show) visibleCount++;
+            if (show) visibleCount++
         });
 
         // Mettre à jour le compteur de filtres actifs
@@ -868,6 +895,42 @@
         } else if (existingEmptyMessage && visibleCount > 0) {
             existingEmptyMessage.remove();
         }
+    }
+
+    // Fonctions pour les actions de commande
+    function updateOrderStatus(orderId, newStatus) {
+        if (confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
+            fetch(`/api/orders/${orderId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    }
+
+    function viewPaymentProof(orderId) {
+        window.open(`/orders/${orderId}/payment-proof/`, '_blank');
+    }
+
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
 
     function toggleFilters() {

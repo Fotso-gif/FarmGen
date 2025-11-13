@@ -17,4 +17,8 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile, name='profile'),
     path('update/password', views.update_password, name='update_password'),
+     # Product
+    path('api/products/<int:product_id>/', views.get_product_data, name='get_product_data'),
+    path('api/products/create/', views.create_product, name='create_product_api'),
+    path('api/orders/<uuid:order_id>/', views.get_order_data, name='get_order_data'),
 ]

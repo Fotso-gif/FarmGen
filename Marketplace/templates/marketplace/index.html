@@ -3,6 +3,339 @@
 
 {% block content %}
 <style>
+/* Styles pour les modales de paiement */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.payment-modal {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.add-payment-modal {
+    max-width: 600px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.btn-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 30px;
+    max-height: calc(90vh - 100px);
+    overflow-y: auto;
+}
+
+.payment-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+}
+
+.payment-methods-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.payment-method-card {
+    display: flex;
+    align-items: center;
+    padding: 25px;
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.payment-method-card:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.method-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 20px;
+    color: white;
+    overflow:hidden;
+}
+.method-icon img{
+    width:100%;
+}
+.om-icon {
+    background: linear-gradient(135deg, #FF7900, #FFA040);
+}
+
+.momo-icon {
+    background: linear-gradient(135deg, #FFCC00, #FFDD44);
+}
+
+.whatsapp-icon {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+}
+
+.method-info {
+    flex: 1;
+}
+
+.method-info h5 {
+    margin: 0 0 8px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+}
+
+.method-description {
+    margin: 0 0 12px 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.method-features {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.feature-badge {
+    background: #f8f9fa;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    color: #495057;
+    border: 1px solid #e9ecef;
+}
+
+.btn-activate {
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Styles du formulaire */
+.payment-method-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.payment-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+    background: #f8f9fa;
+}
+
+.file-upload-area:hover {
+    border-color: #667eea;
+    background: #f0f2ff;
+}
+
+.file-upload-area i {
+    color: #6c757d;
+    margin-bottom: 15px;
+}
+
+.browse-link {
+    color: #667eea;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.file-input {
+    display: none;
+}
+
+.image-preview {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-preview img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+/* Animation */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .payment-modal {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .payment-method-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .method-icon {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+</style>
+<style>
     /* Styles optimisés et affinés */
     .stats-grid {
         display: grid;
@@ -1183,10 +1516,10 @@
                 <h4>Nouvelle Catégorie</h4>
                 <p>Créer une nouvelle catégorie</p>
             </div>
-            <div class="quick-action" onclick="window.location.href='#'">
+            <div class="quick-action" onclick="openPaymentMethodsModal()">
                 <i class="fas fa-clipboard-list"></i>
-                <h4>Voir Commandes</h4>
-                <p>Gérer les commandes clients</p>
+                <h4>Mode de paiement</h4>
+                <p>Gérer vos paiement</p>
             </div>
             <div class="quick-action" onclick="openModal('editShopModal')">
                 <i class="fas fa-edit"></i>
@@ -1200,7 +1533,206 @@
     </div>
     {% endif %}
 </main>
+<!-- Modal de gestion des méthodes de paiement -->
+<div class="modal-overlay" id="paymentMethodsModal">
+    <div class="modal payment-modal">
+        <div class="modal-header">
+            <h2 class="modal-title">
+                <i class="fas fa-credit-card me-2"></i>
+                Méthodes de paiement
+            </h2>
+            <button type="button" class="btn-close" onclick="closeModal('paymentMethodsModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Section des méthodes disponibles -->
+            <div class="payment-section">
+                <h4 class="section-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    Méthodes activées
+                </h4>
+                <div class="payment-methods-grid" id="activeMethods">
+                    <!-- Méthodes activées chargées dynamiquement -->
+                </div>
+            </div>
 
+            <!-- Section des méthodes disponibles à activer -->
+            <div class="payment-section">
+                <h4 class="section-title">
+                    <i class="fas fa-plus-circle text-primary me-2"></i>
+                    Ajouter une méthode de paiement
+                </h4>
+                <div class="payment-methods-grid">
+                    <!-- Orange Money -->
+                    <div class="payment-method-card" data-method="om">
+                        <div class="method-icon om-icon">
+                            <img src="{% static './paiement/OM.png' %}" alt="om">
+                        </div>
+                        <div class="method-info">
+                            <h5>Orange Money</h5>
+                            <p class="method-description">
+                                Paiement via Orange Money - Côte d'Ivoire
+                            </p>
+                            <div class="method-features">
+                                <span class="feature-badge">
+                                    <i class="fas fa-bolt"></i> Rapide
+                                </span>
+                                <span class="feature-badge">
+                                    <i class="fas fa-shield-alt"></i> Sécurisé
+                                </span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-activate" onclick="openAddPaymentModal('om')">
+                            <i class="fas fa-plus"></i> Activer
+                        </button>
+                    </div>
+
+                    <!-- MTN Mobile Money -->
+                    <div class="payment-method-card" data-method="momo">
+                        <div class="method-icon momo-icon">
+                            <img src="{% static './paiement/MOMO.png' %}" alt="momo">
+                        </div>
+                        <div class="method-info">
+                            <h5>MTN Mobile Money</h5>
+                            <p class="method-description">
+                                Paiement via MTN MoMo - Côte d'Ivoire
+                            </p>
+                            <div class="method-features">
+                                <span class="feature-badge">
+                                    <i class="fas fa-bolt"></i> Rapide
+                                </span>
+                                <span class="feature-badge">
+                                    <i class="fas fa-shield-alt"></i> Sécurisé
+                                </span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-activate" onclick="openAddPaymentModal('momo')">
+                            <i class="fas fa-plus"></i> Activer
+                        </button>
+                    </div>
+
+                    <!-- WhatsApp Paiement -->
+                    <div class="payment-method-card" data-method="whatsapp">
+                        <div class="method-icon whatsapp-icon">
+                            <i class="fab fa-whatsapp"></i>
+                        </div>
+                        <div class="method-info">
+                            <h5>WhatsApp Paiement</h5>
+                            <p class="method-description">
+                                Paiement et confirmation via WhatsApp
+                            </p>
+                            <div class="method-features">
+                                <span class="feature-badge">
+                                    <i class="fas fa-comments"></i> Direct
+                                </span>
+                                <span class="feature-badge">
+                                    <i class="fas fa-users"></i> Populaire
+                                </span>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary btn-activate" onclick="openAddPaymentModal('whatsapp')">
+                            <i class="fas fa-plus"></i> Activer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout de méthode de paiement -->
+<div class="modal-overlay" id="addPaymentModal">
+    <div class="modal add-payment-modal">
+        <div class="modal-header">
+            <h2 class="modal-title" id="addPaymentModalTitle">
+                <i class="fas fa-plus-circle me-2"></i>
+                Activer le paiement
+            </h2>
+            <button type="button" class="btn-close" onclick="closeModal('addPaymentModal')">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="payment-method-header" id="paymentMethodHeader">
+                <!-- En-tête dynamique selon la méthode -->
+            </div>
+
+            <form id="addPaymentForm" class="payment-form">
+                <input type="hidden" id="paymentMethodType" name="payment_method">
+                
+                <!-- Champs communs -->
+                <div class="form-group">
+                    <label for="accountName" class="form-label">
+                        <i class="fas fa-user me-1"></i>
+                        Nom du titulaire *
+                    </label>
+                    <input type="text" id="accountName" name="nom" class="form-control" 
+                           placeholder="Ex: Koffi Kouame" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phoneNumber" class="form-label">
+                        <i class="fas fa-phone me-1"></i>
+                        Numéro de téléphone *
+                    </label>
+                    <input type="tel" id="phoneNumber" name="number" class="form-control" 
+                           placeholder="Ex: 0701234567" pattern="[0-9]{10}" required>
+                    <small class="form-text">Format: 10 chiffres sans espaces</small>
+                </div>
+
+                <!-- Champ QR Code (pour Orange Money et MTN) -->
+                <div class="form-group" id="qrCodeField">
+                    <label for="qrCodeImage" class="form-label">
+                        <i class="fas fa-qrcode me-1"></i>
+                        QR Code de paiement *
+                    </label>
+                    <div class="file-upload-area" id="qrCodeUpload">
+                        <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                        <p>Glissez-déposez votre QR Code ou <span class="browse-link">parcourir</span></p>
+                        <input type="file" id="qrCodeImage" name="pathimg" accept="image/*" 
+                               class="file-input" required>
+                        <small class="form-text">Formats acceptés: JPG, PNG, WEBP (max 2MB)</small>
+                    </div>
+                    <div class="image-preview mt-2" id="qrCodePreview"></div>
+                </div>
+
+                <!-- Champ WhatsApp (spécifique) -->
+                <div class="form-group" id="whatsappField" style="display: none;">
+                    <label for="whatsappNumber" class="form-label">
+                        <i class="fab fa-whatsapp me-1"></i>
+                        Numéro WhatsApp *
+                    </label>
+                    <input type="tel" id="whatsappNumber" name="whatsapp_number" 
+                           class="form-control" placeholder="Ex: 0701234567">
+                    <small class="form-text">Ce numéro recevra les commandes via WhatsApp</small>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check">
+                        <input type="checkbox" id="activateImmediately" name="status" 
+                               class="form-check-input" checked>
+                        <label for="activateImmediately" class="form-check-label">
+                            Activer immédiatement cette méthode de paiement
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" 
+                            onclick="closeModal('addPaymentModal')">
+                        <i class="fas fa-times me-1"></i>Annuler
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- Modal de bienvenue (s'ouvre automatiquement si pas de boutique) -->
 <div class="modal-overlay {% if not shop %}show{% endif %}" id="welcomeModal">
     <div class="modal welcome-modal">
@@ -1362,7 +1894,7 @@
     <div class="modal modal-lg">
         <div class="modal-header">
             <h4 class="modal-title" id="productModalTitle">Nouveau produit</h4>
-            <button class="modal-close" onclick="closeModal('addProductModal')">&times;</button>
+            <button class="modal-close" style="color:#000;" onclick="closeModal('addProductModal')">&times;</button>
         </div>
         <form id="productForm" method="post" action="{% url 'create_product' %}" enctype="multipart/form-data">
             {% csrf_token %}
@@ -1574,5 +2106,223 @@
             document.getElementById('productDescription').value = editor.getData();
         }
     });
+</script>
+<script>
+// Fonctions pour gérer les modales
+function openPaymentMethodsModal() {
+    document.getElementById('paymentMethodsModal').classList.add('show');
+    loadActivePaymentMethods();
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+}
+
+function openAddPaymentModal(method) {
+    closeModal('paymentMethodsModal');
+    setupAddPaymentModal(method);
+    document.getElementById('addPaymentModal').classList.add('show');
+}
+
+function setupAddPaymentModal(method) {
+    const methodConfig = {
+        'om': {
+            title: 'Orange Money',
+            icon: 'fas fa-money-bill-wave',
+            color: '#FF7900',
+            description: 'Configurez les paiements via Orange Money'
+        },
+        'momo': {
+            title: 'MTN Mobile Money', 
+            icon: 'fas fa-mobile-alt',
+            color: '#FFCC00',
+            description: 'Configurez les paiements via MTN MoMo'
+        },
+        'whatsapp': {
+            title: 'WhatsApp Paiement',
+            icon: 'fab fa-whatsapp',
+            color: '#25D366',
+            description: 'Configurez les paiements via WhatsApp'
+        }
+    };
+
+    const config = methodConfig[method];
+    
+    // Mise à jour du titre
+    document.getElementById('addPaymentModalTitle').innerHTML = 
+        `<i class="${config.icon} me-2"></i>Activer ${config.title}`;
+    
+    // Mise à jour de l'en-tête
+    document.getElementById('paymentMethodHeader').innerHTML = `
+        <div class="method-icon" style="background: ${config.color}; margin: 0 auto 15px; width: 80px; height: 80px;">
+            <i class="${config.icon} fa-2x"></i>
+        </div>
+        <h3 style="color: ${config.color}; margin-bottom: 10px;">${config.title}</h3>
+        <p style="color: #6c757d; margin: 0;">${config.description}</p>
+    `;
+    
+    // Configuration des champs spécifiques
+    document.getElementById('paymentMethodType').value = method;
+    
+    // Gestion des champs conditionnels
+    const qrCodeField = document.getElementById('qrCodeField');
+    const whatsappField = document.getElementById('whatsappField');
+    
+    if (method === 'whatsapp') {
+        qrCodeField.style.display = 'none';
+        whatsappField.style.display = 'block';
+        document.getElementById('qrCodeImage').removeAttribute('required');
+    } else {
+        qrCodeField.style.display = 'block';
+        whatsappField.style.display = 'none';
+        document.getElementById('qrCodeImage').setAttribute('required', 'true');
+    }
+    
+    // Réinitialiser le formulaire
+    document.getElementById('addPaymentForm').reset();
+    document.getElementById('qrCodePreview').innerHTML = '';
+}
+
+// Chargement des méthodes activées
+function loadActivePaymentMethods() {
+    fetch('{% url "payment_methods_list" %}')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('activeMethods');
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Aucune méthode de paiement activée</p>
+                        <small>Activez une méthode pour recevoir des paiements</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.map(method => `
+                <div class="payment-method-card active">
+                    <div class="method-icon ${method.payment_method}-icon">
+                        <i class="${getMethodIcon(method.payment_method)}"></i>
+                    </div>
+                    <div class="method-info">
+                        <h5>${method.nom || getMethodName(method.payment_method)}</h5>
+                        <p class="method-description">
+                            ${method.number} • ${method.status ? 'Activé' : 'Désactivé'}
+                        </p>
+                        <div class="method-features">
+                            <span class="feature-badge">
+                                <i class="fas fa-calendar"></i>
+                                Ajouté le ${new Date(method.created_at).toLocaleDateString()}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="method-actions">
+                        <button class="btn btn-sm btn-outline-danger" onclick="deactivateMethod('${method.id}')">
+                            <i class="fas fa-times"></i> Désactiver
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error loading payment methods:', error);
+        });
+}
+
+// Utilitaires
+function getMethodIcon(method) {
+    const icons = {
+        'om': 'fas fa-money-bill-wave',
+        'momo': 'fas fa-mobile-alt', 
+        'whatsapp': 'fab fa-whatsapp'
+    };
+    return icons[method] || 'fas fa-credit-card';
+}
+
+function getMethodName(method) {
+    const names = {
+        'om': 'Orange Money',
+        'momo': 'MTN Mobile Money',
+        'whatsapp': 'WhatsApp Paiement'
+    };
+    return names[method] || 'Méthode inconnue';
+}
+
+// Gestion de l'upload d'image QR Code
+document.getElementById('qrCodeUpload').addEventListener('click', function() {
+    document.getElementById('qrCodeImage').click();
+});
+
+document.getElementById('qrCodeImage').addEventListener('change', function(e) {
+    const preview = document.getElementById('qrCodePreview');
+    preview.innerHTML = '';
+    
+    if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.alt = 'QR Code preview';
+            preview.appendChild(img);
+        };
+        
+        reader.readAsDataURL(file);
+    }
+});
+
+// Soumission du formulaire
+document.getElementById('addPaymentForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "create_payment_method" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeModal('addPaymentModal');
+            openPaymentMethodsModal(); // Recharger la liste
+            showNotification('Méthode de paiement ajoutée avec succès!', 'success');
+        } else {
+            showNotification('Erreur: ' + (data.error || 'Erreur lors de l\'ajout'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Erreur lors de l\'ajout de la méthode de paiement', 'error');
+    });
+});
+
+// Fonction utilitaire pour CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Notification
+function showNotification(message, type) {
+    // Implémentez votre système de notification ici
+    alert(message); // Solution temporaire
+}
 </script>
 {% endblock %}

@@ -1,3 +1,7 @@
+import os
+import qrcode
+import base64
+from io import BytesIO
 import json
 import logging
 from django.utils import timezone
@@ -10,9 +14,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from .models import Order, MethodPaid, PaymentVerification
-import base64
-from io import BytesIO
-import qrcode
+from django.core.files.storage import default_storage
+from .utils import image_processor  # Assure-toi que le chemin est bon
 
 logger = logging.getLogger(__name__)
 
@@ -86,7 +89,7 @@ def process_checkout(request, payment_method):
         last_name = request.POST.get('last_name')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
-        payment_phone = request.POST.get(f'{payment_method}_number')
+        payment_phone = request.POST.get('payment_phone')
         
         # Validation des données
         if not all([first_name, last_name, email, phone]):
@@ -107,6 +110,7 @@ def process_checkout(request, payment_method):
         
         # Créer la commande
         order = Order.objects.create(
+            user = request.user,
             total_amount=cart_total,
             tax_amount=tax,
             final_amount=final_amount,
@@ -185,48 +189,119 @@ def generate_payment_qr(order, method):
 @require_http_methods(["POST"])
 @csrf_exempt
 def upload_payment_proof(request, order_id):
-    """Uploader et vérifier la preuve de paiement"""
+    """Uploader et vérifier la preuve de paiement (avec OCR automatique)"""
     try:
         order = get_object_or_404(Order, id=order_id)
-        
+
         if 'payment_proof' not in request.FILES:
             return JsonResponse({'success': False, 'message': 'Aucun fichier fourni'})
-        
+
         payment_proof = request.FILES['payment_proof']
-        
+
         # Vérifications du fichier
         if payment_proof.size > 5 * 1024 * 1024:  # 5MB max
             return JsonResponse({'success': False, 'message': 'Fichier trop volumineux (max 5MB)'})
-        
+
         if not payment_proof.content_type.startswith('image/'):
             return JsonResponse({'success': False, 'message': 'Format de fichier non supporté'})
-        
-        # Sauvegarder le fichier
+
+        # Sauvegarder le fichier temporairement pour OCR
         file_name = f"payment_proof_{order_id}_{payment_proof.name}"
         file_path = default_storage.save(f'payment_proofs/{file_name}', payment_proof)
-        
+
+        full_file_path = default_storage.path(file_path)
+
+        # === ÉTAPE OCR ===
+        extracted_data = image_processor(full_file_path)
+
+        if "erreur" in extracted_data:
+            # Nettoyer le fichier temporaire si besoin
+            if default_storage.exists(file_path):
+                default_storage.delete(file_path)
+            return JsonResponse({
+                'success': False,
+                'message': f'Erreur OCR: {extracted_data["erreur"]}'
+            })
+
+        # Sauvegarder le fichier dans la commande même si OCR échoue partiellement
         order.payment_proof = file_path
-        order.status = Order.STATUS_PAYMENT_VERIFIED
         order.save()
-        
-        # Ici, vous pouvez ajouter une vérification automatique via OCR
-        # Pour l'instant, on retourne une vérification manuelle nécessaire
-        verification_data = {
-            'montant': order.final_amount,
-            'order_id': str(order.id),
-            'method': order.payment_method
-        }
-        
+
+        # === VÉRIFICATION AUTOMATIQUE ===
+        auto_verified = False
+        verification_message = "Preuve uploadée. En attente de vérification manuelle."
+
+        # Vérifier le montant
+        extracted_amount = extracted_data.get("montant")
+        expected_amount = float(order.final_amount)
+
+        if extracted_amount is None:
+            verification_message = "Montant non détecté dans l'image."
+        elif abs(extracted_amount - expected_amount) > 1:  # Tolérance de 1 XAF
+            verification_message = f"Montant incorrect. Attendu : {expected_amount} XAF, trouvé : {extracted_amount} XAF."
+        else:
+            # Vérifier le destinataire (nom et numéro)
+            extracted_nom = extracted_data.get("destinataire")
+            extracted_numero = extracted_data.get("numero_destinataire")
+
+            if not extracted_nom or not extracted_numero:
+                verification_message = "Nom ou numéro du destinataire non détecté."
+            else:
+                # Rechercher dans MethodPaid lié au shop de la commande
+                # Supposons que l'Order a un champ `shop` (sinon adapte selon ton modèle)
+                try:
+                    shop = order.shop  # ← Assure-toi que ton modèle Order a un champ `shop`
+                except AttributeError:
+                    verification_message = "La commande n'est pas liée à un shop."
+                else:
+                    method_paid_qs = MethodPaid.objects.filter(
+                        shop=shop,
+                        nom__iexact=extracted_nom.strip(),
+                        numero=extracted_numero,
+                        status=True  # Optionnel : ne vérifier que les comptes actifs
+                    )
+
+                    if method_paid_qs.exists():
+                        # ✅ TOUT CORRESPOND → VÉRIFICATION AUTOMATIQUE
+                        auto_verified = True
+                        order.payment_verified = True
+                        order.payment_verified_at = timezone.now()
+                        order.status = Order.STATUS_PAID
+                        order.save()
+
+                        PaymentVerification.objects.create(
+                            order=order,
+                            verified_by=None,  # ou un utilisateur système si tu veux
+                            is_approved=True,
+                            notes=f"Paiement vérifié automatiquement via OCR. Données extraites : {extracted_data}"
+                        )
+
+                        # Vider le panier
+                        request.session['cart'] = {}
+                        request.session.modified = True
+
+                        verification_message = "Paiement vérifié automatiquement avec succès !"
+                    else:
+                        verification_message = f"Aucun compte de paiement trouvé pour le nom '{extracted_nom}' et le numéro '{extracted_numero}'."
+
         return JsonResponse({
             'success': True,
-            'verified': False,  # Nécessite vérification manuelle
-            'message': 'Preuve de paiement uploadée avec succès. En attente de vérification.',
-            'data': verification_data
+            'verified': auto_verified,
+            'message': verification_message,
+            'data': {
+                'montant': extracted_amount,
+                'destinataire': extracted_data.get("destinataire"),
+                'numero_destinataire': extracted_data.get("numero_destinataire"),
+                'date_heure': extracted_data.get("date_heure"),
+                'transaction_id': extracted_data.get("transaction_id"),
+                'solde': extracted_data.get("solde"),
+                'texte_complet': extracted_data.get("texte_complet")[:200] + "..." if extracted_data.get("texte_complet") else ""
+            }
         })
-        
+
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Erreur lors de l\'upload: {str(e)}'})
-
+    
 @require_http_methods(["POST"])
 def verify_payment_manual(request, order_id):
     """Vérification manuelle du paiement par l'admin"""

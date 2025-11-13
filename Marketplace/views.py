@@ -8,9 +8,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from account.models import User
 from .models import Shop, Product, Favorite, Category, ProductImage
-from payments.models import Order
+from payments.models import Order, MethodPaid
 # Create your views here.
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 
     
@@ -117,7 +120,7 @@ def create_shop(request):
             # Vérifier si l'utilisateur a déjà une boutique
             if Shop.objects.filter(user=request.user).exists():
                 messages.error(request, "Vous avez déjà une boutique.")
-                return redirect('shop_dashboard')
+                return redirect('marketplace_list')
             
             shop = Shop.objects.create(
                 user=request.user,
@@ -138,12 +141,12 @@ def create_shop(request):
             shop.save()
             
             messages.success(request, "Boutique créée avec succès!")
-            return redirect('shop_dashboard')
+            return redirect('marketplace_list')
             
         except Exception as e:
             messages.error(request, f"Erreur lors de la création: {str(e)}")
     
-    return redirect('shop_dashboard')
+    return redirect('marketplace_list')
 
 @login_required
 def update_shop(request):
@@ -168,7 +171,7 @@ def update_shop(request):
         except Exception as e:
             messages.error(request, f"Erreur lors de la mise à jour: {str(e)}")
     
-    return redirect('shop_dashboard')
+    return redirect('marketplace_list')
 
 @login_required
 def create_category(request):
@@ -193,7 +196,7 @@ def create_category(request):
         except Exception as e:
             messages.error(request, f"Erreur lors de la création: {str(e)}")
     
-    return redirect('shop_dashboard')
+    return redirect('marketplace_list')
 
 @login_required
 def create_product(request):
@@ -225,7 +228,7 @@ def create_product(request):
         except Exception as e:
             messages.error(request, f"Erreur lors de la création: {str(e)}")
     
-    return redirect('shop_dashboard')
+    return redirect('marketplace_list')
 
 @login_required
 @csrf_exempt
@@ -403,74 +406,161 @@ def update_shop(request):
     
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})  
 
+
 @login_required
 def order_history(request):
-    """Historique des commandes avec filtres par rôle"""
-    # Récupérer les filtres depuis l'URL
-    # status_filter = request.GET.getlist('status')
-    # payment_filter = request.GET.get('payment')
-    # date_from = request.GET.get('date_from')
-    # date_to = request.GET.get('date_to')
-    
-    # Base queryset selon le rôle
-    if request.user.is_superuser:
-        # Admin: voir toutes les commandes
-        # orders = Order.objects.all().select_related('user', 'shop').prefetch_related('items__product')
-        orders = None
-        all_shops = Shop.objects.all()
-        # customers = User.objects.filter(orders__isnull=False).distinct()
-        
-    elif hasattr(request.user, 'shop'):
-        # Vendeur: voir les commandes de sa boutique
-        shop = request.user.shop
-        # orders = Order.objects.filter(shop=shop).select_related('user').prefetch_related('items__product')
-        # customers = User.objects.filter(orders__shop=shop).distinct()
-        orders=None
-        all_shops = None
-        
-    else:
-        # Client: voir ses propres commandes
-        # orders = Order.objects.filter(user=request.user).select_related('shop').prefetch_related('items__product')
-        orders = None
-        customers = None
-        all_shops = None
-    
-    # Appliquer les filtres
-    # if status_filter:
-    #     orders = orders.filter(status__in=status_filter) or None
-    
-    # if payment_filter:
-    #     orders = orders.filter(payment_status=payment_filter) or None
-    
-    # if date_from:
-    #     orders = orders.filter(created_at__date__gte=date_from) or None
-    
-    # if date_to:
-    #     orders = orders.filter(created_at__date__lte=date_to) or None
-    
-    # Statistiques
-    # total_orders = orders.count() or None
-    # pending_orders = orders.filter(status='pending').count() or None
-    # delivered_orders = orders.filter(status='delivered').count() or None
-    # cancelled_orders = orders.filter(status='cancelled').count() or None
-    
-    # Pagination
-    # paginator = Paginator(orders, 10)
-    # page_number = request.GET.get('page')
-    # page_orders = paginator.get_page(page_number)
-    
-    context = {
-         'orders': None,
-        'total_orders': None,
-        'pending_orders': None,
-        'delivered_orders': None,
-        'cancelled_orders': None,
-        'all_shops': all_shops,
-        # 'customers': None,
-    }
-    
-    return render(request, 'marketplace/historiqueCommande.html', context)
+    """Affiche l'historique des commandes avec filtres selon le rôle utilisateur."""
 
+    # 🔹 Récupération des filtres
+    status_filter = request.GET.getlist('status')
+    payment_filter = request.GET.get('payment')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    shop_filter = request.GET.get('shop')
+    customer_filter = request.GET.get('customer')
+
+    # 🔹 Base queryset selon le rôle
+    if request.user.is_superuser:
+        orders = Order.objects.all().order_by('-created_at')
+        all_shops = Shop.objects.all()
+        customers = User.objects.filter(
+            Q(orders__isnull=False) |
+            Q(first_name__isnull=False)
+        ).distinct()
+
+    elif hasattr(request.user, 'shop'):
+        # Vendeur → uniquement commandes de sa boutique
+        shop = request.user.shop
+        orders = Order.objects.filter(shop_id=shop.id).order_by('-created_at')
+        all_shops = None
+        customers = User.objects.filter(
+            Q(orders__shop_id=shop.id) |
+            Q(first_name__isnull=False)
+        ).distinct()
+
+    else:
+        # Client → ses commandes seulement
+        orders = Order.objects.filter(
+            Q(customer_email=request.user.email) |
+            Q(customer_phone=request.user.phone)
+        ).order_by('-created_at')
+        all_shops = None
+        customers = None
+
+    # 🔹 Application des filtres dynamiques
+    if status_filter:
+        orders = orders.filter(status__in=status_filter)
+
+    if payment_filter:
+        if payment_filter == 'paid':
+            orders = orders.filter(status__in=[
+                Order.STATUS_PAID, Order.STATUS_PAYMENT_VERIFIED
+            ])
+        elif payment_filter == 'pending':
+            orders = orders.filter(status__in=[
+                Order.STATUS_PENDING, Order.STATUS_WAITING_PAYMENT
+            ])
+        elif payment_filter == 'failed':
+            orders = orders.filter(status__in=[
+                Order.STATUS_FAILED, Order.STATUS_REFUNDED
+            ])
+
+    # 🔹 Filtres par dates
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            orders = orders.filter(created_at__gte=date_from_obj)
+        except ValueError:
+            pass
+
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+            orders = orders.filter(created_at__lte=date_to_obj)
+        except ValueError:
+            pass
+
+    # 🔹 Filtre boutique (admin uniquement)
+    if shop_filter and request.user.is_superuser:
+        orders = orders.filter(shop_id=shop_filter)
+
+    # 🔹 Filtre client (admin uniquement)
+    if customer_filter and request.user.is_superuser:
+        orders = orders.filter(
+            Q(customer_email__icontains=customer_filter) |
+            Q(customer_first_name__icontains=customer_filter) |
+            Q(customer_last_name__icontains=customer_filter)
+        )
+
+    # 🔹 Statistiques globales
+    if request.user.is_superuser:
+        base_orders = Order.objects.all()
+    elif hasattr(request.user, 'shop'):
+        base_orders = Order.objects.filter(shop_id=request.user.shop.id)
+    else:
+        base_orders = Order.objects.filter(
+            Q(customer_email=request.user.email) |
+            Q(customer_phone=request.user.phone)
+        )
+
+    total_orders = base_orders.count()
+    pending_orders = base_orders.filter(
+        status__in=[Order.STATUS_PENDING, Order.STATUS_WAITING_PAYMENT]
+    ).count()
+    delivered_orders = base_orders.filter(
+        status__in=[Order.STATUS_PAID, Order.STATUS_PAYMENT_VERIFIED]
+    ).count()
+    cancelled_orders = base_orders.filter(
+        status__in=[Order.STATUS_FAILED, Order.STATUS_REFUNDED]
+    ).count()
+
+    # 🔹 Pagination
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get('page')
+    page_orders = paginator.get_page(page_number)
+
+    # 🔹 Formatage des données
+    orders_data = []
+    for order in page_orders:
+        total_items = sum(
+            item.get('quantity', 0) for item in (order.cart_items or [])
+        )
+
+        shop_info = None
+        if request.user.is_superuser:
+            shop_info = Shop.objects.filter(id=order.shop_id).first()
+
+        orders_data.append({
+            'id': order.id,
+            'order_number': str(order.id)[:8].upper(),
+            'created_at': order.created_at,
+            'status': order.status,
+            'payment_status': 'paid' if order.status in [
+                Order.STATUS_PAID, Order.STATUS_PAYMENT_VERIFIED
+            ] else 'pending',
+            'total_amount': order.final_amount,
+            'customer_name': f"{order.customer_first_name} {order.customer_last_name}",
+            'customer_email': order.customer_email,
+            'customer_phone': order.customer_phone,
+            'payment_method': order.payment_method,
+            'cart_items': order.cart_items,
+            'shop': shop_info,
+            'total_items': total_items
+        })
+
+    # 🔹 Contexte final
+    context = {
+        'orders': orders_data,
+        'page_orders': page_orders,
+        'total_orders': total_orders,
+        'pending_orders': pending_orders,
+        'delivered_orders': delivered_orders,
+        'cancelled_orders': cancelled_orders,
+        'all_shops': all_shops,
+        'customers': customers,
+    }
+
+    return render(request, 'marketplace/historiqueCommande.html', context)
 @login_required
 def update_order_status(request, order_id):
     """Mettre à jour le statut d'une commande"""
@@ -493,6 +583,67 @@ def update_order_status(request, order_id):
     
     return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
 
+
+
+@csrf_exempt
+def payment_methods_list(request):
+    if request.method == 'GET':
+        try:
+            shop = Shop.objects.get(user=request.user)
+            methods = MethodPaid.objects.filter(shop=shop)
+            
+            data = []
+            for method in methods:
+                data.append({
+                    'id': str(method.id),
+                    'payment_method': method.payment_method,
+                    'nom': method.nom,
+                    'number': method.number,
+                    'status': method.status,
+                    'created_at': method.created_at.isoformat(),
+                    'pathimg': method.pathimg.url if method.pathimg else None
+                })
+            
+            return JsonResponse(data, safe=False)
+            
+        except Shop.DoesNotExist:
+            return JsonResponse([], safe=False)
+
+@csrf_exempt
+def create_payment_method(request):
+    if request.method == 'POST':
+        try:
+            shop = Shop.objects.get(user=request.user)
+            
+            payment_method = MethodPaid.objects.create(
+                shop=shop,
+                payment_method=request.POST['payment_method'],
+                nom=request.POST.get('nom'),
+                number=request.POST['number'],
+                status=request.POST.get('status', 'false') == 'true'
+            )
+            
+            if 'pathimg' in request.FILES:
+                payment_method.pathimg = request.FILES['pathimg']
+                payment_method.save()
+            
+            return JsonResponse({'success': True, 'method_id': str(payment_method.id)})
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+def deactivate_payment_method(request, method_id):
+    if request.method == 'POST':
+        try:
+            method = MethodPaid.objects.get(id=method_id, shop__user=request.user)
+            method.status = False
+            method.save()
+            
+            return JsonResponse({'success': True})
+            
+        except MethodPaid.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Méthode non trouvée'})
 @login_required
 def export_orders(request, format):
     """Exporter les commandes en CSV ou PDF"""
