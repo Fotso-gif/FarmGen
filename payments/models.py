@@ -82,7 +82,7 @@ class MethodPaid(models.Model):
 
     PAYMENT_METHODS = [
         ('om', 'Orange Money'),
-        ('momo', 'MTN Mobile Money'),
+        ('momo', 'MTN Mobile Money')
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

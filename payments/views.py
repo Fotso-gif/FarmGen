@@ -14,6 +14,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 from .models import Order, MethodPaid, PaymentVerification
+from Marketplace.models import Shop
 from django.core.files.storage import default_storage
 from .utils import image_processor  # Assure-toi que le chemin est bon
 
@@ -160,6 +161,8 @@ def generate_whatsapp_link(order, phone_number):
 
 def generate_payment_qr(order, method):
     """Générer QR code et code USSD pour OM/MOMO"""
+    payment_methods = MethodPaid.objects.filter(shop_id=order.shop_id, status=True, payment_method=method).first()
+
     # Données pour le QR code (à adapter selon votre API de paiement)
     payment_data = {
         'order_id': str(order.id),
@@ -167,10 +170,16 @@ def generate_payment_qr(order, method):
         'method': method,
         'currency': 'XAF'
     }
-    
+    # Générer code USSD
+    ussd_code = None 
+    if method == 'momo':
+        ussd_code = f"*126*14*{payment_methods.number}*{round(order.final_amount)}#"
+    else:  # om
+        ussd_code = f"#150*14*{payment_methods.number}*{round(order.final_amount)}#"
+
     # Générer QR code
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
-    qr.add_data(json.dumps(payment_data))
+    qr.add_data(json.dumps(ussd_code))
     qr.make(fit=True)
     
     img = qr.make_image(fill_color="black", back_color="white")
@@ -178,11 +187,7 @@ def generate_payment_qr(order, method):
     img.save(buffer, format='PNG')
     qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
     
-    # Générer code USSD (exemple)
-    if method == 'om':
-        ussd_code = f"#150*1*1*674907032*{order.final_amount}#"
-    else:  # momo
-        ussd_code = f"*126*1*658094842*{order.final_amount}#"
+    
     
     return qr_code_base64, ussd_code
 
@@ -212,7 +217,7 @@ def upload_payment_proof(request, order_id):
         full_file_path = default_storage.path(file_path)
 
         # === ÉTAPE OCR ===
-        extracted_data = image_processor(full_file_path)
+        extracted_data = image_processor.process_payment_capture(full_file_path)
 
         if "erreur" in extracted_data:
             # Nettoyer le fichier temporaire si besoin
@@ -233,7 +238,7 @@ def upload_payment_proof(request, order_id):
 
         # Vérifier le montant
         extracted_amount = extracted_data.get("montant")
-        expected_amount = float(order.final_amount)
+        expected_amount = int(order.final_amount)
 
         if extracted_amount is None:
             verification_message = "Montant non détecté dans l'image."

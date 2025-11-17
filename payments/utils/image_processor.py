@@ -4,11 +4,16 @@ import re
 import numpy as np
 import os
 
+# Chemin relatif vers l'exécutable
+current_dir = os.path.dirname(__file__)  # dossier où est ton script
+tesseract_path = os.path.join(current_dir, "..", "..", "Tesseract-OCR", "tesseract.exe")
+tesseract_path = os.path.normpath(tesseract_path)  # normalise le chemin
 # Configuration Tesseract
 try:
-    pytesseract.pytesseract.tesseract_cmd = r"../Tesseract-OCR/tesseract.exe"
+    pytesseract.pytesseract.tesseract_cmd = tesseract_path
+
 except:
-    pass  # Utiliser le chemin par défaut sur Linux/Mac
+    print('On ne retrouve pas le module.')  # Utiliser le chemin par défaut sur Linux/Mac
 
 def find_first_match(patterns, texte, group=1):
     """Cherche la première correspondance parmi plusieurs regex."""

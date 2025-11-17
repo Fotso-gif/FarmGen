@@ -354,6 +354,18 @@
         margin-bottom: 15px;
     }
 
+     #timer {
+        position:fixed;
+        right:2rem;
+        z-index:999;
+            font-size: 1.5em;
+            max-width:100px;
+            padding: 10px 20px;
+            background-color: red;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
     .preview-container {
         margin-top: 20px;
         text-align: center;
@@ -535,6 +547,7 @@
 {% endblock %}
 
 {% block main %}
+<div id="timer">30:00</div>
 <!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
@@ -730,7 +743,11 @@
                                     <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
                                     
                                     <div class="qrcode-container">
-                                        <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                        {% if method.pathimg %}
+                                            <img src="{{ method.pathimg.url }}" alt="QR Code de paiement" class="qrcode-image">
+                                        {% else %}
+                                            <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                        {% endif %}
                                     </div>
                                     
                                     <div class="text-center mt-3">
@@ -780,7 +797,11 @@
                                 <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
                                 
                                 <div class="qrcode-container">
-                                    <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                    {% if payment_methods.pathimg %}
+                                        <img src="{{ payment_methods.pathimg.url }}" alt="QR Code de paiement" class="qrcode-image">
+                                    {% else %}
+                                        <img id="qrcode-image-om" src="" alt="QR Code de paiement" class="qrcode-image">
+                                    {% endif %}
                                 </div>
                                 
                                 <div class="text-center mt-3">
@@ -832,7 +853,11 @@
                                     <h4 class="text-center mb-4">Scannez ou utilisez le code USSD pour payer</h4>
                                     
                                     <div class="qrcode-container">
-                                        <img id="qrcode-image-momo" src="" alt="QR Code de paiement" class="qrcode-image">
+                                        {% if method.pathimg %}
+                                            <img src="{{ method.pathimg.url }}" alt="QR Code de paiement" class="qrcode-image">
+                                        {% else %}
+                                            <img id="qrcode-image-momo" src="" alt="QR Code de paiement" class="qrcode-image">
+                                        {% endif %}
                                     </div>
                                     
                                     <div class="text-center mt-3">
@@ -1576,4 +1601,51 @@ updateProgressBar();
 }); {% endcomment %}
 
 </script>
+ <script>
+        // Temps initial en secondes (30 minutes)
+        let totalSeconds = 30 * 60;
+
+        const timerEl = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+
+            // Affichage format mm:ss
+            timerEl.textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+
+            totalSeconds--;
+
+            if (totalSeconds < 0) {
+                clearInterval(countdown);
+                // Timer terminé → AJAX pour rediriger
+                fetch('{% url "clear-cart" %}', {  // <-- ton endpoint Django/Laravel pour vider le panier
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()  // si tu utilises Django/Laravel avec CSRF
+                    },
+                    body: JSON.stringify({action: 'clear'})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Panier vidé avec succès → redirection
+                        window.location.href = '{% url "marketplace" %}';
+                    } else {
+                        console.error('Erreur lors du vidage du panier:', data.message);
+                    }
+                })
+                .catch(err => console.error('Erreur AJAX:', err));
+            }
+        }, 1000);
+
+        // Fonction pour récupérer le token CSRF (optionnel selon backend)
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            if (match) return match[2];
+            return '';
+        }
+    </script>
 {% endblock %}
