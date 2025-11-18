@@ -592,7 +592,7 @@ def profile(request):
     context = {
         'user': user,
     }
-    return render(request, 'account\profile.html', context)
+    return render(request, 'account/profile.html', context)
 
 @login_required
 def update_password(request):
