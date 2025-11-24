@@ -1,74 +1,25 @@
 import json
 from django.http import JsonResponse
-from django.db.models import Count, Q
+from django.db.models import Q, Avg, Count
 from django.core.paginator import Paginator
 from django.utils.text import slugify
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from account.models import User
-from .models import Shop, Product, Favorite, Category, ProductImage
+from .models import Shop, Product, Favorite, Category, ProductImage, ProductLike, ProductView, SearchHistory
 from payments.models import Order, MethodPaid
 # Create your views here.
 from django.utils import timezone
 from datetime import datetime, timedelta
-
-
-    
+   
 def shop(request, shop_id):
     shop = Shop.objects.get(id = shop_id)
     produits = Product.objects.filter(category__shop=shop)
     return render(request, 'marketplace/e_shop.html', {'produits': produits, 'shop': shop})    
 
-@login_required
-@require_POST
-@csrf_exempt
-def toggle_favorite(request, shop_id):
-    try:
-        shop = Shop.objects.get(id=shop_id)
-        favorite, created = Favorite.objects.get_or_create(
-            user=request.user,
-            shop=shop
-        )
-        
-        if not created:
-            # Si déjà favori, on supprime
-            favorite.delete()
-            return JsonResponse({
-                'status': 'removed',
-                'message': 'Boutique retirée des favoris',
-                'is_favorite': False
-            })
-        
-        return JsonResponse({
-            'status': 'added',
-            'message': 'Boutique ajoutée aux favoris',
-            'is_favorite': True
-        })
-        
-    except Shop.DoesNotExist:
-        return JsonResponse({
-            'status': 'error',
-            'message': 'Boutique non trouvée'
-        }, status=404)
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=500)
-
-@login_required
-def get_favorites_status(request):
-    """Récupère le statut favori des boutiques pour l'utilisateur connecté"""
-    favorite_shop_ids = Favorite.objects.filter(
-        user=request.user
-    ).values_list('shop_id', flat=True)
-    
-    return JsonResponse({
-        'favorites': list(favorite_shop_ids)
-})
 
 @login_required
 def shop_dashboard(request):
@@ -651,52 +602,357 @@ def export_orders(request, format):
     # CSV: utiliser csv module
     # PDF: utiliser reportlab ou weasyprint
     pass
-"""from rest_framework import viewsets, status, mixins
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from .models import Category, Product, ProductImage
-from .serializers import CategorySerializer, ProductSerializer, ProductCreateUpdateSerializer, ProductImageSerializer
-from .filters import ProductFilter
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import OrderingFilter, SearchFilter
-from django.db.models import Sum, F
-from django.utils import timezone
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    lookup_field = "id"
+def api_shops(request):
+    """
+    API pour récupérer les boutiques avec filtres et pagination
+    """
+    try:
+        # Récupération des paramètres
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 12))
+        search = request.GET.get('search', '')
+        shop_type = request.GET.get('type', '')
+        location = request.GET.get('location', '')
+        min_rating = request.GET.get('min_rating', '')
+        sort_by = request.GET.get('sort', 'popular')
 
-class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.prefetch_related("images").all()
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_class = ProductFilter
-    search_fields = ["name", "description"]
-    ordering_fields = ["price", "quantity", "expiry_date"]
-    def get_serializer_class(self):
-        if self.action in ["create","update","partial_update"]: return ProductCreateUpdateSerializer
-        return ProductSerializer
-    @action(detail=False, methods=["get"])
-    def low_stock(self, request):
-        threshold = int(request.query_params.get("threshold", Product.LOW_STOCK_THRESHOLD))
-        items = Product.objects.filter(quantity__lt=threshold)
-        serializer = ProductSerializer(items, many=True, context={"request": request})
-        return Response(serializer.data)
-    @action(detail=False, methods=["get"])
-    def expired(self, request):
-        today = timezone.localdate()
-        items = Product.objects.filter(expiry_date__lt=today)
-        serializer = ProductSerializer(items, many=True, context={"request": request})
-        return Response(serializer.data)
-    @action(detail=False, methods=["get"])
-    def report(self, request):
-        total_products = Product.objects.count()
-        total_value = Product.objects.aggregate(total_value=Sum(F("price") * F("quantity")))["total_value"] or 0
-        most_expensive = Product.objects.order_by("-price").first()
-        cheapest = Product.objects.order_by("price").first()
-        def serialize_simple(p): return {"id": p.id, "name": p.name, "price": str(p.price), "quantity": p.quantity} if p else None
-        return Response({"total_products": total_products,"total_stock_value": str(total_value),"most_expensive": serialize_simple(most_expensive),"cheapest": serialize_simple(cheapest)})
-class ProductImageViewSet(mixins.CreateModelMixin, mixins.DestroyModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
-    queryset = ProductImage.objects.select_related("product").all()
-    serializer_class = ProductImageSerializer
-"""
+        # Construction de la queryset de base
+        shops = Shop.objects.select_related('user').prefetch_related('favorited_by').all()
+
+        # Application des filtres
+        if search:
+            shops = shops.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(type_shop__icontains=search)
+            )
+
+        if shop_type:
+            shops = shops.filter(type_shop=shop_type)
+
+        if location:
+            shops = shops.filter(localisation__icontains=location)
+
+        if min_rating:
+            shops = shops.filter(note__gte=float(min_rating))
+
+        # Application du tri
+        if sort_by == 'rating':
+            shops = shops.order_by('-note')
+        elif sort_by == 'name':
+            shops = shops.order_by('title')
+        elif sort_by == 'new':
+            shops = shops.order_by('-id')
+        else:  # popular par défaut
+            shops = shops.annotate(favorite_count=Count('favorited_by')).order_by('-favorite_count', '-note')
+
+        # Pagination
+        paginator = Paginator(shops, per_page)
+        shops_page = paginator.get_page(page)
+
+        # Préparation des données pour la réponse
+        shops_data = []
+        for shop in shops_page:
+            shop_data = {
+                'id': shop.id,
+                'title': shop.title,
+                'localisation': shop.localisation,
+                'type_shop': shop.type_shop,
+                'note': float(shop.note) if shop.note else 0.0,
+                'description': shop.description,
+                'couverture': shop.couverture.url if shop.couverture else None,
+                'user': {
+                    'username': shop.user.username,
+                    'profile_picture': shop.user.profile_picture.url if hasattr(shop.user, 'profile_picture') and shop.user.profile_picture else None,
+                },
+                'favorite_count': shop.favorited_by.count(),
+                'is_favorited': False,
+            }
+
+            # Vérifier si l'utilisateur connecté a favorisé cette boutique
+            if request.user.is_authenticated:
+                shop_data['is_favorited'] = Favorite.objects.filter(
+                    user=request.user, 
+                    shop=shop
+                ).exists()
+
+            shops_data.append(shop_data)
+
+        response_data = {
+            'shops': shops_data,
+            'pagination': {
+                'current_page': page,
+                'total_pages': paginator.num_pages,
+                'total_shops': paginator.count,
+                'has_next': shops_page.has_next(),
+                'has_previous': shops_page.has_previous(),
+            },
+            'filters': {
+                'available_types': list(Shop.objects.values_list('type_shop', flat=True).distinct()),
+                'available_locations': list(Shop.objects.values_list('localisation', flat=True).distinct()),
+            }
+        }
+
+        return JsonResponse(response_data)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_favorite(request, shop_id):
+    """
+    API pour ajouter/retirer une boutique des favoris
+    """
+    try:
+        shop = Shop.objects.get(id=shop_id)
+        favorite, created = Favorite.objects.get_or_create(
+            user=request.user,
+            shop=shop
+        )
+
+        if not created:
+            # Si déjà existant, on le supprime (toggle)
+            favorite.delete()
+            return JsonResponse({
+                'status': 'removed',
+                'message': 'Boutique retirée des favoris',
+                'favorite_count': shop.favorited_by.count()
+            })
+
+        return JsonResponse({
+            'status': 'added',
+            'message': 'Boutique ajoutée aux favoris',
+            'favorite_count': shop.favorited_by.count()
+        })
+
+    except Shop.DoesNotExist:
+        return JsonResponse({'error': 'Boutique non trouvée'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+def favorites_status(request):
+    """
+    API pour récupérer le statut des favoris de l'utilisateur
+    """
+    try:
+        favorite_shop_ids = Favorite.objects.filter(
+            user=request.user
+        ).values_list('shop_id', flat=True)
+        
+        return JsonResponse({
+            'favorites': list(favorite_shop_ids)
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def save_search_history(request):
+    """
+    API pour sauvegarder l'historique de recherche
+    """
+    try:
+        data = json.loads(request.body)
+        search_history = SearchHistory.objects.create(
+            user=request.user,
+            query=data.get('query', ''),
+            filters=data.get('filters', {})
+        )
+        
+        return JsonResponse({
+            'status': 'success',
+            'search_id': search_history.id
+        })
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def marketplace_filters(request):
+    """
+    API pour récupérer les filtres disponibles
+    """
+    try:
+        filters = {
+            'types': list(Shop.objects.values_list('type_shop', flat=True)
+                        .distinct()
+                        .order_by('type_shop')),
+            'locations': list(Shop.objects.values_list('localisation', flat=True)
+                            .distinct()
+                            .order_by('localisation')),
+            'rating_ranges': [
+                {'min': 4, 'label': '4 étoiles et plus'},
+                {'min': 3, 'label': '3 étoiles et plus'},
+            ]
+        }
+        
+        return JsonResponse(filters)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+#Boutique
+def shop_products_api(request, shop_id):
+    """
+    API pour récupérer les produits d'une boutique avec filtres
+    """
+    try:
+        shop = Shop.objects.get(id=shop_id)
+        
+        # Paramètres de pagination et filtres
+        page = int(request.GET.get('page', 1))
+        per_page = int(request.GET.get('per_page', 12))
+        search = request.GET.get('search', '')
+        categories = request.GET.getlist('categories[]')
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        sort_by = request.GET.get('sort_by', 'popular')
+        
+        # Base queryset
+        products = Product.objects.filter(
+            category__shop=shop
+        ).select_related('category').prefetch_related('images')
+        
+        # Appliquer les filtres
+        if search:
+            products = products.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        if categories:
+            products = products.filter(category_id__in=categories)
+        
+        if min_price:
+            products = products.filter(price__gte=float(min_price))
+        
+        if max_price:
+            products = products.filter(price__lte=float(max_price))
+        
+        # Appliquer le tri
+        if sort_by == 'price-low':
+            products = products.order_by('price')
+        elif sort_by == 'price-high':
+            products = products.order_by('-price')
+        elif sort_by == 'new':
+            products = products.order_by('-created_at')
+        elif sort_by == 'likes':
+            products = products.annotate(like_count=Count('productlike')).order_by('-like_count')
+        else:  # popular par défaut
+            products = products.annotate(
+                like_count=Count('productlike'),
+                view_count=Count('productview')
+            ).order_by('-view_count', '-like_count')
+        
+        # Pagination
+        paginator = Paginator(products, per_page)
+        products_page = paginator.get_page(page)
+        
+        # Préparer les données de réponse
+        products_data = []
+        for product in products_page:
+            product_data = {
+                'id': product.id,
+                'name': product.name,
+                'description': product.description,
+                'price': float(product.price),
+                'quantity': product.quantity,
+                'created_at': product.created_at.isoformat(),
+                'category': {
+                    'id': product.category.id,
+                    'name': product.category.name
+                } if product.category else None,
+                'images': [
+                    {
+                        'image': image.image.url,
+                        'alt_text': image.alt_text
+                    } for image in product.images.all()
+                ],
+                'likes_count': product.productlike_set.count(),
+                'views_count': product.productview_set.count(),
+                'rating': 4.8  # À calculer selon votre logique
+            }
+            products_data.append(product_data)
+        
+        return JsonResponse({
+            'products': products_data,
+            'pagination': {
+                'current_page': page,
+                'total_pages': paginator.num_pages,
+                'total_products': paginator.count,
+                'has_next': products_page.has_next(),
+                'has_previous': products_page.has_previous(),
+            }
+        })
+        
+    except Shop.DoesNotExist:
+        return JsonResponse({'error': 'Boutique non trouvée'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def shop_categories_api(request, shop_id):
+    """
+    API pour récupérer les catégories d'une boutique
+    """
+    try:
+        categories = Category.objects.filter(shop_id=shop_id).values('id', 'name')
+        return JsonResponse({
+            'categories': list(categories)
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_product_like(request, product_id):
+    """
+    API pour liker/unliker un produit
+    """
+    try:
+        product = Product.objects.get(id=product_id)
+        like, created = ProductLike.objects.get_or_create(
+            user=request.user,
+            product=product
+        )
+        
+        if not created:
+            like.delete()
+            return JsonResponse({
+                'status': 'unliked',
+                'likes_count': product.productlike_set.count()
+            })
+        
+        return JsonResponse({
+            'status': 'liked',
+            'likes_count': product.productlike_set.count()
+        })
+        
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Produit non trouvé'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def track_product_view(request, product_id):
+    """
+    API pour tracker les vues de produits
+    """
+    try:
+        product = Product.objects.get(id=product_id)
+        ip_address = get_client_ip(request)
+        
+        ProductView.objects.create(
+            product=product,
+            user=request.user if request.user.is_authenticated else None,
+            ip_address=ip_address
+        )
+        
+        return JsonResponse({'status': 'view_tracked'})
+        
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Produit non trouvé'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

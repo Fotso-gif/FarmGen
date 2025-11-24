@@ -674,25 +674,73 @@
   .delay-3 {
     transition-delay: 0.6s;
   }
+
+  /* Variables de couleur adaptées à FarmGen */
+  @font-face {
+    font-family: 'Chapaza';
+    src: url("{% static 'font/Chapaza.ttf' %}") format('opentype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+  
+  :root {
+    --primary-text: "Chapaza";
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ... (le reste de votre CSS reste inchangé) ... */
+
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .loading-spinner.active {
+    display: block;
+  }
+
+  .spinner {
+    border: 4px solid var(--light-gray);
+    border-top: 4px solid var(--primary-green);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .filter-option.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 </style>
 {% endblock %}
 
 {% block main %}
-<!-- Breadcrumb -->
-<!--<div class="breadcrumb">-->
-<!--  <a href="{% url 'home' %}">Accueil</a>-->
-<!--  <span>/</span>-->
-<!--  <span>Marketplace</span>-->
-<!--</div>-->
-
 <!-- Hero Section -->
 <section class="marketplace-hero">
   <div class="marketplace-hero-content">
     <h1 class="fade-in">Marketplace FarmGen</h1>
     <p class="fade-in">Découvrez les meilleurs produits agricoles directement des producteurs locaux. Fraîcheur, qualité et traçabilité garanties.</p>
-    <div class="cta-buttons fade-in">
-      <a href="#shops" class="visit-shop-btn" style="background: var(--light-green); color: var(--white); border-color: var(--light-green);">Explorer les boutiques</a>
-    </div>
   </div>
 </section>
 
@@ -777,55 +825,14 @@
         </div>
       </div>
       
+      <!-- Loading Spinner -->
+      <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+        <p>Chargement des boutiques...</p>
+      </div>
+      
       <div class="shops-grid" id="shops-container">
-        {% if shops %}
-          {% for shop in shops %}
-          <div class="shop-card fade-in" 
-               data-category="{{ shop.type_shop }}" 
-               data-region="{{ shop.localisation }}" 
-               data-rating="{{ shop.note }}"
-               data-shop-id="{{ shop.id }}">
-            <div class="shop-header-image">
-              <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}">
-              <div class="shop-badge">{{ shop.type_shop }}</div>
-              <div class="shop-avatar">
-                <img src="{{ shop.user.profile_picture.url }}" alt="{{ shop.title }}">
-              </div>
-            </div>
-            <div class="shop-content">
-              <h3>{{ shop.title }}</h3>
-              <div class="shop-stats">
-                <div class="shop-stat">
-                  <i class="fas fa-star"></i>
-                  <span>{{ shop.note }}</span>
-                </div>
-                <div class="shop-stat">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <span>{{ shop.localisation }}</span>
-                </div>
-              </div>
-              <p class="shop-description">{{ shop.description }}</p>
-              <div class="shop-actions-bar">
-                <div class="action-buttons">
-                  <button class="action-btn favorite-btn" data-shop-id="{{ shop.id }}">
-                    <i class="far fa-heart"></i>
-                  </button>
-                  <button class="action-btn share-btn" data-shop-id="{{ shop.id }}" data-shop-title="{{ shop.title }}">
-                    <i class="far fa-share-square"></i>
-                  </button>
-                </div>
-                <a href="{% url 'shop' shop.id %}" class="visit-shop-btn">Visiter la boutique</a>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state">
-            <i class="fas fa-store-slash"></i>
-            <h3>Aucune boutique disponible</h3>
-            <p>Il n'y a actuellement aucune boutique dans la marketplace.</p>
-          </div>
-        {% endif %}
+        <!-- Les boutiques seront chargées dynamiquement -->
       </div>
     </main>
   </div>
@@ -837,8 +844,476 @@
 </div>
 
 <script>
-// Fonction pour afficher les notifications toast
-function showToast(message, isError = false) {
+// Classe principale pour gérer la marketplace
+class MarketplaceManager {
+  constructor() {
+    this.shops = [];
+    this.filteredShops = [];
+    this.filters = {
+      types: new Set(),
+      locations: new Set(),
+      ratings: new Set(),
+      search: ''
+    };
+    this.sortBy = 'popular';
+    this.isLoading = false;
+    
+    this.initialize();
+  }
+
+  async initialize() {
+    await this.loadShops();
+    this.setupEventListeners();
+    this.initializeDynamicFilters();
+    this.applyFilters();
+  }
+
+  // Chargement des boutiques via AJAX
+  async loadShops() {
+    this.showLoading(true);
+    
+    try {
+      const response = await fetch('api/shops/');
+      if (!response.ok) throw new Error('Erreur réseau');
+      
+      const data = await response.json();
+      this.shops = data.shops || [];
+      this.renderShops();
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des boutiques:', error);
+      this.showToast('Erreur lors du chargement des boutiques', true);
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  // Rendu des boutiques
+  renderShops() {
+    const container = document.getElementById('shops-container');
+    
+    if (this.filteredShops.length === 0) {
+      container.innerHTML = this.getEmptyStateHTML();
+      return;
+    }
+
+    container.innerHTML = this.filteredShops.map(shop => this.getShopCardHTML(shop)).join('');
+    this.attachShopEventListeners();
+    this.initializeAnimations();
+  }
+
+  // HTML d'une carte boutique
+  getShopCardHTML(shop) {
+    return `
+      <div class="shop-card fade-in" 
+           data-category="${shop.type_shop || ''}" 
+           data-region="${shop.localisation || ''}" 
+           data-rating="${shop.note || 0}"
+           data-shop-id="${shop.id}">
+        <div class="shop-header-image">
+          <img src="${shop.couverture || '/static/images/default-shop.jpg'}" alt="${shop.title}" onerror="this.src='/static/images/default-shop.jpg'">
+          <div class="shop-badge">${shop.type_shop || 'Boutique'}</div>
+          <div class="shop-avatar">
+            <img src="${shop.user?.profile_picture || '/static/images/default-avatar.jpg'}" alt="${shop.title}" onerror="this.src='/static/images/default-avatar.jpg'">
+          </div>
+        </div>
+        <div class="shop-content">
+          <h3>${shop.title}</h3>
+          <div class="shop-specialty">
+            <i class="fas fa-seedling"></i>
+            ${shop.specialty || 'Produits agricoles'}
+          </div>
+          <div class="shop-stats">
+            <div class="shop-stat">
+              <i class="fas fa-star"></i>
+              <span>${shop.note || '0.0'}</span>
+            </div>
+            <div class="shop-stat">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>${shop.localisation || 'Non spécifié'}</span>
+            </div>
+          </div>
+          <p class="shop-description">${shop.description || 'Aucune description disponible.'}</p>
+          <div class="shop-tags">
+            ${this.getShopTagsHTML(shop)}
+          </div>
+          <div class="shop-actions-bar">
+            <div class="action-buttons">
+              <button class="action-btn favorite-btn" data-shop-id="${shop.id}">
+                <i class="far fa-heart"></i>
+              </button>
+              <button class="action-btn share-btn" data-shop-id="${shop.id}" data-shop-title="${shop.title}">
+                <i class="far fa-share-square"></i>
+              </button>
+            </div>
+            <a href="/marketplace/shop/${shop.id}" class="visit-shop-btn">Visiter la boutique</a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  getShopTagsHTML(shop) {
+    const tags = [];
+    if (shop.type_shop) tags.push(shop.type_shop);
+    if (shop.is_verified) tags.push('Vérifié');
+    if (shop.is_premium) tags.push('Premium');
+    
+    return tags.slice(0, 3).map(tag => 
+      `<span class="shop-tag">${tag}</span>`
+    ).join('');
+  }
+
+  getEmptyStateHTML() {
+    return `
+      <div class="empty-state">
+        <i class="fas fa-store-slash"></i>
+        <h3>Aucune boutique trouvée</h3>
+        <p>Aucune boutique ne correspond à vos critères de recherche. Essayez de modifier vos filtres.</p>
+        <button class="visit-shop-btn" onclick="marketplace.clearAllFilters()">Réinitialiser les filtres</button>
+      </div>
+    `;
+  }
+
+  // Initialisation des filtres dynamiques
+  initializeDynamicFilters() {
+    const types = new Set();
+    const locations = new Set();
+    
+    this.shops.forEach(shop => {
+      if (shop.type_shop) types.add(shop.type_shop);
+      if (shop.localisation) locations.add(shop.localisation);
+    });
+
+    this.populateFilterOptions('type-filter', types, 'type');
+    this.populateFilterOptions('location-filter', locations, 'location');
+  }
+
+  populateFilterOptions(containerId, values, filterType) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    values.forEach(value => {
+      const option = this.createFilterOption(filterType, value, value, true);
+      container.appendChild(option);
+    });
+  }
+
+  createFilterOption(filterType, value, label, checked = true) {
+    const id = `${filterType}-${value.toLowerCase().replace(/\s+/g, '-')}`;
+    
+    const optionDiv = document.createElement('div');
+    optionDiv.className = 'filter-option';
+    optionDiv.innerHTML = `
+      <input type="checkbox" id="${id}" data-${filterType}="${value}" ${checked ? 'checked' : ''}>
+      <label for="${id}">${label}</label>
+    `;
+    
+    return optionDiv;
+  }
+
+  // Configuration des événements
+  setupEventListeners() {
+    // Filtres
+    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', () => this.handleFilterChange());
+    });
+
+    // Recherche
+    const searchInput = document.getElementById('shop-search');
+    let searchTimeout;
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        this.filters.search = e.target.value.toLowerCase().trim();
+        this.applyFilters();
+      }, 300);
+    });
+
+    // Tri
+    document.querySelectorAll('.sort-option input').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.sortBy = e.target.value;
+        this.applyFilters();
+        document.querySelector('.sort-menu').classList.remove('show');
+      });
+    });
+
+    // Menu de tri
+    document.querySelector('.sort-btn').addEventListener('click', () => {
+      document.querySelector('.sort-menu').classList.toggle('show');
+    });
+
+    // Effacer les filtres
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      this.clearAllFilters();
+    });
+
+    // Clic en dehors du menu de tri
+    document.addEventListener('click', (e) => {
+      const sortBtn = document.querySelector('.sort-btn');
+      const sortMenu = document.querySelector('.sort-menu');
+      if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
+        sortMenu.classList.remove('show');
+      }
+    });
+  }
+
+  // Gestion des changements de filtre
+  handleFilterChange() {
+    this.updateActiveFilters();
+    this.applyFilters();
+  }
+
+  updateActiveFilters() {
+    // Types
+    this.filters.types.clear();
+    document.querySelectorAll('.filter-option input[data-type]:checked').forEach(cb => {
+      this.filters.types.add(cb.getAttribute('data-type'));
+    });
+
+    // Localisations
+    this.filters.locations.clear();
+    document.querySelectorAll('.filter-option input[data-location]:checked').forEach(cb => {
+      this.filters.locations.add(cb.getAttribute('data-location'));
+    });
+
+    // Notes
+    this.filters.ratings.clear();
+    document.querySelectorAll('.filter-option input[data-rating]:checked').forEach(cb => {
+      this.filters.ratings.add(parseFloat(cb.getAttribute('data-rating')));
+    });
+  }
+
+  // Application des filtres et tri
+  applyFilters() {
+    this.filteredShops = this.shops.filter(shop => {
+      // Filtre par type
+      if (this.filters.types.size > 0 && !this.filters.types.has(shop.type_shop)) {
+        return false;
+      }
+
+      // Filtre par localisation
+      if (this.filters.locations.size > 0 && !this.filters.locations.has(shop.localisation)) {
+        return false;
+      }
+
+      // Filtre par note
+      if (this.filters.ratings.size > 0) {
+        const shopRating = parseFloat(shop.note) || 0;
+        const meetsRating = Array.from(this.filters.ratings).some(minRating => 
+          shopRating >= minRating
+        );
+        if (!meetsRating) return false;
+      }
+
+      // Filtre par recherche
+      if (this.filters.search) {
+        const searchTerm = this.filters.search;
+        const searchableText = `
+          ${shop.title || ''} 
+          ${shop.description || ''} 
+          ${shop.specialty || ''}
+        `.toLowerCase();
+        
+        if (!searchableText.includes(searchTerm)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+    // Appliquer le tri
+    this.sortShops();
+    this.renderShops();
+    this.updateResultsCount();
+  }
+
+  // Tri des boutiques
+  sortShops() {
+    this.filteredShops.sort((a, b) => {
+      switch(this.sortBy) {
+        case 'rating':
+          return (parseFloat(b.note) || 0) - (parseFloat(a.note) || 0);
+        
+        case 'name':
+          return (a.title || '').localeCompare(b.title || '');
+        
+        case 'new':
+          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        
+        case 'popular':
+        default:
+          return (parseFloat(b.note) || 0) - (parseFloat(a.note) || 0);
+      }
+    });
+  }
+
+  // Réinitialisation des filtres
+  clearAllFilters() {
+    // Réinitialiser les cases à cocher
+    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
+      checkbox.checked = true;
+    });
+
+    // Réinitialiser la recherche
+    document.getElementById('shop-search').value = '';
+    
+    // Réinitialiser les filtres
+    this.filters = {
+      types: new Set(),
+      locations: new Set(),
+      ratings: new Set(),
+      search: ''
+    };
+
+    this.applyFilters();
+  }
+
+  // Mise à jour du compteur de résultats
+  updateResultsCount() {
+    let resultsCounter = document.querySelector('.results-counter');
+    
+    if (!resultsCounter) {
+      resultsCounter = document.createElement('div');
+      resultsCounter.className = 'results-counter';
+      document.querySelector('.marketplace-header').appendChild(resultsCounter);
+    }
+    
+    const count = this.filteredShops.length;
+    resultsCounter.textContent = `${count} boutique${count !== 1 ? 's' : ''} trouvée${count !== 1 ? 's' : ''}`;
+  }
+
+  // Affichage du loading
+  showLoading(show) {
+    const spinner = document.getElementById('loading-spinner');
+    if (show) {
+      spinner.classList.add('active');
+    } else {
+      spinner.classList.remove('active');
+    }
+  }
+
+  // Initialisation des animations
+  initializeAnimations() {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll(".fade-in").forEach((el) => {
+      observer.observe(el);
+    });
+  }
+
+  // Attache les événements aux boutons des shops
+  attachShopEventListeners() {
+    // Favoris
+    document.querySelectorAll('.favorite-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const shopId = e.currentTarget.getAttribute('data-shop-id');
+        this.toggleFavorite(shopId, e.currentTarget);
+      });
+    });
+
+    // Partage
+    document.querySelectorAll('.share-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const shopId = e.currentTarget.getAttribute('data-shop-id');
+        const shopTitle = e.currentTarget.getAttribute('data-shop-title');
+        this.shareShop(shopId, shopTitle);
+      });
+    });
+  }
+
+  // Gestion des favoris
+  async toggleFavorite(shopId, button) {
+    const isCurrentlyFavorited = button.classList.contains('favorited');
+    const icon = button.querySelector('i');
+    
+    try {
+      const response = await fetch(`/marketplace/favorite/${shopId}/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': this.getCSRFToken(),
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === 'success' || data.status === 'added' || data.status === 'removed') {
+        button.classList.toggle('favorited');
+        
+        if (button.classList.contains('favorited')) {
+          icon.classList.remove('far');
+          icon.classList.add('fas');
+          this.showToast('Boutique ajoutée aux favoris!');
+        } else {
+          icon.classList.remove('fas');
+          icon.classList.add('far');
+          this.showToast('Boutique retirée des favoris');
+        }
+      } else {
+        throw new Error(data.message || 'Erreur lors de la mise à jour des favoris');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      this.showToast('Vous devez être connecté pour ajouter aux favoris', true);
+    }
+  }
+
+  // Partage de boutique
+  shareShop(shopId, shopTitle) {
+    const shopUrl = `${window.location.origin}/marketplace/shop/${shopId}/`;
+    const shareText = `Découvrez la boutique ${shopTitle} sur FarmGen Marketplace!`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: shopTitle,
+        text: shareText,
+        url: shopUrl
+      }).then(() => {
+        this.showToast('Boutique partagée avec succès!');
+      }).catch((error) => {
+        console.log('Erreur de partage:', error);
+      });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${shareText} ${shopUrl}`).then(() => {
+        this.showToast('Lien copié dans le presse-papier!');
+      }).catch(() => {
+        this.fallbackCopy(shopUrl);
+      });
+    } else {
+      this.fallbackCopy(shopUrl);
+    }
+  }
+
+  fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      this.showToast('Lien copié dans le presse-papier!');
+    } catch (err) {
+      this.showToast('Impossible de copier le lien', true);
+    }
+    document.body.removeChild(textArea);
+  }
+
+  // Notification toast
+  showToast(message, isError = false) {
     const toast = document.getElementById('toast');
     const toastMessage = document.getElementById('toast-message');
     
@@ -846,417 +1321,44 @@ function showToast(message, isError = false) {
     toast.style.display = 'block';
     
     if (isError) {
-        toast.classList.add('error');
+      toast.classList.add('error');
     } else {
-        toast.classList.remove('error');
+      toast.classList.remove('error');
     }
     
     toast.classList.add('show');
     
     setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 300);
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 300);
     }, 3000);
-}
+  }
 
-// Fonction pour partager une boutique
-function shareShop(shopId, shopTitle) {
-    const shopUrl = `${window.location.origin}{% url 'shop' 0 %}`.replace('/0', `/${shopId}`);
-    const shareText = `Découvrez la boutique ${shopTitle} sur FarmGen Marketplace!`;
-    
-    if (navigator.share) {
-        // Utiliser l'API Web Share si disponible
-        navigator.share({
-            title: shopTitle,
-            text: shareText,
-            url: shopUrl
-        }).then(() => {
-            showToast('Boutique partagée avec succès!');
-        }).catch((error) => {
-            console.log('Erreur de partage:', error);
-        });
-    } else if (navigator.clipboard) {
-        // Copier dans le presse-papier
-        navigator.clipboard.writeText(`${shareText} ${shopUrl}`).then(() => {
-            showToast('Lien copié dans le presse-papier!');
-        }).catch((error) => {
-            // Fallback pour les navigateurs sans clipboard API
-            fallbackCopy(shopUrl);
-        });
-    } else {
-        // Fallback ultime
-        fallbackCopy(shopUrl);
-    }
-}
-
-// Fallback pour la copie
-function fallbackCopy(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    try {
-        document.execCommand('copy');
-        showToast('Lien copié dans le presse-papier!');
-    } catch (err) {
-        showToast('Impossible de copier le lien', true);
-    }
-    document.body.removeChild(textArea);
-}
-
-// Fonction pour gérer les favoris
-async function toggleFavorite(shopId, button) {
-    const isCurrentlyFavorited = button.classList.contains('favorited');
-    const icon = button.querySelector('i');
-    
-    try {
-        const response = await fetch(`/marketplace/favorite/${shopId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCSRFToken(),
-                'Content-Type': 'application/json',
-            },
-        });
-        
-        const data = await response.json();
-        
-        if (data.status === 'success' || data.status === 'added' || data.status === 'removed') {
-            // Basculer l'état visuel
-            button.classList.toggle('favorited');
-            
-            if (button.classList.contains('favorited')) {
-                icon.classList.remove('far');
-                icon.classList.add('fas');
-                showToast('Boutique ajoutée aux favoris!');
-            } else {
-                icon.classList.remove('fas');
-                icon.classList.add('far');
-                showToast('Boutique retirée des favoris');
-            }
-        } else {
-            throw new Error(data.message || 'Erreur lors de la mise à jour des favoris');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('Vous devez être connecté pour ajouter aux favoris', true);
-    }
-}
-
-// Fonction pour récupérer le token CSRF
-function getCSRFToken() {
+  // Récupération du token CSRF
+  getCSRFToken() {
     const name = 'csrftoken';
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
+      }
     }
     return cookieValue;
+  }
 }
 
-// Fonction pour charger le statut des favoris
-async function loadFavoritesStatus() {
-    try {
-        const response = await fetch('/marketplace/favorites/status/');
-        const data = await response.json();
-        
-        if (data.favorites) {
-            // Mettre à jour l'état visuel des boutons favoris
-            data.favorites.forEach(shopId => {
-                const button = document.querySelector(`.favorite-btn[data-shop-id="${shopId}"]`);
-                if (button) {
-                    button.classList.add('favorited');
-                    const icon = button.querySelector('i');
-                    icon.classList.remove('far');
-                    icon.classList.add('fas');
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error loading favorites status:', error);
-    }
-}
+// Initialisation de la marketplace
+let marketplace;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Animation on scroll
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add("visible");
-            }
-        });
-    }, observerOptions);
-
-    document.querySelectorAll(".fade-in").forEach((el) => {
-        observer.observe(el);
-    });
-
-    // Initialisation des filtres dynamiques
-    initializeDynamicFilters();
-
-    // Éléments du DOM
-    const clearFiltersBtn = document.getElementById('clear-filters');
-    const searchInput = document.getElementById('shop-search');
-    const sortBtn = document.querySelector('.sort-btn');
-    const sortMenu = document.querySelector('.sort-menu');
-    const sortOptions = document.querySelectorAll('.sort-option input');
-    const shopCards = document.querySelectorAll('.shop-card');
-
-    // Fonction pour initialiser les filtres dynamiques
-    function initializeDynamicFilters() {
-        const types = new Set();
-        const locations = new Set();
-        
-        // Collecter les types et localisations uniques depuis les boutiques
-        shopCards.forEach(card => {
-            const type = card.getAttribute('data-category');
-            const location = card.getAttribute('data-region');
-            
-            if (type) types.add(type);
-            if (location) locations.add(location);
-        });
-
-        // Générer les options de filtre pour les types
-        const typeFilterContainer = document.getElementById('type-filter');
-        types.forEach(type => {
-            const option = createFilterOption('type', type, type, true);
-            typeFilterContainer.appendChild(option);
-        });
-
-        // Générer les options de filtre pour les localisations
-        const locationFilterContainer = document.getElementById('location-filter');
-        locations.forEach(location => {
-            const option = createFilterOption('location', location, location, true);
-            locationFilterContainer.appendChild(option);
-        });
-
-        // Réattacher les événements après la génération dynamique
-        attachFilterEvents();
-    }
-
-    // Créer une option de filtre
-    function createFilterOption(filterType, value, label, checked = true) {
-        const id = `${filterType}-${value.toLowerCase().replace(/\s+/g, '-')}`;
-        
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'filter-option';
-        optionDiv.innerHTML = `
-            <input type="checkbox" id="${id}" data-${filterType}="${value}" ${checked ? 'checked' : ''}>
-            <label for="${id}">${label}</label>
-        `;
-        
-        return optionDiv;
-    }
-
-    // Attacher les événements aux filtres
-    function attachFilterEvents() {
-        const filterCheckboxes = document.querySelectorAll('.filter-option input[type="checkbox"]');
-        
-        filterCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', filterShops);
-        });
-    }
-
-    // Fonction de filtrage améliorée
-    function filterShops() {
-        const selectedTypes = Array.from(document.querySelectorAll('.filter-option input[data-type]:checked'))
-            .map(cb => cb.getAttribute('data-type'));
-        
-        const selectedLocations = Array.from(document.querySelectorAll('.filter-option input[data-location]:checked'))
-            .map(cb => cb.getAttribute('data-location'));
-        
-        const selectedRatings = Array.from(document.querySelectorAll('.filter-option input[data-rating]:checked'))
-            .map(cb => parseFloat(cb.getAttribute('data-rating')));
-        
-        const searchTerm = searchInput.value.toLowerCase().trim();
-
-        let visibleCount = 0;
-
-        shopCards.forEach(card => {
-            const cardType = card.getAttribute('data-category');
-            const cardLocation = card.getAttribute('data-region');
-            const cardRating = parseFloat(card.querySelector('.shop-stat span').textContent);
-            const cardTitle = card.querySelector('h3').textContent.toLowerCase();
-            const cardDescription = card.querySelector('.shop-description').textContent.toLowerCase();
-
-            // Vérifier les filtres
-            const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(cardType);
-            const locationMatch = selectedLocations.length === 0 || selectedLocations.includes(cardLocation);
-            const ratingMatch = selectedRatings.length === 0 || 
-                selectedRatings.some(minRating => cardRating >= minRating);
-            const searchMatch = !searchTerm || 
-                cardTitle.includes(searchTerm) || 
-                cardDescription.includes(searchTerm);
-
-            if (typeMatch && locationMatch && ratingMatch && searchMatch) {
-                card.style.display = 'block';
-                visibleCount++;
-                card.classList.add('visible');
-            } else {
-                card.style.display = 'none';
-                card.classList.remove('visible');
-            }
-        });
-
-        // Gérer l'état vide
-        showEmptyState(visibleCount === 0);
-        updateResultsCount(visibleCount);
-    }
-
-    // Afficher/masquer l'état vide
-    function showEmptyState(show) {
-        let emptyState = document.querySelector('.empty-state');
-        
-        if (show && !emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                <i class="fas fa-search"></i>
-                <h3>Aucune boutique trouvée</h3>
-                <p>Aucune boutique ne correspond à vos critères de recherche. Essayez de modifier vos filtres.</p>
-                <button class="visit-shop-btn" onclick="clearAllFilters()">Réinitialiser les filtres</button>
-            `;
-            document.getElementById('shops-container').appendChild(emptyState);
-        } else if (!show && emptyState) {
-            emptyState.remove();
-        }
-    }
-
-    // Mettre à jour le compteur de résultats
-    function updateResultsCount(count) {
-        let resultsCounter = document.querySelector('.results-counter');
-        
-        if (!resultsCounter) {
-            resultsCounter = document.createElement('div');
-            resultsCounter.className = 'results-counter';
-            document.querySelector('.marketplace-header').appendChild(resultsCounter);
-        }
-        
-        resultsCounter.textContent = `${count} boutique${count !== 1 ? 's' : ''} trouvée${count !== 1 ? 's' : ''}`;
-    }
-
-    // Réinitialiser tous les filtres
-    function clearAllFilters() {
-        document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = true;
-        });
-        
-        searchInput.value = '';
-        filterShops();
-    }
-
-    // Recherche avec debounce
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(filterShops, 300);
-    });
-
-    // Tri amélioré
-    sortBtn.addEventListener('click', function() {
-        sortMenu.classList.toggle('show');
-    });
-
-    sortOptions.forEach(option => {
-        option.addEventListener('change', function() {
-            const sortValue = this.value;
-            sortShops(sortValue);
-            sortMenu.classList.remove('show');
-        });
-    });
-
-    // Fonction de tri
-    function sortShops(sortValue) {
-        const shopsContainer = document.getElementById('shops-container');
-        const visibleShopCards = Array.from(shopCards).filter(card => 
-            card.style.display !== 'none'
-        );
-
-        visibleShopCards.sort((a, b) => {
-            switch(sortValue) {
-                case 'rating':
-                    const ratingA = parseFloat(a.querySelector('.shop-stat span').textContent);
-                    const ratingB = parseFloat(b.querySelector('.shop-stat span').textContent);
-                    return ratingB - ratingA;
-                
-                case 'name':
-                    const nameA = a.querySelector('h3').textContent.toLowerCase();
-                    const nameB = b.querySelector('h3').textContent.toLowerCase();
-                    return nameA.localeCompare(nameB);
-                
-                case 'new':
-                    return Array.from(shopCards).indexOf(a) - Array.from(shopCards).indexOf(b);
-                
-                case 'popular':
-                default:
-                    const popA = parseFloat(a.querySelector('.shop-stat span').textContent);
-                    const popB = parseFloat(b.querySelector('.shop-stat span').textContent);
-                    return popB - popA;
-            }
-        });
-
-        // Réorganiser les cartes visibles
-        visibleShopCards.forEach(card => {
-            shopsContainer.appendChild(card);
-        });
-    }
-
-    // Fermer le menu de tri en cliquant à l'extérieur
-    document.addEventListener('click', function(e) {
-        if (!sortBtn.contains(e.target) && !sortMenu.contains(e.target)) {
-            sortMenu.classList.remove('show');
-        }
-    });
-
-    // Gestion des favoris
-    document.querySelectorAll('.favorite-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const shopId = this.getAttribute('data-shop-id');
-            toggleFavorite(shopId, this);
-        });
-    });
-
-    // Gestion du partage
-    document.querySelectorAll('.share-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const shopId = this.getAttribute('data-shop-id');
-            const shopTitle = this.getAttribute('data-shop-title');
-            shareShop(shopId, shopTitle);
-        });
-    });
-
-    // Réinitialiser les filtres
-    clearFiltersBtn.addEventListener('click', clearAllFilters);
-
-    // Charger le statut des favoris au chargement de la page
-    loadFavoritesStatus();
-
-    // Initialiser le filtrage
-    filterShops();
+  marketplace = new MarketplaceManager();
 });
-
-// Fonction globale pour réinitialiser les filtres
-function clearAllFilters() {
-    document.querySelectorAll('.filter-option input[type="checkbox"]').forEach(checkbox => {
-        checkbox.checked = true;
-    });
-    
-    document.getElementById('shop-search').value = '';
-    
-    const event = new Event('change');
-    document.querySelector('.filter-option input[type="checkbox"]').dispatchEvent(event);
-}
 </script>
 {% endblock %}

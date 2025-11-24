@@ -205,6 +205,32 @@
             max-width: 800px;
             margin: 0 auto;
         }
+
+        .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--light-gray);
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-state h3 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+  }
+
+  .empty-state p {
+    color: var(--text-dark);
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
         
         /* Stats Section */
         .stats-section {
@@ -329,8 +355,13 @@
                     <h1 class="hero-title">FarmGen: Votre marché agricole en ligne</h1>
                     <p class="hero-subtitle">Connectons directement agriculteurs et consommateurs pour une alimentation saine, traçable et de qualité.</p>
                     <div class="d-flex flex-wrap gap-3">
-                        <a href="#marketplace" class="btn btn-primary">Explorer le marché</a>
-                        <a href="#vendeurs" class="btn btn-outline" style="background-color: white; color: var(--primary-green);">Devenir vendeur</a>
+                        <a href="{% url 'marketplace' %}" class="btn btn-primary">Explorer le marché</a>
+                        {% if not user.is_authenticated %}
+                            <a href="{% url 'register_view' %}" class="btn btn-outline" style="background-color: white; color: var(--primary-green);">Devenir vendeur/client</a>
+                        {% else %}
+                            <a href="{% url 'profile' %}" class="btn btn-outline" style="background-color: white; color: var(--primary-green);">Gerer votre compte</a>
+                        {% endif %}
+
                     </div>
                 </div>
             </div>
@@ -388,94 +419,41 @@
     <!-- Featured Products -->
     <section class="section bg-light" id="marketplace">
         <div class="container">
-            <span class="section-subtitle">Découvrez nos produits</span>
-            <h2 class="section-title">Produits phares du marché</h2>
-            <p class="section-description">Une sélection des meilleurs produits agricoles disponibles sur notre marketplace.</p>
-            
+            <span class="section-subtitle">Découvrez nos Boutiques</span>
+            <h2 class="section-title">Boutiques phares du marché</h2>
+            <p class="section-description">Une sélection des meilleurs Boutiques agricoles disponibles sur notre marketplace.</p>
+            {% if shops %}
             <div class="row g-4">
-                <!-- Product 1 -->
+            {% for shop in shops %}
                 <div class="col-md-6 col-lg-3">
                     <div class="product-card">
                         <div class="product-image">
-                            <img src="https://images.unsplash.com/photo-1574856344991-aaa31b6f4ce3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" alt="Tomates fraîches">
+                            <img src="{{ shop.couverture.url }}" alt="{{shop.title}}">
                         </div>
                         <div class="product-info">
-                            <div class="product-category">Légumes</div>
-                            <h3 class="product-name">Tomates fraîches</h3>
-                            <p class="product-description">Tomates rouges et juteuses cultivées localement sans pesticides.</p>
-                            <div class="product-price">1 500 FCFA/kg</div>
+                            <div class="product-category">{{shop.type_shop}}</div>
+                            <h3 class="product-name">{{shop.title}}</h3>
+                            <p class="product-description">{{shop.description}}</p>
+                            
                             <div class="product-seller">
-                                <div class="seller-avatar">FM</div>
-                                <span>Ferme Mboué</span>
+                                <div class="seller-avatar">{{ shop.user.first_name|first|upper }}{{ shop.user.last_name|first|upper }}</div>
                             </div>
-                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
+                            <a href="{% url 'shop' shop.id %}" class="btn btn-primary w-100">Visiter la boutique</a>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Product 2 -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1015&q=80" alt="Bananes plantains">
-                        </div>
-                        <div class="product-info">
-                            <div class="product-category">Fruits</div>
-                            <h3 class="product-name">Bananes plantains</h3>
-                            <p class="product-description">Bananes plantains mûres, parfaites pour la cuisson ou la friture.</p>
-                            <div class="product-price">800 FCFA/kg</div>
-                            <div class="product-seller">
-                                <div class="seller-avatar">CP</div>
-                                <span>Coopérative Plantain</span>
-                            </div>
-                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product 3 -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="https://images.unsplash.com/photo-1592924357228-91a4daadcfea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1035&q=80" alt="Piments frais">
-                        </div>
-                        <div class="product-info">
-                            <div class="product-category">Épices</div>
-                            <h3 class="product-name">Piments frais</h3>
-                            <p class="product-description">Piments locaux frais, parfaits pour relever vos plats traditionnels.</p>
-                            <div class="product-price">1 200 FCFA/kg</div>
-                            <div class="product-seller">
-                                <div class="seller-avatar">EP</div>
-                                <span>Épicerie Paysanne</span>
-                            </div>
-                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Product 4 -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="product-card">
-                        <div class="product-image">
-                            <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Huile de palme">
-                        </div>
-                        <div class="product-info">
-                            <div class="product-category">Huiles</div>
-                            <h3 class="product-name">Huile de palme rouge</h3>
-                            <p class="product-description">Huile de palme rouge traditionnelle, pressée à froid et 100% naturelle.</p>
-                            <div class="product-price">2 500 FCFA/L</div>
-                            <div class="product-seller">
-                                <div class="seller-avatar">HP</div>
-                                <span>Huilerie Palm</span>
-                            </div>
-                            <a href="#" class="btn btn-primary w-100">Ajouter au panier</a>
-                        </div>
-                    </div>
-                </div>
+            {% endfor %}
             </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-store-slash"></i>
+                    <h3>Aucune boutique disponible</h3>
+                    <p>Il n'y a actuellement aucune boutique dans la marketplace.</p>
+                </div>
+            {% endif %}
             
             <div class="text-center mt-5">
-                <a href="#" class="btn btn-primary">Voir tous les produits</a>
+                <a href="{% url 'marketplace' %}" class="btn btn-primary">Voir tous les boutiques</a>
             </div>
         </div>
     </section>

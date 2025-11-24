@@ -10,7 +10,7 @@ urlpatterns = [
     path('history-commande/', views.order_history, name='history'),
     path('shop/<int:shop_id>', views.shop, name='shop'),
     path('favorite/<int:shop_id>/', views.toggle_favorite, name='toggle_favorite'),
-    path('favorites/status/', views.get_favorites_status, name='favorites_status'),
+    path('favorites/status/', views.favorites_status, name='favorites_status'),
     path('products/save/', views.create_update_product, name='save_product'),
     path('categories/save/', views.create_update_category, name='save_category'),
     path('api/products/<int:product_id>/', views.get_product, name='get_product'),
@@ -19,6 +19,15 @@ urlpatterns = [
     path('api/categories/<int:category_id>/delete/', views.delete_category, name='delete_category'),
     path('api/products/<int:product_id>/duplicate/', views.duplicate_product, name='duplicate_product'),
     path('shop/update/', views.update_shop, name='update_shop'),
+    #marketplace
+    path('api/shop/<int:shop_id>/products/', views.shop_products_api, name='shop_products_api'),
+    path('api/shop/<int:shop_id>/categories/', views.shop_categories_api, name='shop_categories_api'),
+    path('api/products/<int:product_id>/like/', views.toggle_product_like, name='toggle_product_like'),
+    path('api/products/<int:product_id>/view/', views.track_product_view, name='track_product_view'),
+    # API endpoints
+    path('api/shops/', views.api_shops, name='api_shops'),
+    path('api/filters/', views.marketplace_filters, name='marketplace_filters'),
+    path('api/search-history/', views.save_search_history, name='save_search_history'),
     # order
     path('orders/history/', views.order_history, name='order_history'),
     path('api/orders/<uuid:order_id>/update-status/', views.update_order_status, name='update_order_status'),

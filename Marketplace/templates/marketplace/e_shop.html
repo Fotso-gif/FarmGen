@@ -454,10 +454,10 @@
     background: var(--white);
     border-radius: 16px;
     overflow: hidden;
-    transition: var(--transition);
+    {% comment %} transition: var(--transition); {% endcomment %}
     border: 2px solid transparent;
     box-shadow: var(--shadow);
-    opacity: 0;
+    opacity: 1;
     transform: translateY(30px);
   }
 
@@ -806,7 +806,7 @@
 
   /* Animation classes */
   .fade-in {
-    opacity: 0;
+    opacity: 1;
     transform: translateY(30px);
     transition: all 0.6s ease;
   }
@@ -945,66 +945,7 @@
     font-weight: 600;
   }
 
-  /* Partage avancé */
-  .share-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-  }
-
-  .share-modal.show {
-    display: flex;
-  }
-
-  .share-modal-content {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 2rem;
-    max-width: 400px;
-    width: 90%;
-    animation: modalSlideIn 0.3s ease;
-  }
-
-  @keyframes modalSlideIn {
-    from { opacity: 0; transform: translateY(-50px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .share-options {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin: 1.5rem 0;
-  }
-
-  .share-option {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    border: 2px solid var(--light-gray);
-    border-radius: 12px;
-    cursor: pointer;
-    transition: var(--transition);
-  }
-
-  .share-option:hover {
-    border-color: var(--primary-green);
-    transform: translateY(-2px);
-  }
-
-  .share-option i {
-    font-size: 1.5rem;
-  }
-
+  
   /* Filtres rapides */
   .quick-filters {
     display: flex;
@@ -1085,14 +1026,15 @@
 <section class="shop-hero">
   <div class="shop-hero-content">
     <div class="shop-avatar-large">
-      <img src="{{ shop.user.profile_picture.url }}" alt="{{ shop.title }}">
+      <img src="{{ shop.user.profile_picture.url }}" alt="{{ shop.title }}" 
+           onerror="this.src='{% static 'images/default-avatar.jpg' %}'">
     </div>
     <div class="shop-info">
       <h1>{{ shop.title }}</h1>
       <div class="shop-stats">
         <div class="shop-stat">
           <i class="fas fa-star"></i>
-          <span>{{ shop.note }}</span>
+          <span>{{ shop.note|default:"0.0" }}</span>
         </div>
         <div class="shop-stat">
           <i class="fas fa-map-marker-alt"></i>
@@ -1110,13 +1052,14 @@
       <p class="shop-description">{{ shop.description }}</p>
     </div>
   </div>
-  <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}" class="couverture">
+  <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}" class="couverture"
+       onerror="this.src='{% static 'images/default-shop-cover.jpg' %}'">
 </section>
 
 <!-- Shop Section -->
 <section class="shop-section">
   <div class="shop-container">
-    <!-- Filters Sidebar amélioré -->
+    <!-- Filters Sidebar -->
     <aside class="filters-sidebar">
       <div class="filters-header">
         <h3>Filtres Intelligents</h3>
@@ -1134,7 +1077,8 @@
         <h4><i class="fas fa-search"></i> Recherche Intelligente</h4>
         <div class="search-box">
           <i class="fas fa-search"></i>
-          <input type="text" id="smart-search" placeholder="Rechercher des produits..." data-shop-id="{{ shop.id }}">
+          <input type="text" id="smart-search" placeholder="Rechercher des produits..." 
+                 data-shop-id="{{ shop.id }}">
           <div class="search-suggestions" id="search-suggestions"></div>
         </div>
       </div>
@@ -1154,12 +1098,7 @@
       <div class="filter-group">
         <h4><i class="fas fa-tags"></i> Catégories</h4>
         <div class="filter-options" id="category-filters">
-          <!-- Généré dynamiquement -->
-          {% if shop.categuory %}
-            {% for shop.categuory in cat%}
-              <div class="quick-filter" data-filter="{{ cat.name }}">{{ cat.name }}</div>
-            {% endfor %}
-          {% endif %}
+          <!-- Généré dynamiquement via AJAX -->
         </div>
       </div>
 
@@ -1206,7 +1145,7 @@
       </div>
     </aside>
 
-    <!-- Main Content amélioré -->
+    <!-- Main Content -->
     <main class="shop-main">
       <div class="shop-header">
         <div>
@@ -1262,736 +1201,1306 @@
         </div>
       </div>
       
+      <!-- Container pour les produits (chargés via AJAX) -->
       <div class="products-grid" id="products-container">
-         {% for produit in produits %}
-        <div class="product-card fade-in visible" 
-             data-product-id="{{ produit.id }}"
-             data-category="{{ produit.category.name|default:'non-categorise' }}" 
-             data-price="{{ produit.price }}"
-             data-stock="{% if produit.quantity > 10 %}available{% elif produit.quantity > 0 %}low{% else %}out-of-stock{% endif %}"
-             data-promo="false"
-             data-likes="{{ produit.likes_count|default:0 }}"
-             data-views="{{ produit.views_count|default:0 }}"
-             data-created="{{ produit.created_at|date:'U' }}">
-          <div class="product-image">
-            <img src="{{ produit.images.first.image.url }}" alt="{{ produit.name }}">
-            <div class="product-badge">{{ produit.category.name|default:shop.type_shop }}</div>
-            <div class="product-actions">
-              <button class="product-action-btn like-btn" data-product-id="{{ produit.id }}">
-                <i class="far fa-heart"></i>
-              </button>
-              <button class="product-action-btn share-btn" data-product-id="{{ produit.id }}" data-product-name="{{ produit.name }}">
-                <i class="far fa-share-square"></i>
-              </button>
-            </div>
-          </div>
-          <div class="product-content">
-            <span class="product-category">{{ produit.category.name|default:"Produit" }}</span>
-            <h3>{{ produit.name }}</h3>
-            <p class="product-description">{{ produit.description|truncatewords:15 }}</p>
-            <div class="product-meta">
-              <div class="product-rating">
-                <i class="fas fa-star"></i>
-                <span>4.8</span>
-                <span class="like-count">(<span data-likes-count="{{ produit.id }}">0</span>)</span>
-              </div>
-              <div class="product-stock {% if produit.quantity > 10 %}in-stock{% elif produit.quantity > 0 %}low-stock{% else %}out-of-stock{% endif %}">
-                {{ produit.quantity }} en stock
-              </div>
-            </div>
-            <div class="product-price">
-              {{ produit.price }} FCFA
-            </div>
-            <div class="product-actions-bottom">
-              <div class="quantity-controls">
-                <button class="quantity-btn minus-btn" data-product-id="{{ produit.id }}">-</button>
-                <input 
-                  type="number"
-                  class="quantity-input"
-                  value="1"
-                  min="1"
-                  max="{{ produit.quantity }}"
-                  data-product-id="{{ produit.id }}"
-                  readonly
-                >
-                <button class="quantity-btn plus-btn" data-product-id="{{ produit.id }}">+</button>
-              </div>
-              <button class="add-to-cart-btn" data-product-id="{{ produit.id }}">
-                <i class="fas fa-shopping-cart"></i>
-                Ajouter
-              </button>
-            </div>
-          </div>
-        </div>
-        {% endfor %} 
+        <!-- Les produits seront chargés dynamiquement -->
       </div>
+      
+      <!-- Pagination -->
+      <div id="pagination-container" class="pagination-container"></div>
     </main>
   </div>
 </section>
 
 <!-- Modal de partage -->
-<div class="share-modal" id="share-modal">
-  <div class="share-modal-content">
-    <h3>Partager ce produit</h3>
-    <div class="share-options">
-      <div class="share-option" data-share="whatsapp">
-        <i class="fab fa-whatsapp" style="color: #25D366;"></i>
-        <span>WhatsApp</span>
+<!-- Modal de partage -->
+<div class="share-modal" id="share-modal" aria-hidden="true">
+  <div class="share-modal-overlay" id="share-modal-overlay">
+    <div class="share-modal-container" role="dialog" aria-labelledby="share-modal-title">
+      <div class="share-modal-header">
+        <h3 id="share-modal-title" class="share-modal-title">
+          <i class="fas fa-share-alt"></i>
+          Partager ce produit
+        </h3>
+        <button class="share-modal-close" id="close-share-modal" aria-label="Fermer la modale">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
-      <div class="share-option" data-share="facebook">
-        <i class="fab fa-facebook" style="color: #1877F2;"></i>
-        <span>Facebook</span>
+      
+      <div class="share-modal-content">
+        <p class="share-modal-subtitle">Choisissez votre plateforme de partage</p>
+        
+        <div class="share-options-grid">
+          <div class="share-option" data-share="whatsapp" role="button" tabindex="0">
+            <div class="share-option-icon whatsapp-bg">
+              <i class="fab fa-whatsapp"></i>
+            </div>
+            <span class="share-option-label">WhatsApp</span>
+          </div>
+          
+          <div class="share-option" data-share="facebook" role="button" tabindex="0">
+            <div class="share-option-icon facebook-bg">
+              <i class="fab fa-facebook-f"></i>
+            </div>
+            <span class="share-option-label">Facebook</span>
+          </div>
+          
+          <div class="share-option" data-share="twitter" role="button" tabindex="0">
+            <div class="share-option-icon twitter-bg">
+              <i class="fab fa-twitter"></i>
+            </div>
+            <span class="share-option-label">Twitter</span>
+          </div>
+          
+          <div class="share-option" data-share="telegram" role="button" tabindex="0">
+            <div class="share-option-icon telegram-bg">
+              <i class="fab fa-telegram"></i>
+            </div>
+            <span class="share-option-label">Telegram</span>
+          </div>
+          
+          <div class="share-option" data-share="copy" role="button" tabindex="0">
+            <div class="share-option-icon copy-bg">
+              <i class="fas fa-link"></i>
+            </div>
+            <span class="share-option-label">Copier le lien</span>
+          </div>
+          
+          <div class="share-option" data-share="email" role="button" tabindex="0">
+            <div class="share-option-icon email-bg">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <span class="share-option-label">Email</span>
+          </div>
+        </div>
+        
+        <div class="share-link-container">
+          <div class="share-link-input-group">
+            <input type="text" class="share-link-input" id="share-link-input" readonly 
+                   placeholder="Lien de partage...">
+            <button class="share-link-copy-btn" id="share-link-copy-btn" aria-label="Copier le lien">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+          <div class="share-link-copied" id="share-link-copied">
+            <i class="fas fa-check"></i>
+            Lien copié !
+          </div>
+        </div>
       </div>
-      <div class="share-option" data-share="twitter">
-        <i class="fab fa-twitter" style="color: #1DA1F2;"></i>
-        <span>Twitter</span>
-      </div>
-      <div class="share-option" data-share="copy">
-        <i class="fas fa-link"></i>
-        <span>Copier le lien</span>
-      </div>
-      <div class="share-option" data-share="email">
-        <i class="fas fa-envelope"></i>
-        <span>Email</span>
-      </div>
-      <div class="share-option" data-share="sms">
-        <i class="fas fa-sms"></i>
-        <span>SMS</span>
+      
+      <div class="share-modal-footer">
+        <button class="share-modal-btn secondary" id="cancel-share-modal">
+          Annuler
+        </button>
       </div>
     </div>
-    <button class="visit-shop-btn" id="close-share-modal">Ferme</button>
   </div>
+</div>
+
+<style>
+/* Variables pour la modale de partage */
+.share-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.share-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.share-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.share-modal-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.share-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.share-modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.share-modal-title i {
+  font-size: 1.3rem;
+  opacity: 0.9;
+}
+
+.share-modal-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.share-modal-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.share-modal-content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.share-modal-subtitle {
+  text-align: center;
+  color: #64748b;
+  margin: 0 0 24px 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Grille des options de partage */
+.share-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 12px;
+  border-radius: 16px;
+  background: white;
+  border: 2px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.share-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transition: left 0.6s ease;
+}
+
+.share-option:hover::before {
+  left: 100%;
+}
+
+.share-option:hover {
+  transform: translateY(-4px);
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.share-option:active {
+  transform: translateY(-2px);
+}
+
+.share-option-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.share-option-icon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+}
+
+/* Couleurs des plateformes */
+.whatsapp-bg { background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); }
+.facebook-bg { background: linear-gradient(135deg, #1877F2 0%, #0D5EBB 100%); }
+.twitter-bg { background: linear-gradient(135deg, #1DA1F2 0%, #0D8BD9 100%); }
+.telegram-bg { background: linear-gradient(135deg, #0088cc 0%, #006699 100%); }
+.email-bg { background: linear-gradient(135deg, #EA4335 0%, #D14836 100%); }
+.copy-bg { background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); }
+
+.share-option-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.share-option:hover .share-option-label {
+  color: #1e293b;
+}
+
+/* Container du lien de partage */
+.share-link-container {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.share-link-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  background: white;
+  color: #334155;
+  transition: all 0.3s ease;
+}
+
+.share-link-input:focus {
+  outline: none;
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.share-link-copy-btn {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.share-link-copy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px -3px rgba(139, 92, 246, 0.4);
+}
+
+.share-link-copy-btn:active {
+  transform: translateY(0);
+}
+
+.share-link-copied {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  color: #10B981;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: fadeInUp 0.3s ease;
+}
+
+.share-link-copied.active {
+  display: flex;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Footer de la modale */
+.share-modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  background: #f8fafc;
+}
+
+.share-modal-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.share-modal-btn.secondary {
+  background: #64748b;
+  color: white;
+}
+
+.share-modal-btn.secondary:hover {
+  background: #475569;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px -3px rgba(100, 116, 139, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .share-modal-overlay {
+    padding: 16px;
+  }
+  
+  .share-modal-container {
+    max-height: 95vh;
+  }
+  
+  .share-options-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .share-modal-header {
+    padding: 20px 20px 16px;
+  }
+  
+  .share-modal-content {
+    padding: 20px;
+  }
+  
+  .share-link-input-group {
+    flex-direction: column;
+  }
+  
+  .share-link-copy-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .share-options-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .share-option-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+  
+  .share-modal-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* Accessibilité */
+.share-modal:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+}
+
+.share-option:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+}
+
+/* Animation de sortie */
+.share-modal.leaving {
+  opacity: 0;
+}
+
+.share-modal.leaving .share-modal-container {
+  animation: modalSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes modalSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.95);
+  }
+}
+
+/* États de chargement */
+.share-option.loading .share-option-icon {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .share-modal-container {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+  }
+  
+  .share-modal-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  }
+  
+  .share-option {
+    background: #334155;
+    border-color: #475569;
+  }
+  
+  .share-option-label {
+    color: #e2e8f0;
+  }
+  
+  .share-option:hover .share-option-label {
+    color: #f8fafc;
+  }
+  
+  .share-link-container {
+    background: #1e293b;
+    border-color: #334155;
+  }
+  
+  .share-link-input {
+    background: #334155;
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+  
+  .share-modal-footer {
+    background: #1e293b;
+    border-color: #334155;
+  }
+}
+</style>
+
+<script>
+// Script pour la modale de partage
+class ShareModal {
+    constructor() {
+        this.modal = document.getElementById('share-modal');
+        this.overlay = document.getElementById('share-modal-overlay');
+        this.shareLinkInput = document.getElementById('share-link-input');
+        this.copyBtn = document.getElementById('share-link-copy-btn');
+        this.copiedIndicator = document.getElementById('share-link-copied');
+        this.currentProduct = null;
+        
+        this.init();
+    }
+
+    init() {
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Fermeture de la modale
+        document.getElementById('close-share-modal').addEventListener('click', () => this.hide());
+        document.getElementById('cancel-share-modal').addEventListener('click', () => this.hide());
+        this.overlay.addEventListener('click', (e) => {
+            if (e.target === this.overlay) this.hide();
+        });
+
+        // Touche Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.hide();
+            }
+        });
+
+        // Options de partage
+        document.querySelectorAll('.share-option').forEach(option => {
+            option.addEventListener('click', () => {
+                this.handleShare(option.dataset.share);
+            });
+            
+            // Support clavier
+            option.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.handleShare(option.dataset.share);
+                }
+            });
+        });
+
+        // Copie du lien
+        this.copyBtn.addEventListener('click', () => {
+            this.copyToClipboard();
+        });
+    }
+
+    show(productId, productName) {
+        this.currentProduct = { id: productId, name: productName };
+        const shareUrl = `${window.location.origin}/produit/${productId}/`;
+        
+        // Mettre à jour le lien
+        this.shareLinkInput.value = shareUrl;
+        
+        // Afficher la modale
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Focus sur la première option de partage pour l'accessibilité
+        setTimeout(() => {
+            document.querySelector('.share-option').focus();
+        }, 100);
+    }
+
+    hide() {
+        this.modal.classList.add('leaving');
+        setTimeout(() => {
+            this.modal.classList.remove('active', 'leaving');
+            document.body.style.overflow = '';
+            this.copiedIndicator.classList.remove('active');
+        }, 300);
+    }
+
+    handleShare(platform) {
+        const shareUrl = this.shareLinkInput.value;
+        const shareText = `Découvrez "${this.currentProduct.name}" sur FarmGen!`;
+
+        const shareConfigs = {
+            whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`,
+            facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`,
+            twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+            telegram: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`,
+            email: `mailto:?subject=${encodeURIComponent(shareText)}&body=${encodeURIComponent(shareUrl)}`,
+            copy: () => {
+                this.copyToClipboard();
+                return null;
+            }
+        };
+
+        if (platform === 'copy') {
+            shareConfigs.copy();
+        } else {
+            window.open(shareConfigs[platform], '_blank', 'width=600,height=400');
+            this.hide();
+        }
+    }
+
+    async copyToClipboard() {
+        try {
+            await navigator.clipboard.writeText(this.shareLinkInput.value);
+            
+            // Afficher l'indicateur de copie
+            this.copiedIndicator.classList.add('active');
+            
+            // Changer temporairement le bouton
+            const originalHtml = this.copyBtn.innerHTML;
+            this.copyBtn.innerHTML = '<i class="fas fa-check"></i> Copié';
+            this.copyBtn.style.background = 'linear-gradient(135deg, #10B981 0%, #059669 100%)';
+            
+            setTimeout(() => {
+                this.copiedIndicator.classList.remove('active');
+                this.copyBtn.innerHTML = originalHtml;
+                this.copyBtn.style.background = 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)';
+            }, 2000);
+            
+        } catch (err) {
+            // Fallback pour les navigateurs plus anciens
+            this.shareLinkInput.select();
+            document.execCommand('copy');
+            
+            Toast.fire({
+                icon: 'success',
+                title: 'Lien copié dans le presse-papier!'
+            });
+        }
+    }
+}
+
+// Initialisation
+let shareModal;
+
+document.addEventListener('DOMContentLoaded', () => {
+    shareModal = new ShareModal();
+    
+    // Exposer globalement pour ShopManager
+    window.ShareManager = {
+        showModal: (productId, productName) => shareModal.show(productId, productName),
+        hideModal: () => shareModal.hide()
+    };
+});
+</script>
+
+<!-- Loading Spinner -->
+<div id="loading-spinner" class="loading-spinner" style="display: none;">
+  <div class="spinner"></div>
+  <p>Chargement des produits...</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Système de gestion avancé
-class AdvancedShopSystem {
-  constructor() {
-    this.filters = {
-      categories: [],
-      priceRange: [0, 10000],
-      availability: [],
-      promotions: false,
-      liked: false,
-      viewed: false,
-      eco: false,
-      quick: null,
-      search: ''
-    };
-    this.activeFilters = new Set();
-    this.likedProducts = new Set(JSON.parse(localStorage.getItem('farmgen_likes') || '[]'));
-    this.viewedProducts = new Set(JSON.parse(localStorage.getItem('farmgen_views') || '[]'));
-    this.searchHistory = JSON.parse(localStorage.getItem('farmgen_search_history') || '[]');
-    this.cartManager = new CartManager();
-    this.init();
-  }
 
-  async init() {
-    await this.loadInitialData();
-    this.setupEventListeners();
-    this.updateStats();
-    this.trackProductViews();
-  }
-
-  async loadInitialData() {
-    // Charger les données initiales
-    await this.loadCategories();
-    await this.loadLikesData();
-    this.updateProductDisplays();
-  }
-
-  async loadCategories() {
-    // Simuler le chargement des catégories
-    const categories = [...new Set(Array.from(document.querySelectorAll('.product-card')).map(card => card.getAttribute('data-category')))];
-    
-    const container = document.getElementById('category-filters');
-    container.innerHTML = categories.map(cat => `
-      <div class="filter-option">
-        <input type="checkbox" id="cat-${this.slugify(cat)}" data-category="${cat}">
-        <label for="cat-${this.slugify(cat)}">${cat}</label>
-      </div>
-    `).join('');
-  }
-
-  async loadLikesData() {
-    // Mettre à jour les compteurs de likes
-    document.querySelectorAll('.product-card').forEach(card => {
-      const productId = card.getAttribute('data-product-id');
-      const likeBtn = card.querySelector('.like-btn');
-      const likeCount = card.querySelector('.like-count span');
-      
-      if (this.likedProducts.has(productId)) {
-        likeBtn.classList.add('active');
-        likeBtn.querySelector('i').classList.replace('far', 'fas');
-      }
-      
-      // Simuler des données de likes
-      const likes = Math.floor(Math.random() * 50);
-      likeCount.textContent = likes;
-      card.setAttribute('data-likes', likes);
-    });
-  }
-
-  setupEventListeners() {
-    // Recherche intelligente
-    const smartSearch = document.getElementById('smart-search');
-    smartSearch.addEventListener('input', this.debounce(this.handleSmartSearch.bind(this), 300));
-    
-    // Filtres rapides
-    document.querySelectorAll('.quick-filter').forEach(filter => {
-      filter.addEventListener('click', (e) => {
-        this.handleQuickFilter(e.target);
-      });
-    });
-
-    // Likes avancés
-    document.querySelectorAll('.like-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        this.handleLike(e.target.closest('.like-btn'));
-      });
-    });
-
-    // Partage avancé
-    document.querySelectorAll('.share-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        this.handleShare(e.target.closest('.share-btn'));
-      });
-    });
-
-    // Gestion des filtres
-    this.setupFilterListeners();
-  }
-
-  handleSmartSearch(e) {
-    const query = e.target.value;
-    if (query.length > 2) {
-      this.showSearchSuggestions(query);
-      this.saveSearchHistory(query);
-    } else {
-      this.hideSearchSuggestions();
+// --- Gestionnaire de Boutique avec Intégration Panier ---
+class ShopManager {
+    constructor(shopId) {
+        this.shopId = shopId;
+        this.products = [];
+        this.filteredProducts = [];
+        this.categories = [];
+        this.filters = {
+            categories: [],
+            priceRange: [0, 10000],
+            availability: 'all',
+            search: '',
+            sortBy: 'popular',
+            quickFilter: null
+        };
+        this.currentPage = 1;
+        this.productsPerPage = 12;
+        this.isLoading = false;
+        
+        this.init();
     }
-  }
 
-  showSearchSuggestions(query) {
-    const suggestions = this.generateSuggestions(query);
-    const container = document.getElementById('search-suggestions');
-    
-    container.innerHTML = suggestions.map(suggestion => `
-      <div class="suggestion-item" data-suggestion="${suggestion}">
-        <i class="fas fa-search"></i> ${suggestion}
-      </div>
-    `).join('');
-    
-    container.classList.add('show');
-    
-    // Ajouter les écouteurs d'événements
-    container.querySelectorAll('.suggestion-item').forEach(item => {
-      item.addEventListener('click', () => {
-        document.getElementById('smart-search').value = item.getAttribute('data-suggestion');
-        this.filters.search = item.getAttribute('data-suggestion');
-        this.hideSearchSuggestions();
-        this.updateProductDisplays();
-      });
-    });
-  }
+    async init() {
+        await this.loadInitialData();
+        this.setupEventListeners();
+        this.updateStats();
+        this.initializeAnimations();
+    }
 
-  generateSuggestions(query) {
-    const products = Array.from(document.querySelectorAll('.product-card'));
-    const suggestions = new Set();
-    
-    products.forEach(card => {
-      const name = card.querySelector('h3').textContent.toLowerCase();
-      const category = card.getAttribute('data-category').toLowerCase();
-      const description = card.querySelector('.product-description').textContent.toLowerCase();
-      
-      if (name.includes(query.toLowerCase())) suggestions.add(card.querySelector('h3').textContent);
-      if (category.includes(query.toLowerCase())) suggestions.add(card.getAttribute('data-category'));
-      
-      // Extraire des mots-clés de la description
-      description.split(' ').forEach(word => {
-        if (word.includes(query.toLowerCase()) && word.length > 3) {
-          suggestions.add(word.charAt(0).toUpperCase() + word.slice(1));
+    async loadInitialData() {
+        try {
+            this.showLoading(true);
+            
+            const [productsResponse, categoriesResponse] = await Promise.all([
+                this.fetchProducts(),
+                this.fetchCategories()
+            ]);
+
+            this.products = productsResponse.products || [];
+            this.categories = categoriesResponse.categories || [];
+            
+            this.renderProducts();
+            this.renderCategories();
+            this.setupPriceRange();
+            
+        } catch (error) {
+            console.error('Erreur chargement initial:', error);
+            this.showError('Erreur lors du chargement des données');
+        } finally {
+            this.showLoading(false);
         }
-      });
-    });
-    
-    // Ajouter l'historique de recherche
-    this.searchHistory.forEach(history => {
-      if (history.query.toLowerCase().includes(query.toLowerCase())) {
-        suggestions.add(history.query);
-      }
-    });
-    
-    return Array.from(suggestions).slice(0, 5);
-  }
-
-  async handleLike(button) {
-    const productId = button.getAttribute('data-product-id');
-    const wasLiked = this.likedProducts.has(productId);
-    
-    // Animation
-    button.classList.add('liking');
-    setTimeout(() => button.classList.remove('liking'), 600);
-    
-    try {
-      if (wasLiked) {
-        // Unlike
-        this.likedProducts.delete(productId);
-        button.classList.remove('active');
-        button.querySelector('i').classList.replace('fas', 'far');
-        await this.unlikeProduct(productId);
-      } else {
-        // Like
-        this.likedProducts.add(productId);
-        button.classList.add('active');
-        button.querySelector('i').classList.replace('far', 'fas');
-        await this.likeProduct(productId);
-      }
-      
-      // Mettre à jour le localStorage
-      localStorage.setItem('farmgen_likes', JSON.stringify([...this.likedProducts]));
-      
-      // Mettre à jour le compteur
-      this.updateLikeCount(productId, wasLiked ? -1 : 1);
-      this.updateStats();
-      
-    } catch (error) {
-      console.error('Erreur like:', error);
-      // Revert visual state
-      button.classList.toggle('active');
-      button.querySelector('i').classList.toggle('far');
-      button.querySelector('i').classList.toggle('fas');
     }
-  }
 
-  async likeProduct(productId) {
-    // Simuler un appel API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log(`Produit ${productId} liké`);
-        resolve();
-      }, 300);
-    });
-  }
-
-  updateLikeCount(productId, change) {
-    const countElement = document.querySelector(`[data-likes-count="${productId}"]`);
-    if (countElement) {
-      const current = parseInt(countElement.textContent) || 0;
-      countElement.textContent = Math.max(0, current + change);
-    }
-  }
-
-  handleShare(button) {
-    const productId = button.getAttribute('data-product-id');
-    const productName = button.getAttribute('data-product-name');
-    this.showShareModal(productId, productName);
-  }
-
-  showShareModal(productId, productName) {
-    const modal = document.getElementById('share-modal');
-    const product = document.querySelector(`[data-product-id="${productId}"]`);
-    const productImage = product?.querySelector('img')?.src || '';
-    const productPrice = product?.getAttribute('data-price') || '';
-    
-    modal.setAttribute('data-product-id', productId);
-    modal.setAttribute('data-product-name', productName);
-    modal.setAttribute('data-product-image', productImage);
-    modal.setAttribute('data-product-price', productPrice);
-    
-    modal.classList.add('show');
-    
-    // Setup share options
-    this.setupShareOptions();
-  }
-
-  setupShareOptions() {
-    const modal = document.getElementById('share-modal');
-    const productId = modal.getAttribute('data-product-id');
-    const productName = modal.getAttribute('data-product-name');
-    const productImage = modal.getAttribute('data-product-image');
-    const productPrice = modal.getAttribute('data-product-price');
-    
-    const shareUrl = `${window.location.origin}/produit/${productId}/`;
-    const shareText = `Découvrez "${productName}" à ${productPrice}FCFA sur FarmGen!`;
-    
-    document.querySelectorAll('.share-option').forEach(option => {
-      option.onclick = () => {
-        const platform = option.getAttribute('data-share');
-        this.executeShare(platform, shareUrl, shareText, productName, productImage);
-      };
-    });
-    
-    // Fermer le modal
-    document.getElementById('close-share-modal').onclick = () => {
-      modal.classList.remove('show');
-    };
-  }
-
-  executeShare(platform, url, text, title, image) {
-    const encodedUrl = encodeURIComponent(url);
-    const encodedText = encodeURIComponent(text);
-    const encodedTitle = encodeURIComponent(title);
-    
-    const shareConfigs = {
-      whatsapp: `https://wa.me/?text=${encodedText}%20${encodedUrl}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-      email: `mailto:?subject=${encodedTitle}&body=${encodedText}%0A%0A${url}`,
-      sms: `sms:?body=${encodedText}%20${url}`,
-      copy: () => {
-        navigator.clipboard.writeText(`${text} ${url}`).then(() => {
-          this.showToast('Lien copié dans le presse-papier!');
+    async fetchProducts(page = 1) {
+        const params = new URLSearchParams({
+            page: page,
+            shop_id: this.shopId,
+            ...this.filters
         });
-      }
-    };
-    
-    if (platform === 'copy') {
-      shareConfigs.copy();
-    } else {
-      window.open(shareConfigs[platform], '_blank', 'width=600,height=400');
-    }
-    
-    document.getElementById('share-modal').classList.remove('show');
-  }
 
-  trackProductViews() {
-    const productCards = document.querySelectorAll('.product-card');
-    productCards.forEach(card => {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const productId = card.getAttribute('data-product-id');
-            if (!this.viewedProducts.has(productId)) {
-              this.viewedProducts.add(productId);
-              localStorage.setItem('farmgen_views', JSON.stringify([...this.viewedProducts]));
-              this.trackView(productId);
+        const response = await fetch(`/marketplace/api/shop/${this.shopId}/products/?${params}`);
+        if (!response.ok) throw new Error('Erreur réseau');
+        
+        return await response.json();
+    }
+
+    async fetchCategories() {
+        const response = await fetch(`/marketplace/api/shop/${this.shopId}/categories/`);
+        if (!response.ok) throw new Error('Erreur réseau');
+        
+        return await response.json();
+    }
+
+    async renderProducts() {
+        const container = document.getElementById('products-container');
+        if (!container) return;
+        
+        if (this.filteredProducts.length === 0) {
+            container.innerHTML = this.getEmptyStateHTML();
+            return;
+        }
+
+        container.innerHTML = this.filteredProducts.map(product => 
+            this.getProductCardHTML(product)
+        ).join('');
+        
+        //this.attachProductEventListeners();
+    }
+
+    getProductCardHTML(product) {
+        const stockStatus = this.getStockStatus(product.quantity);
+        const isLiked = this.isProductLiked(product.id);
+        const isOutOfStock = product.quantity === 0;
+        
+        return `
+            <div class="product-card fade-in" 
+                 data-product-id="${product.id}"
+                 data-category="${product.category?.name || 'non-categorise'}" 
+                 data-price="${product.price}"
+                 data-stock="${stockStatus}"
+                 data-likes="${product.likes_count || 0}"
+                 data-views="${product.views_count || 0}"
+                 data-created="${new Date(product.created_at).getTime()}">
+                <div class="product-image">
+                    <img src="${product.images?.[0]?.image || '/static/images/default-product.jpg'}" 
+                         alt="${product.name}"
+                         onerror="this.src='/static/images/default-product.jpg'">
+                    <div class="product-badge">${product.category?.name || 'Produit'}</div>
+                    <div class="product-actions">
+                        <button class="product-action-btn like-btn ${isLiked ? 'active' : ''}" 
+                                data-product-id="${product.id}">
+                            <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+                        </button>
+                        <button class="product-action-btn share-btn" 
+                                data-product-id="${product.id}" 
+                                data-product-name="${product.name}">
+                            <i class="far fa-share-square"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="product-content">
+                    <span class="product-category">${product.category?.name || "Produit"}</span>
+                    <h3>${product.name}</h3>
+                    <p class="product-description">${product.description || 'Aucune description disponible'}</p>
+                    <div class="product-meta">
+                        <div class="product-rating">
+                            <i class="fas fa-star"></i>
+                            <span>${product.rating || '4.8'}</span>
+                            <span class="like-count">(${product.likes_count || 0})</span>
+                        </div>
+                        <div class="product-stock ${stockStatus}">
+                            ${this.getStockText(product.quantity)}
+                        </div>
+                    </div>
+                    <div class="product-price">
+                        ${this.formatPrice(product.price)} FCFA
+                    </div>
+                    <div class="product-actions-bottom">
+                        <div class="quantity-controls ${isOutOfStock ? 'disabled' : ''}">
+                            <button class="quantity-btn minus-btn" 
+                                    data-product-id="${product.id}"
+                                    ${isOutOfStock ? 'disabled' : ''}>-</button>
+                            <input type="number" class="quantity-input" value="1" min="1" 
+                                   max="${product.quantity}" data-product-id="${product.id}" 
+                                   ${isOutOfStock ? 'disabled' : ''} readonly>
+                            <button class="quantity-btn plus-btn" 
+                                    data-product-id="${product.id}"
+                                    ${isOutOfStock ? 'disabled' : ''}>+</button>
+                        </div>
+                        <button class="add-to-cart-btn ${isOutOfStock ? 'disabled' : ''}" 
+                                data-product-id="${product.id}"
+                                ${isOutOfStock ? 'disabled' : ''}>
+                            <i class="fas fa-shopping-cart"></i>
+                            ${isOutOfStock ? 'Rupture' : 'Ajouter'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getStockStatus(quantity) {
+        if (quantity > 10) return 'available';
+        if (quantity > 0) return 'low';
+        return 'out-of-stock';
+    }
+
+    getStockText(quantity) {
+        if (quantity > 10) return `${quantity} en stock`;
+        if (quantity > 0) return `Stock faible (${quantity})`;
+        return 'Rupture de stock';
+    }
+
+    formatPrice(price) {
+        return new Intl.NumberFormat('fr-FR').format(price);
+    }
+
+    renderCategories() {
+        const container = document.getElementById('category-filters');
+        if (!container) return;
+        
+        container.innerHTML = this.categories.map(category => `
+            <div class="filter-option">
+                <input type="checkbox" id="cat-${category.id}" 
+                       data-category="${category.name}" value="${category.id}">
+                <label for="cat-${category.id}">${category.name}</label>
+            </div>
+        `).join('');
+    }
+
+    setupEventListeners() {
+        this.setupSearch();
+        this.setupFilters();
+        this.setupSorting();
+        this.setupProductActions();
+    }
+
+    setupSearch() {
+        const searchInput = document.getElementById('smart-search');
+        if (!searchInput) return;
+        
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.filters.search = e.target.value;
+                this.applyFilters();
+            }, 300);
+        });
+    }
+
+    setupFilters() {
+        // Catégories
+        document.addEventListener('change', (e) => {
+            if (e.target.matches('[data-category]')) {
+                const category = e.target.value;
+                if (e.target.checked) {
+                    this.filters.categories.push(category);
+                } else {
+                    this.filters.categories = this.filters.categories.filter(cat => cat !== category);
+                }
+                this.applyFilters();
             }
-          }
         });
-      }, { threshold: 0.5 });
-      
-      observer.observe(card);
-    });
-  }
 
-  async trackView(productId) {
-    // Simuler le tracking de vue
-    console.log(`Produit ${productId} consulté`);
-  }
+        // Filtres rapides
+        document.querySelectorAll('.quick-filter').forEach(filter => {
+            filter.addEventListener('click', (e) => {
+                document.querySelectorAll('.quick-filter').forEach(f => f.classList.remove('active'));
+                e.target.classList.add('active');
+                this.filters.quickFilter = e.target.dataset.filter;
+                this.applyFilters();
+            });
+        });
 
-  updateProductDisplays() {
-    const products = Array.from(document.querySelectorAll('.product-card'));
-    let visibleCount = 0;
-    
-    products.forEach(product => {
-      if (this.matchesFilters(product)) {
-        product.style.display = 'block';
-        visibleCount++;
-        product.classList.add('visible');
-      } else {
-        product.style.display = 'none';
-        product.classList.remove('visible');
-      }
-    });
-    
-    this.updateFilteredCount(visibleCount);
-    this.updateActiveFiltersDisplay();
-  }
+        this.setupPriceFilter();
+    }
 
-  matchesFilters(product) {
-    const category = product.getAttribute('data-category');
-    const price = parseInt(product.getAttribute('data-price'));
-    const likes = parseInt(product.getAttribute('data-likes'));
-    const views = parseInt(product.getAttribute('data-views'));
-    const created = parseInt(product.getAttribute('data-created'));
-    const productId = product.getAttribute('data-product-id');
-    const stock = product.getAttribute('data-stock');
-    
-    // Filtre catégorie
-    if (this.filters.categories.length > 0 && !this.filters.categories.includes(category)) {
-      return false;
-    }
-    
-    // Filtre prix
-    if (price < this.filters.priceRange[0] || price > this.filters.priceRange[1]) {
-      return false;
-    }
-    
-    // Filtre likes
-    if (this.filters.liked && !this.likedProducts.has(productId)) {
-      return false;
-    }
-    
-    // Filtre vus
-    if (this.filters.viewed && !this.viewedProducts.has(productId)) {
-      return false;
-    }
-    
-    // Filtres rapides
-    if (this.filters.quick === 'popular' && likes < 10) return false;
-    if (this.filters.quick === 'promo' && product.getAttribute('data-promo') !== 'true') return false;
-    if (this.filters.quick === 'new' && (Date.now()/1000 - created) > 2592000) return false; // 30 jours
-    if (this.filters.quick === 'stock' && stock === 'out-of-stock') return false;
-    
-    // Recherche
-    if (this.filters.search) {
-      const searchLower = this.filters.search.toLowerCase();
-      const name = product.querySelector('h3').textContent.toLowerCase();
-      const description = product.querySelector('.product-description').textContent.toLowerCase();
-      
-      if (!name.includes(searchLower) && !description.includes(searchLower)) {
-        return false;
-      }
-    }
-    
-    return true;
-  }
+    setupPriceFilter() {
+        const minInput = document.getElementById('min-price');
+        const maxInput = document.getElementById('max-price');
+        const rangeInputs = document.querySelectorAll('.range-input');
 
-  updateStats() {
-    const totalProducts = document.querySelectorAll('.product-card').length;
-    const totalLikes = Array.from(document.querySelectorAll('.product-card'))
-      .reduce((sum, card) => sum + parseInt(card.getAttribute('data-likes') || 0), 0);
-    
-    document.getElementById('total-products').textContent = `${totalProducts} produits`;
-    document.getElementById('total-likes').textContent = `${totalLikes} likes`;
-    document.getElementById('total-views').textContent = `${this.viewedProducts.size} vues`;
-  }
+        if (!minInput || !maxInput) return;
 
-  updateFilteredCount(count) {
-    document.getElementById('filtered-count').textContent = `${count} filtrés`;
-  }
+        [minInput, maxInput].forEach(input => {
+            input.addEventListener('input', this.debounce(() => {
+                this.filters.priceRange = [
+                    parseInt(minInput.value) || 0,
+                    parseInt(maxInput.value) || 10000
+                ];
+                this.applyFilters();
+            }, 500));
+        });
 
-  updateActiveFiltersDisplay() {
-    const container = document.getElementById('active-filters');
-    const tags = [];
-    
-    if (this.filters.categories.length > 0) {
-      tags.push(...this.filters.categories.map(cat => 
-        `<div class="filter-tag">Catégorie: ${cat}<button class="filter-tag-remove" data-filter="category" data-value="${cat}">×</button></div>`
-      ));
+        rangeInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const minVal = parseInt(rangeInputs[0].value);
+                const maxVal = parseInt(rangeInputs[1].value);
+                
+                minInput.value = minVal;
+                maxInput.value = maxVal;
+                this.filters.priceRange = [minVal, maxVal];
+                this.applyFilters();
+            });
+        });
     }
-    
-    if (this.filters.quick) {
-      tags.push(`<div class="filter-tag">Filtre: ${this.filters.quick}<button class="filter-tag-remove" data-filter="quick">×</button></div>`);
-    }
-    
-    if (this.filters.search) {
-      tags.push(`<div class="filter-tag">Recherche: "${this.filters.search}"<button class="filter-tag-remove" data-filter="search">×</button></div>`);
-    }
-    
-    container.innerHTML = tags.join('');
-    
-    // Ajouter les écouteurs pour supprimer les filtres
-    container.querySelectorAll('.filter-tag-remove').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const filterType = btn.getAttribute('data-filter');
-        const filterValue = btn.getAttribute('data-value');
-        this.removeFilter(filterType, filterValue);
-      });
-    });
-  }
 
-  removeFilter(type, value) {
-    switch(type) {
-      case 'category':
-        this.filters.categories = this.filters.categories.filter(cat => cat !== value);
-        break;
-      case 'quick':
-        this.filters.quick = null;
-        break;
-      case 'search':
-        this.filters.search = '';
-        document.getElementById('smart-search').value = '';
-        break;
-    }
-    this.updateProductDisplays();
-  }
+    setupSorting() {
+        document.querySelectorAll('.sort-option input').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.filters.sortBy = e.target.value;
+                this.applyFilters();
+            });
+        });
 
-  setupFilterListeners() {
-    // Catégories
-    document.addEventListener('change', (e) => {
-      if (e.target.matches('[data-category]')) {
-        const category = e.target.getAttribute('data-category');
-        if (e.target.checked) {
-          this.filters.categories.push(category);
-        } else {
-          this.filters.categories = this.filters.categories.filter(cat => cat !== category);
+        const sortBtn = document.querySelector('.sort-btn');
+        const sortMenu = document.querySelector('.sort-menu');
+        
+        if (sortBtn && sortMenu) {
+            sortBtn.addEventListener('click', () => {
+                sortMenu.classList.toggle('show');
+            });
         }
-        this.updateProductDisplays();
-      }
-    });
-    
-    // Prix
-    const minPriceInput = document.getElementById('min-price');
-    const maxPriceInput = document.getElementById('max-price');
-    
-    [minPriceInput, maxPriceInput].forEach(input => {
-      input.addEventListener('input', this.debounce(() => {
-        this.filters.priceRange = [
-          parseInt(minPriceInput.value) || 0,
-          parseInt(maxPriceInput.value) || 10000
-        ];
-        this.updateProductDisplays();
-      }, 500));
-    });
-    
-    // Filtres avancés
-    document.addEventListener('change', (e) => {
-      if (e.target.matches('[data-filter]')) {
-        const filter = e.target.getAttribute('data-filter');
-        this.filters[filter] = e.target.checked;
-        this.updateProductDisplays();
-      }
-    });
-  }
+    }
 
-  handleQuickFilter(filterElement) {
-    document.querySelectorAll('.quick-filter').forEach(f => f.classList.remove('active'));
-    filterElement.classList.add('active');
-    
-    this.filters.quick = filterElement.getAttribute('data-filter');
-    this.updateProductDisplays();
-  }
+    setupProductActions() {
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.like-btn')) {
+                this.handleLike(e.target.closest('.like-btn'));
+            }
+            
+            if (e.target.closest('.share-btn')) {
+                this.handleShare(e.target.closest('.share-btn'));
+            }
+        });
 
-  saveSearchHistory(query) {
-    this.searchHistory.unshift({
-      query,
-      timestamp: Date.now(),
-      filters: { ...this.filters }
-    });
-    
-    // Garder seulement les 10 dernières recherches
-    this.searchHistory = this.searchHistory.slice(0, 10);
-    localStorage.setItem('farmgen_search_history', JSON.stringify(this.searchHistory));
-  }
+        this.setupQuantityControls();
+    }
 
-  debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  }
+    async handleLike(button) {
+        const productId = button.getAttribute('data-product-id');
+        const isLiked = button.classList.contains('active');
+        
+        try {
+            const response = await fetch(`/marketplace/api/products/${productId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json',
+                },
+            });
 
-  slugify(text) {
-    return text.toString().toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '')
-      .replace(/-+$/, '');
-  }
+            if (response.ok) {
+                button.classList.toggle('active');
+                const icon = button.querySelector('i');
+                icon.classList.toggle('far');
+                icon.classList.toggle('fas');
+                
+                this.updateLikeCount(productId, isLiked ? -1 : 1);
+            }
+        } catch (error) {
+            console.error('Erreur like:', error);
+            this.showError('Erreur lors de la mise à jour du like');
+        }
+    }
 
-  showToast(message) {
-    // Implémentation simple du toast
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--primary-green);
-      color: white;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      z-index: 10000;
-      animation: slideInRight 0.3s ease;
-    `;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  }
+    updateLikeCount(productId, change) {
+        const product = this.products.find(p => p.id == productId);
+        if (product) {
+            product.likes_count = (product.likes_count || 0) + change;
+            const likeCount = document.querySelector(`[data-product-id="${productId}"] .like-count`);
+            if (likeCount) {
+                likeCount.textContent = `(${product.likes_count})`;
+            }
+        }
+    }
+
+    handleShare(button) {
+        const productId = button.getAttribute('data-product-id');
+        const productName = button.getAttribute('data-product-name');
+        ShareManager.showModal(productId, productName);
+    }
+
+    setupQuantityControls() {
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('plus-btn')) {
+                this.handleQuantityChange(e.target, 1);
+            } else if (e.target.classList.contains('minus-btn')) {
+                this.handleQuantityChange(e.target, -1);
+            }
+        });
+    }
+
+    handleQuantityChange(button, change) {
+        const productId = button.getAttribute('data-product-id');
+        const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
+        if (!input) return;
+        
+        const current = parseInt(input.value) || 1;
+        const max = parseInt(input.max) || Infinity;
+        const min = parseInt(input.min) || 1;
+        
+        const newValue = current + change;
+        if (newValue >= min && newValue <= max) {
+            input.value = newValue;
+        } else if (newValue > max) {
+            this.showWarning(`Stock maximal atteint (${max})`);
+        }
+    }
+
+    async applyFilters() {
+        try {
+            this.showLoading(true);
+            
+            const response = await this.fetchProducts(1);
+            this.filteredProducts = response.products || [];
+            this.currentPage = 1;
+            
+            this.renderProducts();
+            this.updateStats();
+            this.updateActiveFilters();
+            
+        } catch (error) {
+            console.error('Erreur filtrage:', error);
+            this.showError('Erreur lors du filtrage des produits');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    updateStats() {
+        const totalProducts = this.products.length;
+        const filteredCount = this.filteredProducts.length;
+        const totalLikes = this.products.reduce((sum, product) => 
+            sum + (product.likes_count || 0), 0
+        );
+
+        const totalProductsEl = document.getElementById('total-products');
+        const filteredCountEl = document.getElementById('filtered-count');
+        const totalLikesEl = document.getElementById('total-likes');
+
+        if (totalProductsEl) totalProductsEl.textContent = `${totalProducts} produits`;
+        if (filteredCountEl) filteredCountEl.textContent = `${filteredCount} filtrés`;
+        if (totalLikesEl) totalLikesEl.textContent = `${totalLikes} likes`;
+    }
+
+    updateActiveFilters() {
+        const container = document.getElementById('active-filters');
+        if (!container) return;
+        
+        const activeFilters = [];
+
+        if (this.filters.categories.length > 0) {
+            this.filters.categories.forEach(catId => {
+                const category = this.categories.find(c => c.id == catId);
+                if (category) {
+                    activeFilters.push(`
+                        <div class="filter-tag">
+                            ${category.name}
+                            <button class="filter-tag-remove" data-type="category" data-value="${catId}">×</button>
+                        </div>
+                    `);
+                }
+            });
+        }
+
+        if (this.filters.search) {
+            activeFilters.push(`
+                <div class="filter-tag">
+                    Recherche: "${this.filters.search}"
+                    <button class="filter-tag-remove" data-type="search">×</button>
+                </div>
+            `);
+        }
+
+        container.innerHTML = activeFilters.join('');
+
+        container.querySelectorAll('.filter-tag-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = btn.dataset.type;
+                const value = btn.dataset.value;
+                this.removeFilter(type, value);
+            });
+        });
+    }
+
+    removeFilter(type, value) {
+        switch (type) {
+            case 'category':
+                this.filters.categories = this.filters.categories.filter(cat => cat !== value);
+                const checkbox = document.querySelector(`[value="${value}"]`);
+                if (checkbox) checkbox.checked = false;
+                break;
+            case 'search':
+                this.filters.search = '';
+                const searchInput = document.getElementById('smart-search');
+                if (searchInput) searchInput.value = '';
+                break;
+        }
+        this.applyFilters();
+    }
+
+    // Méthodes utilitaires
+    debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    showLoading(show) {
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) {
+            spinner.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    showError(message) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: message,
+            confirmButtonColor: '#2ecc71'
+        });
+    }
+
+    showWarning(message) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            title: message,
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+    }
+
+    isProductLiked(productId) {
+        const likes = JSON.parse(localStorage.getItem('farmgen_likes') || '[]');
+        return likes.includes(productId.toString());
+    }
+
+    getEmptyStateHTML() {
+        return `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>Aucun produit trouvé</h3>
+                <p>Aucun produit ne correspond à vos critères de recherche.</p>
+                <button class="visit-shop-btn" onclick="window.shopManager.clearFilters()">
+                    Réinitialiser les filtres
+                </button>
+            </div>
+        `;
+    }
+
+    clearFilters() {
+        this.filters = {
+            categories: [],
+            priceRange: [0, 10000],
+            availability: 'all',
+            search: '',
+            sortBy: 'popular',
+            quickFilter: null
+        };
+        
+        const searchInput = document.getElementById('smart-search');
+        if (searchInput) searchInput.value = '';
+        
+        document.querySelectorAll('.filter-option input').forEach(input => input.checked = false);
+        document.querySelectorAll('.quick-filter').forEach(filter => filter.classList.remove('active'));
+        
+        this.applyFilters();
+    }
+
+    setupPriceRange() {
+        // Calculer la gamme de prix automatique basée sur les produits
+        if (this.products.length > 0) {
+            const prices = this.products.map(p => p.price).filter(p => p > 0);
+            if (prices.length > 0) {
+                const minPrice = Math.min(...prices);
+                const maxPrice = Math.max(...prices);
+                const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
+                
+                const minInput = document.getElementById('min-price');
+                const maxInput = document.getElementById('max-price');
+                const avgPriceEl = document.getElementById('average-price');
+                
+                if (minInput) minInput.placeholder = Math.floor(minPrice);
+                if (maxInput) maxInput.placeholder = Math.ceil(maxPrice);
+                if (avgPriceEl) avgPriceEl.textContent = `${Math.round(avgPrice)} FCFA`;
+            }
+        }
+    }
+
+    initializeAnimations() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll(".fade-in").forEach((el) => {
+            observer.observe(el);
+        });
+    }
 }
 
-// Initialisation
+
+
+// --- Initialisation ---
+let shopManager;
+
 document.addEventListener('DOMContentLoaded', function() {
-  window.shopSystem = new AdvancedShopSystem();
-  
-  // Animation on scroll (conservée)
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("visible");
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll(".fade-in").forEach((el) => {
-    observer.observe(el);
-  });
+    const shopId = {{ shop.id }};
+    shopManager = new ShopManager(shopId);
+    
+    // Fermer le modal de partage
+    const closeShareModal = document.getElementById('close-share-modal');
+    if (closeShareModal) {
+        closeShareModal.addEventListener('click', () => {
+            ShareManager.hideModal();
+        });
+    }
 });
 </script>
-<script>
-// Gestion des boutons + et -
-document.querySelectorAll('.quantity-controls').forEach(control => {
-    const minusBtn = control.querySelector('.minus-btn');
-    const plusBtn = control.querySelector('.plus-btn');
-    const input = control.querySelector('.quantity-input');
-
-    // Récupération des bornes
-    const min = parseInt(input.min) || 1;
-    const max = parseInt(input.max) || Infinity;
-
-    // Bouton +
-    plusBtn.addEventListener('click', () => {
-        let current = parseInt(input.value) || min;
-        if (current < max) {
-            input.value = current + 1;
-        } else {
-            showWarningToast(`Stock maximal atteint (${max})`);
-            input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 300);
-        }
-    });
-
-    // Bouton -
-    minusBtn.addEventListener('click', () => {
-        let current = parseInt(input.value) || min;
-        if (current > min) {
-            input.value = current - 1;
-        } else {
-            input.classList.add('shake');
-            setTimeout(() => input.classList.remove('shake'), 300);
-        }
-    });
-});
-
-// Petite animation visuelle
-const style = document.createElement('style');
-style.innerHTML = `
-  .shake { animation: shake 0.3s; }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    75% { transform: translateX(3px); }
-  }
-`;
-document.head.appendChild(style);
-
-// Toast SweetAlert2 (si non déjà défini)
-function showWarningToast(message) {
-  if (typeof Swal !== 'undefined') {
-      Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'warning',
-          title: message,
-          showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true,
-          background: '#1e293b',
-          color: '#fff',
-      });
-  }
-}
-</script>
-
 {% endblock %}
