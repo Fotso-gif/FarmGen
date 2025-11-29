@@ -822,7 +822,7 @@
 
         const message = input.toLowerCase().trim();
         const botReply = getBotResponse(message);
-        const authHeader = "Basic " + btoa("merveille.fotso@facsciences-uy1.cm:BzT-9aBVN2sQV2R");
+        //const authHeader = "Basic " + btoa("merveille.fotso@facsciences-uy1.cm:BzT-9aBVN2sQV2R");
 
         const webhookURL = "https://hook.eu2.make.com/cnx8mya0diyitb1oq35aoxsta4uudgyt";
 
@@ -831,7 +831,7 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "x-make-apikey": "BzT-9aBVN2sQV2R"
+                    "x-make-apikey": "ASCII237"
                 },
                 body: JSON.stringify({ reply: botReply })
             });
