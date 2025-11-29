@@ -3,6 +3,10 @@
 {% block title %} Accueil {% endblock %}
 {% block css %}
 <style>
+body{
+    width:100%;
+    overflow-x:hidden !important;
+}
     /* Hero Section */
         .hero-section {
             background: linear-gradient(rgba(34, 139, 34, 0.8), rgba(34, 139, 34, 0.6)), url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1932&q=80');
@@ -159,6 +163,9 @@
         }
         
         .product-description {
+            height:7rem;
+            overflow-y:Scroll;
+            scrollbar-width: none;
             color: var(--text-light);
             margin-bottom: 15px;
             font-size: 0.95rem;

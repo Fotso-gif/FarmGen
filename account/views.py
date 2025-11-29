@@ -314,7 +314,7 @@ def dashboard(request):
         
     except Shop.DoesNotExist:
         # Rediriger vers la création de boutique si aucune trouvée
-        return redirect('shop_create')
+        return redirect('marketplace_list')
 
 # API pour récupérer les données produit
 def get_product_data(request, product_id):

@@ -63,7 +63,548 @@
                 color: rgba(255, 255, 255, 0.5);
                 font-size: 0.9rem;
             }
-    </style>
+
+    /* Boutons flottants */
+    .floating-buttons {
+        position: fixed;
+        width:100%;
+        bottom: 5rem;
+        right: 0px;
+        z-index: 1000;
+        padding:2rem;
+        display: flex;
+        flex-direction: row;
+        justify-content:space-between;
+        gap: 15px;
+    }
+
+    .floating-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        position: relative;
+        animation: float 1.5s infinite ease-in-out;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: scale(-10px); opacity: 0.5; }
+        50% { transform: translateY(10px); opacity: 1; }
+    }
+    
+
+    .floating-btn:hover {
+        transform: translateY(-5px) scale(1.1);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .floating-btn.faq {
+        background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+    }
+
+    .floating-btn.chatbot {
+        background: linear-gradient(135deg, var(--forest-green), var(--earth-brown));
+    }
+
+    .floating-btn .notification {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: var(--light-green);
+        color: var(--text-dark);
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+
+    /* Modales */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 2000;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow: hidden;
+        animation: modalSlideIn 0.3s ease-out;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--forest-green), var(--primary-green));
+        color: white;
+        padding: 25px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 0;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    /* Modal FAQ */
+    .faq-list {
+        padding: 20px;
+    }
+
+    .faq-item {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+    }
+
+    .faq-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .faq-question {
+        font-weight: 600;
+        color: var(--text-dark);
+        cursor: pointer;
+        padding: 15px;
+        background: var(--light-gray);
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: var(--transition);
+    }
+
+    .faq-question:hover {
+        background: var(--primary-green);
+        color: white;
+    }
+
+    .faq-question.active {
+        background: var(--primary-green);
+        color: white;
+    }
+
+    .faq-answer {
+        padding: 0 15px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    .faq-answer.active {
+        padding: 15px;
+        max-height: 500px;
+    }
+
+    .faq-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .faq-question.active .faq-icon {
+        transform: rotate(180deg);
+    }
+
+    /* Modal Chatbot */
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 500px;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        background: var(--light-gray);
+    }
+
+    .message {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .message.bot .avatar {
+        background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+    }
+
+    .message.user {
+        flex-direction: row-reverse;
+    }
+
+    .message.user .avatar {
+        background: linear-gradient(135deg, var(--forest-green), var(--earth-brown));
+    }
+
+    .message.user .content {
+        background: var(--primary-green);
+        color: white;
+    }
+
+    .avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+
+    .content {
+        background: white;
+        color:#000;
+        padding: 12px 16px;
+        border-radius: 18px;
+        max-width: 70%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        line-height: 1.4;
+    }
+
+    .message.user .content {
+        border-bottom-right-radius: 5px;
+    }
+
+    .message.bot .content {
+
+        border-bottom-left-radius: 5px;
+    }
+
+    .chat-input-container {
+        padding: 20px;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        background: white;
+    }
+
+    .chat-input-wrapper {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px 16px;
+        border: 2px solid var(--light-gray);
+        border-radius: 25px;
+        outline: none;
+        transition: var(--transition);
+    }
+
+    .chat-input:focus {
+        border-color: var(--primary-green);
+    }
+
+    .send-btn {
+        background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+        border: none;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .send-btn:hover {
+        transform: scale(1.1);
+    }
+
+    .send-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 10px 16px;
+        background: white;
+        border-radius: 18px;
+        border-bottom-left-radius: 5px;
+        max-width: 70px;
+        margin-bottom: 15px;
+    }
+
+    .typing-indicator.active {
+        display: flex;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--text-dark);
+        border-radius: 50%;
+        margin: 0 2px;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .floating-buttons {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .floating-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+        }
+
+        .modal-container {
+            width: 95%;
+            margin: 20px;
+        }
+
+        .content {
+            max-width: 85%;
+        }
+    }
+</style>
+
+    <!-- Boutons flottants -->
+    <div class="floating-buttons">
+        <button class="floating-btn faq" onclick="openModal('faqModal')">
+            FAQ
+            <span class="notification">3</span>
+        </button>
+        <button class="floating-btn chatbot" onclick="openModal('chatbotModal')">
+            <i class="fas fa-robot"></i>
+            <span class="notification">1</span>
+        </button>
+    </div>
+
+    <!-- Modal FAQ -->
+    <div class="modal-overlay" id="faqModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-question-circle"></i>
+                    Foire Aux Questions
+                </h3>
+                <button class="modal-close" onclick="closeModal('faqModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Comment passer une commande sur FarmGen ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Pour passer une commande, parcourez la marketplace, ajoutez les produits à votre panier, 
+                            puis procédez au paiement via les méthodes disponibles (WhatsApp, Orange Money, MTN Mobile Money). 
+                            Vous recevrez une confirmation par email.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Quels sont les frais de livraison ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Les frais de livraison varient selon votre localisation et le vendeur. 
+                            Ils sont calculés automatiquement lors de la commande et affichés avant le paiement. 
+                            Certains vendeurs offrent la livraison gratuite pour les commandes supérieures à un certain montant.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Comment devenir vendeur sur FarmGen ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Pour devenir vendeur, cliquez sur "Devenir vendeur" dans le menu principal, 
+                            remplissez le formulaire d'inscription avec vos informations et documents, 
+                            et notre équipe vous contactera dans les 48 heures pour finaliser votre inscription.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Quelles sont les méthodes de paiement acceptées ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Nous acceptons les paiements via WhatsApp, Orange Money et MTN Mobile Money. 
+                            Chaque vendeur peut activer les méthodes de son choix. 
+                            Le paiement est sécurisé et vous recevez une confirmation instantanée.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Comment suivre ma commande ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Après confirmation de paiement, vous recevrez un numéro de suivi par email. 
+                            Vous pouvez également suivre votre commande depuis votre espace client dans la section "Mes Commandes". 
+                            Le vendeur vous informera des étapes de préparation et de livraison.
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <div class="faq-question" onclick="toggleFAQ(this)">
+                            Quelle est la politique de retour ?
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            Nous acceptons les retours sous 48 heures pour les produits non périssables 
+                            dans leur emballage d'origine. Les produits frais et périssables ne peuvent être retournés 
+                            sauf en cas de défaut de qualité constaté à la livraison.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Chatbot -->
+    <div class="modal-overlay" id="chatbotModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-robot"></i>
+                    Assistant FarmGen
+                </h3>
+                <button class="modal-close" onclick="closeModal('chatbotModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot">
+                            <div class="avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="content">
+                                Bonjour ! 👋 Je suis l'assistant FarmGen. Comment puis-je vous aider aujourd'hui ?
+                            </div>
+                        </div>
+                        <div class="message bot">
+                            <div class="avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="content">
+                                Voici quelques questions fréquentes :
+                                <br>• 🛒 Comment commander
+                                <br>• 🚚 Livraison
+                                <br>• 💰 Paiement
+                                <br>• 👨‍🌾 Devenir vendeur
+                            </div>
+                        </div>
+                    </div>
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <input type="text" class="chat-input" id="chatInput" 
+                                placeholder="Tapez votre message..." 
+                                onkeypress="handleChatInput(event)">
+                            <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 <!-- Footer -->
     <footer id="contact">
         <div class="container">
@@ -114,3 +655,220 @@
             </div>
         </div>
     </footer>
+    <script>
+    // Gestion des modales
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        if (modalId === 'chatbotModal') {
+            setTimeout(() => {
+                document.getElementById('chatInput').focus();
+            }, 300);
+        }
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Fermer les modales en cliquant à l'extérieur
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal(this.id);
+            }
+        });
+    });
+
+    // Gestion FAQ
+    function toggleFAQ(element) {
+        const answer = element.nextElementSibling;
+        const isActive = element.classList.contains('active');
+        
+        // Fermer toutes les autres FAQ
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.classList.remove('active');
+            q.nextElementSibling.classList.remove('active');
+        });
+        
+        // Ouvrir/fermer la FAQ actuelle
+        if (!isActive) {
+            element.classList.add('active');
+            answer.classList.add('active');
+        }
+    }
+
+    // Chatbot
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    function handleChatInput(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function getBotResponse(msg) {
+
+            // Salutations
+            if (msg.includes('bonjour') || msg.includes('salut') || msg.includes('hello')) {
+                return "Bonjour ! Comment puis-je vous aider avec votre automatisation Make ?";
+            }
+
+            // Scénario / workflow
+            if (msg.includes('scénario') || msg.includes('workflow') || msg.includes('automatisation') || msg.includes('make')) {
+                return "Pour créer un workflow Make : définissez un déclencheur → ajoutez vos modules → faites le mapping → testez → activez. Que voulez-vous créer ?";
+            }
+
+            // Webhooks
+            if (msg.includes('webhook') || msg.includes('callback') || msg.includes('url')) {
+                return "Pour utiliser un webhook Make : créez un module Webhook → copiez l’URL → envoyez une requête test → mappez les champs. Souhaitez-vous un exemple ?";
+            }
+
+            // API
+            if (msg.includes('api') || msg.includes('http') || msg.includes('requête') || msg.includes('endpoint')) {
+                return "Avec le module HTTP de Make, vous pouvez envoyer des requêtes GET, POST, PUT, PATCH, DELETE. Voulez-vous un exemple ?";
+            }
+
+            // Erreurs Make
+            if (msg.includes('erreur') || msg.includes('failed') || msg.includes('bug') || msg.includes('error')) {
+                return "Les erreurs Make sont souvent dues à un mauvais mapping ou une réponse API incorrecte. Quel est le message exact ?";
+            }
+
+            // Intégrations (WhatsApp, Airtable, Notion…)
+            if (msg.includes('airtable') || msg.includes('notion') || msg.includes('gmail') || msg.includes('guide') || msg.includes('whatsapp')) {
+                return "Je peux vous aider à configurer cette intégration dans Make. Quelle action souhaitez-vous automatiser ?";
+            }
+
+            // Modules & mapping
+            if (msg.includes('module') || msg.includes('configurer') || msg.includes('map') || msg.includes('mapping')) {
+                return "Pour configurer un module : choisissez la connexion → mappez → testez. Quel module pose problème ?";
+            }
+
+            // Contact
+            if (msg.includes('contact') || msg.includes('email')) {
+                return "Pour une aide plus avancée, contactez le support Wheebook. Ici, je peux vous aider avec vos automatisations Make.";
+            }
+
+            // Fallback
+            const fallback = [
+                "Pouvez-vous préciser ? Je peux vous aider sur webhooks, scénarios, API et erreurs Make.",
+                "Je n’ai pas compris. Parlez-vous d’un webhook, d’un module ou d’une API ?",
+                "Décrivez ce que vous souhaitez automatiser et je vous donnerai la structure.",
+                "Je peux vous guider étape par étape. Que voulez-vous créer dans Make ?"
+            ];
+
+            return fallback[Math.floor(Math.random() * fallback.length)];
+        }
+
+    function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        chatInput.value = '';
+        sendBtn.disabled = true;
+
+        showTypingIndicator();
+
+        // Envoyer au webhook et afficher réponse
+        handleMessage(message).then(result => {
+            hideTypingIndicator();
+            addMessage(result.response, 'bot');
+            sendBtn.disabled = false;
+            chatInput.focus();
+        }).catch(err => {
+            hideTypingIndicator();
+            addMessage("Erreur serveur : " + err.message, 'bot');
+            sendBtn.disabled = false;
+        });
+    }
+
+
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = sender === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
+        
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.textContent = text;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll vers le bas
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+        typingIndicator.classList.add('active');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+        typingIndicator.classList.remove('active');
+    }
+
+    async function handleMessage(input) {
+
+        const message = input.toLowerCase().trim();
+        const botReply = getBotResponse(message);
+        const authHeader = "Basic " + btoa("merveille.fotso@facsciences-uy1.cm:BzT-9aBVN2sQV2R");
+
+        const webhookURL = "https://hook.eu2.make.com/cnx8mya0diyitb1oq35aoxsta4uudgyt";
+
+        try {
+            const res = await fetch(webhookURL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-make-apikey": "BzT-9aBVN2sQV2R"
+                },
+                body: JSON.stringify({ reply: botReply })
+            });
+
+            // Lire la réponse JSON du webhook Make
+            const jsonResponse = await res.json();
+
+            // Retourner la réponse à l’appelant
+            return {
+                status: "ok",
+                sent_to_webhook: true,
+                response: botReply,
+                webhook_response: jsonResponse
+            };
+
+        } catch (err) {
+            // Gestion d’erreur
+            return {
+                status: "error",
+                message: err.message
+            };
+        }
+    }
+
+
+
+    // Désactiver le bouton d'envoi si le champ est vide
+    chatInput.addEventListener('input', function() {
+        sendBtn.disabled = !this.value.trim();
+    });
+
+    // Fermer avec la touche Échap
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                closeModal(modal.id);
+            });
+        }
+    });
+</script>
