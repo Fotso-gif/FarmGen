@@ -7,6 +7,7 @@ from Blog import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.liste_articles, name='liste_articles'),
+    path('list/', views.blog_admin, name='blog_admin'),
 ]
 
 if settings.DEBUG:

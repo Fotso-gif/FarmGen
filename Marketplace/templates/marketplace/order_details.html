@@ -1,0 +1,473 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .order-details-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .order-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+    }
+
+    .order-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .order-subtitle {
+        opacity: 0.9;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .order-body {
+        background: white;
+        padding: 30px;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .info-section {
+        background: #f8f9fc;
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #4e73df;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .info-item {
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: #6e707e;
+    }
+
+    .info-value {
+        font-weight: 600;
+        color: #5a5c69;
+        text-align: right;
+    }
+
+    .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 30px 0;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+    }
+
+    .items-table th {
+        background: #4e73df;
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .items-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .items-table tr:hover {
+        background: #f8f9fc;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-paid { background: #d4edda; color: #155724; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+
+    .totals-section {
+        background: #f8f9fc;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 30px;
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .total-row.final {
+        font-size: 1.2rem;
+        font-weight: 700;
+        border-top: 2px solid #4e73df;
+        margin-top: 10px;
+        padding-top: 15px;
+    }
+
+    .actions-bar {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 1px solid #e3e6f0;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: #4e73df;
+        color: white;
+    }
+
+    .btn-success {
+        background: #1cc88a;
+        color: white;
+    }
+
+    .btn-info {
+        background: #36b9cc;
+        color: white;
+    }
+
+    .btn-outline {
+        background: white;
+        border: 1px solid #e3e6f0;
+        color: #5a5c69;
+    }
+
+    @media print {
+        .no-print { display: none !important; }
+        .order-body { box-shadow: none; }
+        .actions-bar { display: none; }
+    }
+</style>
+
+<div class="order-details-container">
+    <div class="order-header">
+        <h1 class="order-title">Commande #{{ order.order_number }}</h1>
+        <div class="order-subtitle">
+            <span><i class="fas fa-calendar"></i> {{ order.created_at|date:"d/m/Y à H:i" }}</span>
+            <span class="status-badge status-{{ order.status }}">
+                {{ order.status_display }}
+            </span>
+            <span><i class="fas fa-money-bill-wave"></i> {{ order.final_amount }} FCFA</span>
+        </div>
+    </div>
+
+    <div class="order-body">
+        <!-- Informations générales -->
+        <div class="info-grid">
+            <!-- Informations client -->
+            <div class="info-section">
+                <h3 class="section-title">
+                    <i class="fas fa-user"></i> Informations client
+                </h3>
+                <div class="info-item">
+                    <span class="info-label">Nom complet:</span>
+                    <span class="info-value">{{ order.customer.full_name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">{{ order.customer.email }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Téléphone:</span>
+                    <span class="info-value">{{ order.customer.phone }}</span>
+                </div>
+                {% if order.customer.user_id %}
+                <div class="info-item">
+                    <span class="info-label">Compte:</span>
+                    <span class="info-value">{{ order.customer.username }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Informations paiement -->
+            <div class="info-section">
+                <h3 class="section-title">
+                    <i class="fas fa-credit-card"></i> Paiement
+                </h3>
+                <div class="info-item">
+                    <span class="info-label">Méthode:</span>
+                    <span class="info-value">{{ order.payment_method_display }}</span>
+                </div>
+                {% if order.payment_phone %}
+                <div class="info-item">
+                    <span class="info-label">Numéro:</span>
+                    <span class="info-value">{{ order.payment_phone }}</span>
+                </div>
+                {% endif %}
+                <div class="info-item">
+                    <span class="info-label">Statut:</span>
+                    <span class="info-value">
+                        {% if order.payment_verified %}
+                        <span class="text-success">
+                            <i class="fas fa-check-circle"></i> Vérifié
+                        </span>
+                        {% else %}
+                        <span class="text-warning">
+                            <i class="fas fa-clock"></i> En attente
+                        </span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if order.payment_verified_at %}
+                <div class="info-item">
+                    <span class="info-label">Vérifié le:</span>
+                    <span class="info-value">{{ order.payment_verified_at|date:"d/m/Y H:i" }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Informations boutique -->
+            {% if order.shop %}
+            <div class="info-section">
+                <h3 class="section-title">
+                    <i class="fas fa-store"></i> Boutique
+                </h3>
+                <div class="info-item">
+                    <span class="info-label">Nom:</span>
+                    <span class="info-value">{{ order.shop.title }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Localisation:</span>
+                    <span class="info-value">{{ order.shop.localisation }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Type:</span>
+                    <span class="info-value">{{ order.shop.type_shop }}</span>
+                </div>
+                {% if order.shop.phone %}
+                <div class="info-item">
+                    <span class="info-label">Contact:</span>
+                    <span class="info-value">{{ order.shop.phone }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Articles commandés -->
+        <h3 class="section-title">
+            <i class="fas fa-shopping-cart"></i> Articles commandés
+            <span class="badge bg-primary">{{ order.total_items }} article{{ order.total_items|pluralize:"s" }}</span>
+        </h3>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Prix unitaire</th>
+                    <th>Quantité</th>
+                    <th>Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.cart_items %}
+                <tr>
+                    <td>
+                        <strong>{{ item.name }}</strong>
+                        {% if item.description %}
+                        <br><small class="text-muted">{{ item.description|truncatechars:100 }}</small>
+                        {% endif %}
+                        {% if item.expiry_date %}
+                        <br><small class="text-warning">
+                            <i class="fas fa-clock"></i> Expire le {{ item.expiry_date }}
+                        </small>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.price }} FCFA</td>
+                    <td>{{ item.quantity }}</td>
+                    <td><strong>{{ item.price|multiply:item.quantity }} FCFA</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totaux -->
+        <div class="totals-section">
+            <div class="total-row">
+                <span>Total HT:</span>
+                <span>{{ order.items_total_ht|floatformat:2 }} FCFA</span>
+            </div>
+            <div class="total-row">
+                <span>TVA (18%):</span>
+                <span>{{ order.calculated_vat|floatformat:2 }} FCFA</span>
+            </div>
+            <div class="total-row final">
+                <span>Total TTC:</span>
+                <span>{{ order.final_amount }} FCFA</span>
+            </div>
+        </div>
+
+        <!-- Codes de paiement -->
+        {% if order.qr_code_data or order.ussd_code or order.whatsapp_link %}
+        <div class="info-section mt-4">
+            <h3 class="section-title">
+                <i class="fas fa-qrcode"></i> Codes de paiement
+            </h3>
+            <div class="row">
+                {% if order.qr_code_data %}
+                <div class="col-md-4">
+                    <h6>QR Code</h6>
+                    <div class="qr-code-container">
+                        <!-- QR Code serait généré ici -->
+                        <p class="text-muted small">Scanner pour payer</p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if order.ussd_code %}
+                <div class="col-md-4">
+                    <h6>USSD Code</h6>
+                    <code class="bg-light p-2 rounded d-block">{{ order.ussd_code }}</code>
+                    <p class="text-muted small">Composer sur votre téléphone</p>
+                </div>
+                {% endif %}
+                {% if order.whatsapp_link %}
+                <div class="col-md-4">
+                    <h6>WhatsApp</h6>
+                    <a href="{{ order.whatsapp_link }}" class="btn btn-success" target="_blank">
+                        <i class="fab fa-whatsapp"></i> Payer via WhatsApp
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="actions-bar no-print">
+            <a href="{% url 'order_listing' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Retour
+            </a>
+            <a href="{% url 'download_invoice' order.id %}" class="btn btn-info">
+                <i class="fas fa-file-pdf"></i> Télécharger facture
+            </a>
+            {% if order.has_payment_proof %}
+            <a href="{% url 'payment_proof' order.id %}" class="btn btn-success">
+                <i class="fas fa-receipt"></i> Voir preuve de paiement
+            </a>
+            {% endif %}
+            {% if is_admin or is_seller %}
+            {% if order.status == 'waiting_payment' %}
+            <button class="btn btn-primary" onclick="verifyPayment('{{ order.id }}')">
+                <i class="fas fa-check-circle"></i> Vérifier paiement
+            </button>
+            {% endif %}
+            {% if order.status in 'pending,payment_verified' %}
+            <button class="btn btn-success" onclick="markAsPaid('{{ order.id }}')">
+                <i class="fas fa-check"></i> Marquer comme payée
+            </button>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    function verifyPayment(orderId) {
+        if (confirm('Êtes-vous sûr de vouloir vérifier ce paiement ?')) {
+            fetch(`/api/orders/${orderId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ status: 'payment_verified' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Paiement vérifié avec succès');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    }
+
+    function markAsPaid(orderId) {
+        if (confirm('Êtes-vous sûr de vouloir marquer cette commande comme payée ?')) {
+            fetch(`/api/orders/${orderId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ status: 'paid' })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Commande marquée comme payée');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+    }
+
+    // Imprimer la page
+    function printPage() {
+        window.print();
+    }
+</script>
+{% endblock %}

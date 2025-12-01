@@ -597,7 +597,8 @@
                 <div class="profile-card animate__animated animate__fadeInLeft">
                     <div class="profile-avatar">
                         {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}" alt="Profil de {{ user.get_full_name }}">
+
+                        <img id="userAvatarImg" src="{{ user.profile_picture.url }}" alt="Profil de {{ user.get_full_name }}">
                         {% else %}
                         <div class="avatar-initials">
                             {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
@@ -1073,14 +1074,65 @@
 
         // Gestion de l'upload d'image
         const profileImageInput = document.getElementById('profileImageInput');
-        if (profileImageInput) {
-            profileImageInput.addEventListener('change', function() {
-                if (this.files && this.files[0]) {
-                    const form = document.getElementById('profileImageForm');
-                    form.submit();
+
+if (profileImageInput) {
+    profileImageInput.addEventListener('change', function () {
+
+        if (!(this.files && this.files[0])) return;
+
+        const formData = new FormData();
+        formData.append("profile_image", this.files[0]);
+
+        // Récupération du token CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch("/account/update-avatar/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                },
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+
+                if (data.success) {
+                    // Mise à jour immédiate de l'avatar sans recharger la page
+                    const avatarImg = document.getElementById("userAvatarImg");
+                    if (avatarImg) {
+                        avatarImg.src = data.image_url + "?t=" + new Date().getTime();
+                    }
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Succès",
+                        text: data.message,
+                        toast: true,
+                        position: "top-end",
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+
+                } else {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Erreur",
+                        text: data.message
+                    });
                 }
+            })
+            .catch(err => {
+                console.error(err);
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur",
+                    text: "Impossible de mettre à jour l'avatar."
+                });
             });
-        }
+        });
+    }
+
 
         // Afficher les messages Django
         {% if messages %}

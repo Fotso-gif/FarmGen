@@ -18,7 +18,7 @@ def forgot_password(request):
     return render(request, 'client/auth/forgot-password.html')
 
 # views.py (suite)
-
+@login_required
 def marketplace(request):
     """
     Vue principale pour la page marketplace

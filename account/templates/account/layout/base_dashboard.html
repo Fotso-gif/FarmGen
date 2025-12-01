@@ -131,31 +131,31 @@
         </div>
 
         <ul class="nav-links">
-            {% if user.user_type == 'seller' %}
+            {% if user.account_type == 'seller' %}
             <li>
                 <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                     <i class="fas fa-home"></i>
                     <span class="nav-text">Tableau de Bord</span>
                 </a>
             </li>
-            <li>
-                {% comment %} <a href="{% url 'product_list' %}" class="{% if 'product' in request.resolver_match.url_name %}active{% endif %}"> {% endcomment %}
-                <a href="#">
+            <li> 
+            
+                <a href="{% url 'marketplace_list' %}" class="{% if 'marketplace_list' in request.resolver_match.url_name %}active{% endif %}">
                     <i class="fas fa-seedling"></i>
                     <span class="nav-text">Mes Produits</span>
                 </a>
-            </li>
+            </li> 
             <li>
                 {% comment %} <a href="#" class="{% if 'blog' in request.resolver_match.url_name %}active{% endif %}"> {% endcomment %}
-                <a href="#">    
+                <a href="{% url 'blog_admin' %}"class="{% if 'blog_admin' in request.resolver_match.url_name %}active{% endif %}">    
                     <i class="fas fa-blog"></i>
                     <span class="nav-text">Blog Agricole</span>
                 </a>
             </li>
             <li>
-                <a href="#">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="nav-text">Commandes</span>
+                <a href="{% url 'history' %}">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span class="nav-text">Mes Commandes</span>
                 </a>
             </li>
             <li>
@@ -172,17 +172,12 @@
                 </a>
             </li>
             <li>
-                <a href="{% url 'history' %}">
+                <a href="{% url 'listing' %}">
                     <i class="fas fa-shopping-bag"></i>
                     <span class="nav-text">Mes Commandes</span>
                 </a>
             </li>
-            <li>
-                <a href="{% url 'marketplace_list' %}">
-                    <i class="fas fa-store"></i>
-                    <span class="nav-text">Boutiques</span>
-                </a>
-            </li>
+            
             {% endif %}
             <li>
                 <a href="{% url 'profile' %}">

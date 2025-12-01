@@ -656,6 +656,10 @@
         </div>
     </footer>
     <script>
+        window.userId = "{{ request.user.id|default:'null' }}";
+    </script>
+
+    <script>
     // Gestion des modales
     function openModal(modalId) {
         document.getElementById(modalId).classList.add('active');
@@ -778,14 +782,22 @@
         // Envoyer au webhook et afficher réponse
         handleMessage(message).then(result => {
             hideTypingIndicator();
-            addMessage(result.response, 'bot');
+
+            if (result.status === "ok") {
+                addMessage(result.response, 'bot');
+            } else {
+                addMessage("Erreur : " + result.message, 'bot');
+            }
+
             sendBtn.disabled = false;
             chatInput.focus();
+
         }).catch(err => {
             hideTypingIndicator();
             addMessage("Erreur serveur : " + err.message, 'bot');
             sendBtn.disabled = false;
         });
+
     }
 
 
@@ -820,11 +832,23 @@
 
     async function handleMessage(input) {
 
-        const message = input.toLowerCase().trim();
-        const botReply = getBotResponse(message);
-        //const authHeader = "Basic " + btoa("merveille.fotso@facsciences-uy1.cm:BzT-9aBVN2sQV2R");
+        // On récupère l'id utilisateur passé depuis le template Django
+        const userId = window.userId || null;
 
+        // Thread dynamique si user connecté
+        let thread_id_value = null;
+        if (userId) {
+            thread_id_value = `thread_${userId}`;
+            console.log("Utilisateur connecté → thread:", thread_id_value);
+        }
+
+        const message = input.trim();
         const webhookURL = "https://hook.eu2.make.com/cnx8mya0diyitb1oq35aoxsta4uudgyt";
+
+        const payload = {
+            thread_id: thread_id_value,
+            message: message
+        };
 
         try {
             const res = await fetch(webhookURL, {
@@ -833,28 +857,26 @@
                     "Content-Type": "application/json",
                     "x-make-apikey": "ASCII237"
                 },
-                body: JSON.stringify({ reply: botReply })
+                body: JSON.stringify(payload)
             });
 
-            // Lire la réponse JSON du webhook Make
-            const jsonResponse = await res.json();
+            const json = await res.json();
 
-            // Retourner la réponse à l’appelant
             return {
                 status: "ok",
-                sent_to_webhook: true,
-                response: botReply,
-                webhook_response: jsonResponse
+                response: json.response || "Aucune réponse reçue.",
+                raw: json
             };
 
         } catch (err) {
-            // Gestion d’erreur
             return {
                 status: "error",
                 message: err.message
             };
         }
     }
+
+
 
 
 

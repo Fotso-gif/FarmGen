@@ -3,6 +3,31 @@
 
 {% block content %}
 <style>
+    .dashboard-content {
+        padding: 20px;
+    }
+    
+    .welcome-section {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        padding: 30px;
+        border-radius: var(--radius);
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+    }
+    
+    .welcome-text h3 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+    
+    .welcome-text p {
+        opacity: 0.9;
+        margin-top: 10px;
+        font-size: 1rem;
+    }
+    
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -17,6 +42,17 @@
         box-shadow: var(--shadow);
         text-align: center;
         border-top: 4px solid var(--primary);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+        color: var(--primary);
     }
     
     .stat-value {
@@ -29,14 +65,48 @@
     .stat-label {
         color: #7f8c8d;
         font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
-    .recent-orders {
+    .section-card {
         background: white;
         border-radius: var(--radius);
         padding: 25px;
         box-shadow: var(--shadow);
         margin-bottom: 30px;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .section-title {
+        color: var(--primary);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-link {
+        color: var(--primary);
+        font-size: 0.9rem;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .section-link:hover {
+        color: var(--secondary);
     }
     
     .order-item {
@@ -45,158 +115,613 @@
         align-items: center;
         padding: 15px 0;
         border-bottom: 1px solid #ecf0f1;
+        transition: background-color 0.2s ease;
+    }
+    
+    .order-item:hover {
+        background-color: #f8f9fa;
     }
     
     .order-item:last-child {
         border-bottom: none;
     }
     
+    .order-info {
+        flex: 1;
+    }
+    
+    .order-number {
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 5px 0;
+    }
+    
+    .order-date {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+    
+    .order-shop {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+    
+    .order-status {
+        margin: 0 15px;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-delivered { background: rgba(40, 167, 69, 0.1); color: var(--success); }
+    .status-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
+    .status-cancelled { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
+    
+    .order-amount {
+        font-weight: 700;
+        color: var(--dark);
+        font-size: 1.1rem;
+        min-width: 100px;
+        text-align: right;
+    }
+    
+    .shop-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
     .shop-card {
         background: white;
         border-radius: var(--radius);
         padding: 20px;
-        box-shadow: var(--shadow);
-        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
         border-left: 4px solid var(--secondary);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .shop-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .shop-logo {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--primary);
+        flex-shrink: 0;
+        overflow: hidden;
+    }
+    
+    .shop-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .shop-info {
+        flex: 1;
+    }
+    
+    .shop-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 5px 0;
+    }
+    
+    .shop-stats {
+        display: flex;
+        gap: 15px;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+    
+    .shop-actions {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .product-card {
+        background: white;
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #eee;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .product-image {
+        height: 180px;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .product-card:hover .product-image img {
+        transform: scale(1.05);
+    }
+    
+    .product-info {
+        padding: 20px;
+    }
+    
+    .product-name {
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0 0 10px 0;
+        font-size: 1rem;
+        height: 40px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+    
+    .product-price {
+        color: var(--success);
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0 0 5px 0;
+    }
+    
+    .product-shop {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        margin: 0 0 15px 0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #7f8c8d;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+    
+    .empty-state-text {
+        margin-bottom: 20px;
+    }
+    
+    .search-history {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: var(--radius);
+        margin-bottom: 15px;
+    }
+    
+    .search-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .search-item:last-child {
+        border-bottom: none;
+    }
+    
+    .search-query {
+        font-weight: 500;
+        color: var(--dark);
+    }
+    
+    .search-time {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .welcome-section {
+            padding: 20px;
+        }
+        
+        .welcome-text h3 {
+            font-size: 1.5rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-card {
+            padding: 20px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+        }
+        
+        .shop-grid,
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .order-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .order-status {
+            margin: 0;
+        }
+        
+        .order-amount {
+            text-align: left;
+            min-width: auto;
+        }
     }
 </style>
 
 <div class="dashboard-content">
+    <!-- Section Bienvenue -->
+    <div class="welcome-section">
+        <div class="welcome-text">
+            <h3>Bonjour, {{ user.first_name|default:user.username }} 👋</h3>
+            <p>Voici un aperçu de votre activité sur notre plateforme</p>
+        </div>
+    </div>
+
     <!-- Statistiques -->
     <div class="stats-grid">
         <div class="stat-card">
-            <i class="fas fa-shopping-bag fa-2x" style="color: var(--primary);"></i>
+            <div class="stat-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
             <div class="stat-value">{{ total_orders }}</div>
             <div class="stat-label">Commandes totales</div>
+            {% if pending_orders > 0 %}
+            <small class="text-muted">{{ pending_orders }} en attente</small>
+            {% endif %}
         </div>
         
         <div class="stat-card">
-            <i class="fas fa-store fa-2x" style="color: var(--primary);"></i>
+            <div class="stat-icon">
+                <i class="fas fa-store"></i>
+            </div>
             <div class="stat-value">{{ favorite_shops_count }}</div>
             <div class="stat-label">Boutiques favorites</div>
         </div>
         
         <div class="stat-card">
-            <i class="fas fa-seedling fa-2x" style="color: var(--primary);"></i>
+            <div class="stat-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
             <div class="stat-value">{{ products_tracked }}</div>
             <div class="stat-label">Produits suivis</div>
         </div>
         
         <div class="stat-card">
-            <i class="fas fa-star fa-2x" style="color: var(--primary);"></i>
+            <div class="stat-icon">
+                <i class="fas fa-star"></i>
+            </div>
             <div class="stat-value">{{ total_reviews }}</div>
             <div class="stat-label">Avis publiés</div>
         </div>
     </div>
 
     <!-- Commandes récentes -->
-    <div class="recent-orders">
-        <h4 style="color: var(--primary); margin-bottom: 20px;">
-            <i class="fas fa-clock"></i> Commandes récentes
-        </h4>
-        
-        {% for order in recent_orders %}
-        <div class="order-item">
-            <div class="order-info">
-                <h6 style="margin: 0; color: var(--dark);">Commande #{{ order.id }}</h6>
-                <small class="text-muted">{{ order.shop.name }} • {{ order.created_at|date:"d/m/Y" }}</small>
-            </div>
-            <div class="order-status">
-                <span class="badge {% if order.status == 'delivered' %}bg-success{% else %}bg-warning{% endif %}">
-                    {{ order.get_status_display }}
-                </span>
-            </div>
-            <div class="order-amount">
-                <strong>{{ order.total_amount }} FCFA</strong>
-            </div>
-        </div>
-        {% empty %}
-        <div class="text-center py-4">
-            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-            <p class="text-muted">Aucune commande récente</p>
-            <a href="{% url 'marketplace' %}" class="btn btn-primary">
-                <i class="fas fa-store"></i> Découvrir les boutiques
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-clock"></i> Commandes récentes
+                <span class="badge bg-primary">{{ recent_orders|length }}</span>
+            </h3>
+            {% if recent_orders %}
+            <a href="{% url 'order_history' %}" class="section-link">
+                Voir tout <i class="fas fa-arrow-right"></i>
             </a>
+            {% endif %}
         </div>
-        {% endfor %}
+        
+        {% if recent_orders %}
+            {% for order in recent_orders %}
+            <div class="order-item">
+                <div class="order-info">
+                    <h6 class="order-number">Commande #{{ order.id|slice:":8"|upper }}</h6>
+                    <p class="order-date">
+                        <i class="far fa-calendar"></i> {{ order.created_at|date:"d/m/Y" }}
+                    </p>
+                    {% if order.shop %}
+                    <p class="order-shop">
+                        <i class="fas fa-store"></i> {{ order.shop.title }}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="order-status">
+                    <span class="status-badge status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div class="order-amount">
+                    <strong>{{ order.total_amount }} FCFA</strong>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h4 class="empty-state-text">Aucune commande récente</h4>
+                <p>Vous n'avez pas passé de commande dans les 30 derniers jours.</p>
+                <a href="{% url 'marketplace' %}" class="btn btn-primary">
+                    <i class="fas fa-store"></i> Découvrir la marketplace
+                </a>
+            </div>
+        {% endif %}
     </div>
 
     <!-- Boutiques favorites -->
-    <div class="recent-orders">
-        <h4 style="color: var(--primary); margin-bottom: 20px;">
-            <i class="fas fa-heart"></i> Vos boutiques favorites
-        </h4>
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-heart"></i> Vos boutiques favorites
+            </h3>
+            {% if favorite_shops %}
+            <a href="{% url 'marketplace' %}" class="section-link">
+                Découvrir plus <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
         
-        <div class="row">
+        {% if favorite_shops %}
+        <div class="shop-grid">
             {% for shop in favorite_shops %}
-            <div class="col-md-6 mb-3">
-                <div class="shop-card">
-                    <div class="d-flex align-items-center">
-                        {% if shop.logo %}
-                        <img src="{{ shop.logo.url }}" alt="{{ shop.name }}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
-                        {% else %}
-                        <div class="user-avatar" style="width: 50px; height: 50px; font-size: 1rem; margin-right: 15px;">
-                            {{ shop.name|first }}
-                        </div>
-                        {% endif %}
-                        <div class="flex-grow-1">
-                            <h6 style="margin: 0; color: var(--dark);">{{ shop.name }}</h6>
-                            <small class="text-muted">{{ shop.product_set.count }} produits</small>
-                        </div>
-                        <a href="{% url 'shop_detail' shop.id %}" class="btn btn-sm btn-outline-primary">
-                            Visiter
-                        </a>
-                    </div>
+            <div class="shop-card">
+                <div class="shop-logo">
+                    {% if shop.couverture %}
+                    <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}">
+                    {% else %}
+                    {{ shop.title|first }}
+                    {% endif %}
                 </div>
-            </div>
-            {% empty %}
-            <div class="col-12 text-center py-4">
-                <i class="fas fa-store fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Aucune boutique favorite</p>
-                <a href="{% url 'marketplace' %}" class="btn btn-primary">
-                    <i class="fas fa-heart"></i> Ajouter des boutiques favorites
-                </a>
+                <div class="shop-info">
+                    <h5 class="shop-name">{{ shop.title }}</h5>
+                    <div class="shop-stats">
+                        <span>
+                            <i class="fas fa-cube"></i> {{ shop.product_count }} produits
+                        </span>
+                        {% if shop.avg_rating %}
+                        <span>
+                            <i class="fas fa-star"></i> {{ shop.avg_rating|floatformat:1 }}/5
+                        </span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">{{ shop.type_shop }}</small>
+                </div>
+                <div class="shop-actions">
+                    <a href="{% url 'shop' shop.id %}" class="btn btn-sm btn-outline-primary">
+                        Visiter
+                    </a>
+                </div>
             </div>
             {% endfor %}
         </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-store"></i>
+            </div>
+            <h4 class="empty-state-text">Aucune boutique favorite</h4>
+            <p>Ajoutez des boutiques à vos favoris pour les retrouver facilement.</p>
+            <a href="{% url 'marketplace' %}" class="btn btn-primary">
+                <i class="fas fa-heart"></i> Ajouter des boutiques favorites
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <!-- Produits récemment consultés -->
-    <div class="recent-orders">
-        <h4 style="color: var(--primary); margin-bottom: 20px;">
-            <i class="fas fa-eye"></i> Produits récemment consultés
-        </h4>
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-eye"></i> Produits récemment consultés
+                <small class="text-muted">(7 derniers jours)</small>
+            </h3>
+            {% if recent_products %}
+            <a href="{% url 'marketplace' %}" class="section-link">
+                Voir plus <i class="fas fa-arrow-right"></i>
+            </a>
+            {% endif %}
+        </div>
         
-        <div class="row">
+        {% if recent_products %}
+        <div class="products-grid">
             {% for product in recent_products %}
-            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                <div class="card h-100">
-                    {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 150px; object-fit: cover;">
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.images.all %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
                     {% else %}
-                    <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 150px; background: #f8f9fa;">
-                        <i class="fas fa-seedling fa-2x text-muted"></i>
-                    </div>
+                    <i class="fas fa-seedling fa-3x text-muted"></i>
                     {% endif %}
-                    <div class="card-body">
-                        <h6 class="card-title">{{ product.name }}</h6>
-                        <p class="card-text text-success fw-bold">{{ product.price }} FCFA</p>
-                        <small class="text-muted">{{ product.shop.name }}</small>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-primary w-100">
-                            Voir le produit
-                        </a>
-                    </div>
+                </div>
+                <div class="product-info">
+                    <h5 class="product-name">{{ product.name }}</h5>
+                    <p class="product-price">{{ product.price }} FCFA</p>
+                    {% if product.category and product.category.shop %}
+                    <p class="product-shop">
+                        <i class="fas fa-store"></i> {{ product.category.shop.title }}
+                    </p>
+                    {% endif %}
+                    {% if product.expiry_date %}
+                    <p class="text-muted small">
+                        <i class="fas fa-clock"></i> Expire le {{ product.expiry_date|date:"d/m/Y" }}
+                    </p>
+                    {% endif %}
+                    {% comment %} <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-eye"></i> Voir le produit
+                    </a> {% endcomment %}
                 </div>
             </div>
-            {% empty %}
-            <div class="col-12 text-center py-4">
-                <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
-                <p class="text-muted">Aucun produit récemment consulté</p>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <h4 class="empty-state-text">Aucun produit consulté récemment</h4>
+            <p>Consultez des produits pour les retrouver ici.</p>
+            <a href="{% url 'marketplace' %}" class="btn btn-primary">
+                <i class="fas fa-store"></i> Parcourir les produits
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Produits likés -->
+    {% if liked_products %}
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-thumbs-up"></i> Vos produits likés
+            </h3>
+            <a href="{% url 'marketplace' %}" class="section-link">
+                Voir plus <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        
+        <div class="products-grid">
+            {% for product in liked_products %}
+            <div class="product-card">
+                <div class="product-image">
+                    {% if product.images.all %}
+                    <img src="{{ product.images.first.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                    <i class="fas fa-seedling fa-3x text-muted"></i>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h5 class="product-name">{{ product.name }}</h5>
+                    <p class="product-price">{{ product.price }} FCFA</p>
+                    {% if product.category and product.category.shop %}
+                    <p class="product-shop">
+                        <i class="fas fa-store"></i> {{ product.category.shop.title }}
+                    </p>
+                    {% endif %}
+                    <a href="#" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-eye"></i> Voir le produit
+                    </a>
+                </div>
             </div>
             {% endfor %}
         </div>
     </div>
+    {% endif %}
+
+    <!-- Historique de recherche -->
+    {% if recent_searches %}
+    <div class="section-card">
+        <div class="section-header">
+            <h3 class="section-title">
+                <i class="fas fa-search"></i> Historique de recherche récent
+            </h3>
+        </div>
+        
+        <div>
+            {% for search in recent_searches %}
+            <div class="search-item">
+                <div class="search-query">
+                    <i class="fas fa-search me-2"></i> {{ search.query }}
+                </div>
+                <div class="search-time">
+                    {{ search.searched_at|date:"H:i" }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation pour les cartes
+        const cards = document.querySelectorAll('.stat-card, .shop-card, .product-card');
+        
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Mettre en avant les produits bientôt expirés
+        document.querySelectorAll('.product-card').forEach(card => {
+            const expiryText = card.querySelector('.text-muted.small');
+            if (expiryText && expiryText.textContent.includes('Expire')) {
+                const expiryDate = new Date(expiryText.textContent.match(/\d{2}\/\d{2}\/\d{4}/)[0].split('/').reverse().join('-'));
+                const today = new Date();
+                const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                
+                if (diffDays <= 7) {
+                    card.style.borderLeft = '4px solid var(--warning)';
+                    expiryText.style.color = 'var(--warning)';
+                    expiryText.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Expire dans ${diffDays} jour(s)`;
+                }
+            }
+        });
+        
+        // Actualiser les commandes en attente
+        updatePendingOrders();
+    });
+    
+    function updatePendingOrders() {
+        // Vous pouvez ajouter du code AJAX ici pour vérifier les statuts en temps réel
+        const pendingBadges = document.querySelectorAll('.status-pending, .status-waiting_payment');
+        if (pendingBadges.length > 0) {
+            // Optionnel: faire un polling pour les mises à jour
+            console.log(`${pendingBadges.length} commande(s) en attente`);
+        }
+    }
+</script>
 {% endblock %}

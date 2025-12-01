@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .invoice-container {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #4e73df;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4e73df;
+            margin-bottom: 5px;
+        }
+        
+        .invoice-title {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .invoice-title h1 {
+            font-size: 28px;
+            color: #333;
+            margin: 0;
+        }
+        
+        .invoice-number {
+            font-size: 16px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .client-info, .invoice-info {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #4e73df;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .info-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 40px;
+        }
+        
+        .info-item {
+            margin-bottom: 8px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #666;
+            min-width: 120px;
+            display: inline-block;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .items-table th {
+            background-color: #4e73df;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background-color: #f8f9fc;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .totals {
+            width: 300px;
+            margin-left: auto;
+            margin-top: 30px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .total-row.final {
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 2px solid #4e73df;
+            margin-top: 10px;
+            padding-top: 15px;
+        }
+        
+        .payment-info {
+            margin-top: 40px;
+            padding: 15px;
+            background-color: #f8f9fc;
+            border-radius: 5px;
+        }
+        
+        .qr-code {
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .qr-code img {
+            max-width: 150px;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .stamp {
+            position: absolute;
+            right: 50px;
+            bottom: 100px;
+            opacity: 0.3;
+            transform: rotate(15deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- En-tête -->
+        <div class="header">
+            <div class="company-info">
+                {% if shop %}
+                <div class="company-name">{{ shop.title }}</div>
+                <div class="info-item">{{ shop.localisation }}</div>
+                {% else %}
+                <div class="company-name">Marketplace</div>
+                <div class="info-item">Plateforme de vente en ligne</div>
+                {% endif %}
+            </div>
+            
+            <div class="invoice-info">
+                <div class="info-item">
+                    <span class="info-label">Date d'émission:</span>
+                    {{ today }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Référence:</span>
+                    FACT-{{ order.id|slice:":8"|upper }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Titre facture -->
+        <div class="invoice-title">
+            <h1>FACTURE</h1>
+            <div class="invoice-number">N° {{ order.id|slice:":8"|upper }}</div>
+        </div>
+        
+        <!-- Informations client et facture -->
+        <div class="info-grid">
+            <div class="client-info">
+                <div class="section-title">CLIENT</div>
+                <div class="info-item">
+                    <span class="info-label">Nom:</span>
+                    {{ order.full_name }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    {{ order.customer_email }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Téléphone:</span>
+                    {{ order.customer_phone }}
+                </div>
+            </div>
+            
+            <div class="invoice-details">
+                <div class="section-title">DÉTAILS DE LA FACTURE</div>
+                <div class="info-item">
+                    <span class="info-label">Date commande:</span>
+                    {{ order.created_at|date:"d/m/Y" }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Statut:</span>
+                    {{ order.get_status_display }}
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Méthode paiement:</span>
+                    {{ order.get_payment_method_display }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Articles -->
+        <div class="section-title">ARTICLES COMMANDÉS</div>
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th class="text-right">Prix unitaire</th>
+                    <th class="text-center">Quantité</th>
+                    <th class="text-right">Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.cart_items %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="text-right">{{ item.price|floatformat:2 }} FCFA</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">{{ item.price|multiply:item.quantity|floatformat:2 }} FCFA</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Totaux -->
+        <div class="totals">
+            <div class="total-row">
+                <span>Total HT:</span>
+                <span>{{ items_total|floatformat:2 }} FCFA</span>
+            </div>
+            <div class="total-row">
+                <span>TVA ({{ vat_rate }}%):</span>
+                <span>{{ vat_amount|floatformat:2 }} FCFA</span>
+            </div>
+            <div class="total-row final">
+                <span>Total TTC:</span>
+                <span>{{ order.final_amount|floatformat:2 }} FCFA</span>
+            </div>
+        </div>
+        
+        <!-- Informations de paiement -->
+        <div class="payment-info">
+            <div class="section-title">INFORMATIONS DE PAIEMENT</div>
+            <div class="info-item">
+                <span class="info-label">Méthode:</span>
+                {{ order.get_payment_method_display }}
+            </div>
+            {% if order.payment_phone %}
+            <div class="info-item">
+                <span class="info-label">Numéro:</span>
+                {{ order.payment_phone }}
+            </div>
+            {% endif %}
+            {% if order.payment_verified %}
+            <div class="info-item">
+                <span class="info-label">Statut paiement:</span>
+                <strong style="color: #1cc88a;">VERIFIÉ</strong>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Vérifié le:</span>
+                {{ order.payment_verified_at|date:"d/m/Y H:i" }}
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- QR Code -->
+        <div class="qr-code">
+            <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code Facture">
+            <div>Code de vérification de la facture</div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>Facture générée le {{ generated_at }}</p>
+            <p>Cette facture a été générée automatiquement et ne nécessite pas de signature.</p>
+            <p>En cas de question, contactez le support à support@marketplace.com</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -96,3 +96,31 @@ class SearchHistory(models.Model):
     query = models.CharField(max_length=255)
     filters = models.JSONField(default=dict)
     searched_at = models.DateTimeField(auto_now_add=True)
+
+class Review(models.Model):
+    RATING_CHOICES = [
+        (1, '★'),
+        (2, '★★'),
+        (3, '★★★'),
+        (4, '★★★★'),
+        (5, '★★★★★'),
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews')
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        # Un utilisateur ne peut commenter qu'une fois par boutique/produit
+        unique_together = [
+            ('user', 'shop'),
+            ('user', 'product')
+        ]
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Avis de {self.user.username} - Note: {self.rating}"

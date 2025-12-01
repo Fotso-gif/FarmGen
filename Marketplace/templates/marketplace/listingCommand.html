@@ -1,0 +1,1291 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Variables CSS */
+    :root {
+        --primary: #228B22;
+        --secondary: #FFD700;
+        --success: #1cc88a;
+        --warning: #f6c23e;
+        --danger: #e74a3b;
+        --info: #36b9cc;
+        --light: #f8f9fc;
+        --dark: #5a5c69;
+        --radius: 0.35rem;
+        --shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
+    }
+
+    /* Layout */
+    .dashboard-container {
+        padding: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Header */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .page-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .page-subtitle {
+        color: var(--secondary);
+        margin-top: 5px;
+        font-size: 0.95rem;
+    }
+
+    /* Période Selector */
+    .period-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .period-btn {
+        padding: 10px 20px;
+        border: 1px solid #e3e6f0;
+        background: white;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+
+    .period-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .period-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .custom-period {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .date-input {
+        padding: 8px 12px;
+        border: 1px solid #e3e6f0;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border-left: 4px solid var(--primary);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card.total { border-left-color: var(--primary); }
+    .stat-card.orders { border-left-color: var(--info); }
+    .stat-card.revenue { border-left-color: var(--success); }
+    .stat-card.tax { border-left-color: var(--warning); }
+    .stat-card.pending { border-left-color: var(--danger); }
+
+    .stat-icon {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        color: var(--dark);
+        opacity: 0.7;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--secondary);
+        font-size: 0.9rem;
+        margin-top: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Filters */
+    .filters-section {
+        background: white;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: var(--shadow);
+    }
+
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+
+    .filters-title {
+        margin: 0;
+        color: var(--dark);
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .filter-group {
+        margin-bottom: 0;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 0.9rem;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e3e6f0;
+        border-radius: var(--radius);
+        background: white;
+        font-size: 0.9rem;
+    }
+
+    /* Charts */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+
+    /* Orders Table */
+    .orders-section {
+        background: white;
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        margin-bottom: 30px;
+    }
+
+    .orders-header {
+        padding: 20px;
+        border-bottom: 1px solid #e3e6f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-title {
+        margin: 0;
+        color: var(--dark);
+        font-size: 1.3rem;
+    }
+
+    .actions-bar {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: var(--radius);
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2e59d9;
+        color: white;
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-warning {
+        background: var(--warning);
+        color: white;
+    }
+
+    .btn-info {
+        background: var(--info);
+        color: white;
+    }
+
+    .btn-outline {
+        background: white;
+        border: 1px solid #e3e6f0;
+        color: var(--dark);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .orders-table th {
+        padding: 15px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--dark);
+        background: #f8f9fc;
+        border-bottom: 2px solid #e3e6f0;
+        white-space: nowrap;
+    }
+
+    .orders-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e3e6f0;
+        vertical-align: middle;
+    }
+
+    .orders-table tr:hover {
+        background: #f8f9fc;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-paid { background: #d4edda; color: #155724; }
+    .status-failed { background: #f8d7da; color: #721c24; }
+    .status-refunded { background: #e2e3e5; color: #383d41; }
+    .status-waiting_payment { background: #cce5ff; color: #004085; }
+    .status-payment_verified { background: #d1ecf1; color: #0c5460; }
+
+    /* Payment Method */
+    .payment-method {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        background: #f8f9fc;
+        border-radius: 4px;
+        font-size: 0.85rem;
+    }
+
+    /* Actions Dropdown */
+    .actions-dropdown {
+        position: relative;
+    }
+
+    .dropdown-toggle {
+        padding: 5px 10px;
+        background: none;
+        border: 1px solid #e3e6f0;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid #e3e6f0;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        min-width: 150px;
+        z-index: 1000;
+        display: none;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        display: block;
+        padding: 10px 15px;
+        color: var(--dark);
+        text-decoration: none;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .dropdown-item:hover {
+        background: #f8f9fc;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        padding: 20px;
+        list-style: none;
+    }
+
+    .page-item {
+        display: inline-block;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #e3e6f0;
+        background: white;
+        color: var(--dark);
+        text-decoration: none;
+        border-radius: 4px;
+        display: block;
+    }
+
+    .page-item.active .page-link {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .page-item.disabled .page-link {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--secondary);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+
+    /* Loading */
+    .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 60px;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .orders-table {
+            display: block;
+            overflow-x: auto;
+        }
+
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+        }
+
+        .period-selector {
+            flex-direction: column;
+        }
+
+        .custom-period {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .actions-bar {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">
+                <i class="fas fa-shopping-bag"></i> 
+                {% if is_admin %}
+                    Gestion des Commandes
+                {% elif is_seller %}
+                    Commandes de ma boutique
+                {% else %}
+                    Mes Commandes
+                {% endif %}
+            </h1>
+            <p class="page-subtitle">
+                {{ date_label }}
+                {% if total_orders_count > 0 %}
+                    • {{ total_orders_count }} commande{{ total_orders_count|pluralize:"s" }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="actions-bar">
+            <a href="{% url 'marketplace' %}" class="btn btn-outline">
+                <i class="fas fa-store"></i> Marketplace
+            </a>
+            <button class="btn btn-primary" onclick="exportOrders('csv')">
+                <i class="fas fa-file-export"></i> Exporter
+            </button>
+        </div>
+    </div>
+
+    <!-- Période Selector -->
+    <div class="period-selector">
+        <button class="period-btn {% if period == 'daily' %}active{% endif %}" onclick="changePeriod('daily')">
+            Aujourd'hui
+        </button>
+        <button class="period-btn {% if period == 'weekly' %}active{% endif %}" onclick="changePeriod('weekly')">
+            Cette semaine
+        </button>
+        <button class="period-btn {% if period == 'monthly' %}active{% endif %}" onclick="changePeriod('monthly')">
+            Ce mois
+        </button>
+        <button class="period-btn {% if period == 'yearly' %}active{% endif %}" onclick="changePeriod('yearly')">
+            Cette année
+        </button>
+        <div class="custom-period">
+            <input type="date" class="date-input" id="startDate" value="{{ start_date }}">
+            <span>au</span>
+            <input type="date" class="date-input" id="endDate" value="{{ end_date }}">
+            <button class="period-btn" onclick="applyCustomPeriod()">
+                <i class="fas fa-calendar-alt"></i> Appliquer
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card total">
+            <div class="stat-icon">
+                <i class="fas fa-shopping-bag"></i>
+            </div>
+            <h3 class="stat-value">{{ total_orders_count }}</h3>
+            <p class="stat-label">Commandes</p>
+        </div>
+
+        <div class="stat-card revenue">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <h3 class="stat-value">{{ total_amount|floatformat:0 }} FCFA</h3>
+            <p class="stat-label">Chiffre d'affaires</p>
+        </div>
+
+        <div class="stat-card tax">
+            <div class="stat-icon">
+                <i class="fas fa-receipt"></i>
+            </div>
+            <h3 class="stat-value">{{ total_tax|floatformat:0 }} FCFA</h3>
+            <p class="stat-label">TVA collectée</p>
+        </div>
+
+        <div class="stat-card pending">
+            <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h3 class="stat-value">
+                {% with pending=orders|length %}
+                    {{ pending }}
+                {% endwith %}
+            </h3>
+            <p class="stat-label">En attente</p>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+        <!-- Chart 1: Évolution des commandes -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Évolution des commandes</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="ordersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Répartition par statut -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3 class="chart-title">Répartition par statut</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <div class="filters-header" onclick="toggleFilters()">
+            <h3 class="filters-title">
+                <i class="fas fa-filter"></i> Filtres avancés
+                <span id="activeFiltersCount" class="badge bg-primary">0</span>
+            </h3>
+            <i id="filtersIcon" class="fas fa-chevron-down"></i>
+        </div>
+        <div class="filters-grid" id="filtersContent" style="display: none;">
+            <div class="filter-group">
+                <label class="filter-label">Statut</label>
+                <select class="filter-select" id="statusFilter" multiple>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if value in request.GET.status %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Méthode de paiement</label>
+                <select class="filter-select" id="paymentMethodFilter">
+                    <option value="">Toutes</option>
+                    {% for value, label in payment_method_choices %}
+                    <option value="{{ value }}" {% if value == request.GET.payment_method %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Client</label>
+                <input type="text" class="filter-select" id="customerFilter" placeholder="Nom ou email">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Montant minimum</label>
+                <input type="number" class="filter-select" id="amountMin" placeholder="0" min="0">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Montant maximum</label>
+                <input type="number" class="filter-select" id="amountMax" placeholder="1000000" min="0">
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="orders-section">
+        <div class="orders-header">
+            <h3 class="section-title">Liste des commandes</h3>
+            <div class="actions-bar">
+                <button class="btn btn-outline" onclick="resetFilters()">
+                    <i class="fas fa-redo"></i> Réinitialiser
+                </button>
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="fas fa-sync"></i> Actualiser
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>N° Commande</th>
+                        <th>Date</th>
+                        {% if is_admin or is_seller %}
+                        <th>Client</th>
+                        {% endif %}
+                        <th>Articles</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Paiement</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    {% for order in orders %}
+                    <tr data-order-id="{{ order.id }}">
+                        <td>
+                            <strong>#{{ order.order_number }}</strong>
+                        </td>
+                        <td>
+                            {{ order.created_at|date:"d/m/Y" }}<br>
+                            <small>{{ order.created_at|date:"H:i" }}</small>
+                        </td>
+                        {% if is_admin or is_seller %}
+                        <td>
+                            <strong>{{ order.customer.full_name }}</strong><br>
+                            <small>{{ order.customer.email }}</small><br>
+                            <small>{{ order.customer.phone }}</small>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {{ order.total_items }} article{{ order.total_items|pluralize:"s" }}<br>
+                            <small class="text-muted">
+                                {% for item in order.cart_items|slice:":2" %}
+                                    {{ item.name }}{% if item.quantity > 1 %} (x{{ item.quantity }}){% endif %}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if order.cart_items|length > 2 %}
+                                    ... (+{{ order.cart_items|length|add:"-2" }})
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            <strong>{{ order.final_amount }} FCFA</strong><br>
+                            <small class="text-muted">HT: {{ order.total_amount }} FCFA</small>
+                        </td>
+                        <td>
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.status_display }}
+                            </span>
+                            {% if order.payment_verified %}
+                            <br><small class="text-success">
+                                <i class="fas fa-check-circle"></i> Vérifié
+                            </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="payment-method">
+                                {% if order.payment_method == 'whatsapp' %}
+                                <i class="fab fa-whatsapp"></i>
+                                {% elif order.payment_method == 'om' %}
+                                <i class="fas fa-money-bill-wave"></i>
+                                {% elif order.payment_method == 'momo' %}
+                                <i class="fas fa-mobile-alt"></i>
+                                {% endif %}
+                                {{ order.payment_method_display }}
+                            </span>
+                            {% if order.payment_phone %}
+                            <br><small>{{ order.payment_phone }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="actions-dropdown">
+                                <button class="dropdown-toggle" onclick="toggleDropdown(this)">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a href="{% url 'download_invoice' order.id %}" class="dropdown-item">
+                                        <i class="fas fa-file-invoice"></i> Facture PDF
+                                    </a>
+                                    <button class="dropdown-item" onclick="viewOrderDetails('{{ order.id }}')">
+                                        <i class="fas fa-eye"></i> Détails
+                                    </button>
+                                    {% if is_admin or is_seller %}
+                                    <button class="dropdown-item" onclick="updateOrderStatus('{{ order.id }}', 'payment_verified')"
+                                            {% if order.status != 'waiting_payment' %}disabled{% endif %}>
+                                        <i class="fas fa-check-circle"></i> Vérifier paiement
+                                    </button>
+                                    <button class="dropdown-item" onclick="updateOrderStatus('{{ order.id }}', 'paid')"
+                                            {% if order.status not in 'pending,payment_verified' %}disabled{% endif %}>
+                                        <i class="fas fa-check"></i> Marquer payée
+                                    </button>
+                                    {% endif %}
+                                    {% if order.has_payment_proof %}
+                                    <button class="dropdown-item" onclick="viewPaymentProof('{{ order.id }}')">
+                                        <i class="fas fa-receipt"></i> Voir preuve
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if is_admin or is_seller %}8{% else %}7{% endif %}">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-shopping-bag"></i>
+                                </div>
+                                <h4>Aucune commande trouvée</h4>
+                                <p>Aucune commande ne correspond aux critères de recherche.</p>
+                                <button class="btn btn-primary" onclick="resetFilters()">
+                                    <i class="fas fa-redo"></i> Réinitialiser les filtres
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_orders.has_other_pages %}
+        <nav>
+            <ul class="pagination">
+                {% if page_orders.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_orders.previous_page_number }}&period={{ period }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for num in page_orders.paginator.page_range %}
+                {% if num <= page_orders.number|add:5 and num >= page_orders.number|add:-5 %}
+                <li class="page-item {% if page_orders.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&period={{ period }}">{{ num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_orders.next_page_number }}&period={{ period }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+
+    <!-- Statistics by Status -->
+    {% if status_stats %}
+    <div class="chart-card">
+        <div class="chart-header">
+            <h3 class="chart-title">Détail par statut</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Statut</th>
+                        <th>Nombre de commandes</th>
+                        <th>Montant total</th>
+                        <th>Pourcentage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in status_stats %}
+                    <tr>
+                        <td>
+                            <span class="status-badge status-{{ stat.status }}">
+                                {{ stat.status_display }}
+                            </span>
+                        </td>
+                        <td>{{ stat.count }}</td>
+                        <td>{{ stat.amount }} FCFA</td>
+                        <td>
+                            {% widthratio stat.amount total_amount 100 as percentage %}
+                            {{ percentage|floatformat:1 }}%
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal pour les détails de commande -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails de la commande</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                <!-- Contenu chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Variables globales
+    let currentPeriod = '{{ period }}';
+    let activeFilters = {
+        status: [],
+        payment_method: '',
+        customer: '',
+        amount_min: '',
+        amount_max: ''
+    };
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function() {
+        initCharts();
+        initFilters();
+        updateActiveFiltersCount();
+    });
+
+    // Charts
+    function initCharts() {
+        // Évolution des commandes
+        const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+        const dailyStats = JSON.parse('{{ daily_stats|safe }}');
+        
+        new Chart(ordersCtx, {
+            type: 'line',
+            data: {
+                labels: dailyStats.map(stat => stat.date),
+                datasets: [{
+                    label: 'Commandes',
+                    data: dailyStats.map(stat => stat.count),
+                    borderColor: '#4e73df',
+                    backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Chiffre d\'affaires',
+                    data: dailyStats.map(stat => stat.amount),
+                    borderColor: '#1cc88a',
+                    backgroundColor: 'rgba(28, 200, 138, 0.05)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Nombre de commandes'
+                        }
+                    },
+                    y1: {
+                        position: 'right',
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Montant (FCFA)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Répartition par statut
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusData = [
+            {% for stat in status_stats %}
+            {
+                label: '{{ stat.status_display }}',
+                value: {{ stat.count }},
+                amount: {{ stat.amount|default:0 }}
+            },
+            {% endfor %}
+        ];
+
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: statusData.map(stat => stat.label),
+                datasets: [{
+                    data: statusData.map(stat => stat.value),
+                    backgroundColor: [
+                        '#4e73df', '#1cc88a', '#f6c23e', '#e74a3b', '#36b9cc', '#6f42c1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const stat = statusData[context.dataIndex];
+                                return `${stat.label}: ${stat.value} commandes (${stat.amount} FCFA)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Filtres
+    function initFilters() {
+        // Statut
+        const statusSelect = document.getElementById('statusFilter');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                activeFilters.status = Array.from(this.selectedOptions).map(opt => opt.value);
+                updateActiveFiltersCount();
+                applyFilters();
+            });
+        }
+
+        // Méthode de paiement
+        const paymentSelect = document.getElementById('paymentMethodFilter');
+        if (paymentSelect) {
+            paymentSelect.addEventListener('change', function() {
+                activeFilters.payment_method = this.value;
+                updateActiveFiltersCount();
+                applyFilters();
+            });
+        }
+
+        // Client
+        const customerInput = document.getElementById('customerFilter');
+        if (customerInput) {
+            customerInput.addEventListener('input', debounce(function() {
+                activeFilters.customer = this.value;
+                updateActiveFiltersCount();
+                applyFilters();
+            }, 500));
+        }
+
+        // Montants
+        document.getElementById('amountMin').addEventListener('input', debounce(function() {
+            activeFilters.amount_min = this.value;
+            updateActiveFiltersCount();
+            applyFilters();
+        }, 500));
+
+        document.getElementById('amountMax').addEventListener('input', debounce(function() {
+            activeFilters.amount_max = this.value;
+            updateActiveFiltersCount();
+            applyFilters();
+        }, 500));
+    }
+
+    function toggleFilters() {
+        const filtersContent = document.getElementById('filtersContent');
+        const filtersIcon = document.getElementById('filtersIcon');
+        
+        if (filtersContent.style.display === 'none') {
+            filtersContent.style.display = 'grid';
+            filtersIcon.classList.remove('fa-chevron-down');
+            filtersIcon.classList.add('fa-chevron-up');
+        } else {
+            filtersContent.style.display = 'none';
+            filtersIcon.classList.remove('fa-chevron-up');
+            filtersIcon.classList.add('fa-chevron-down');
+        }
+    }
+
+    function updateActiveFiltersCount() {
+        let count = 0;
+        
+        if (activeFilters.status.length > 0) count++;
+        if (activeFilters.payment_method) count++;
+        if (activeFilters.customer) count++;
+        if (activeFilters.amount_min) count++;
+        if (activeFilters.amount_max) count++;
+        
+        document.getElementById('activeFiltersCount').textContent = count;
+    }
+
+    function applyFilters() {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Mettre à jour les paramètres
+        if (activeFilters.status.length > 0) {
+            params.set('status', activeFilters.status.join(','));
+        } else {
+            params.delete('status');
+        }
+        
+        if (activeFilters.payment_method) {
+            params.set('payment_method', activeFilters.payment_method);
+        } else {
+            params.delete('payment_method');
+        }
+        
+        // Recharger la page avec les nouveaux filtres
+        window.location.search = params.toString();
+    }
+
+    function resetFilters() {
+        // Réinitialiser les valeurs
+        document.getElementById('statusFilter').selectedIndex = -1;
+        document.getElementById('paymentMethodFilter').value = '';
+        document.getElementById('customerFilter').value = '';
+        document.getElementById('amountMin').value = '';
+        document.getElementById('amountMax').value = '';
+        
+        // Réinitialiser l'objet
+        activeFilters = {
+            status: [],
+            payment_method: '',
+            customer: '',
+            amount_min: '',
+            amount_max: ''
+        };
+        
+        // Recharger sans filtres
+        window.location.search = 'period=' + currentPeriod;
+    }
+
+    // Période
+    function changePeriod(period) {
+        currentPeriod = period;
+        const params = new URLSearchParams(window.location.search);
+        params.set('period', period);
+        params.delete('start_date');
+        params.delete('end_date');
+        window.location.search = params.toString();
+    }
+
+    function applyCustomPeriod() {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('period', 'custom');
+            params.set('start_date', startDate);
+            params.set('end_date', endDate);
+            window.location.search = params.toString();
+        }
+    }
+
+    // Commandes
+    function refreshData() {
+        window.location.reload();
+    }
+
+    function toggleDropdown(button) {
+        const dropdown = button.nextElementSibling;
+        dropdown.classList.toggle('show');
+        
+        // Fermer les autres dropdowns
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            if (menu !== dropdown) {
+                menu.classList.remove('show');
+            }
+        });
+        
+        // Fermer en cliquant ailleurs
+        document.addEventListener('click', function closeDropdown(e) {
+            if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                dropdown.classList.remove('show');
+                document.removeEventListener('click', closeDropdown);
+            }
+        });
+    }
+
+    function viewOrderDetails(orderId) {
+        fetch(`marketplace/api/orders/${orderId}/details/`)
+            .then(response => response.json())
+            .then(data => {
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
+                document.getElementById('orderDetailsContent').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Informations client</h6>
+                            <p><strong>Nom:</strong> ${data.customer.full_name}</p>
+                            <p><strong>Email:</strong> ${data.customer.email}</p>
+                            <p><strong>Téléphone:</strong> ${data.customer.phone}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Informations commande</h6>
+                            <p><strong>N°:</strong> ${data.order_number}</p>
+                            <p><strong>Date:</strong> ${new Date(data.created_at).toLocaleDateString()}</p>
+                            <p><strong>Statut:</strong> <span class="status-badge status-${data.status}">${data.status_display}</span></p>
+                            <p><strong>Méthode paiement:</strong> ${data.payment_method_display}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h6>Articles</h6>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Quantité</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.cart_items.map(item => `
+                                    <tr>
+                                        <td>${item.name}</td>
+                                        <td>${item.price} FCFA</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${item.price * item.quantity} FCFA</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                    <td><strong>${data.final_amount} FCFA</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                `;
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erreur lors du chargement des détails');
+            });
+    }
+
+    async function updateOrderStatus(orderId, newStatus) {
+        if (!confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`marketplace/api/orders/${orderId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(data.message);
+                refreshData();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Une erreur est survenue');
+        }
+    }
+
+    function viewPaymentProof(orderId) {
+        window.open(`/marketplace/orders/${orderId}/payment-proof/`, '_blank');
+    }
+
+    function exportOrders(format) {
+        const params = new URLSearchParams(window.location.search);
+        window.open(`/marketplace/orders/export/${format}/?${params.toString()}`, '_blank');
+    }
+
+    // Utilitaires
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+</script>
+{% endblock %}

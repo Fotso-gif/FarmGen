@@ -16,6 +16,7 @@ urlpatterns = [
     path('resend-verification/api/', views.resend_verification_email_api, name='resend_verification'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('profile/', views.profile, name='profile'),
+    path("update-avatar/", views.update_avatar, name="update-avatar"),
     path('update/password', views.update_password, name='update_password'),
      # Product
     path('api/products/<int:product_id>/', views.get_product_data, name='get_product_data'),

@@ -6,12 +6,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
+
 import json
 from .models import User, SellerProfile, ClientProfile, PasswordResetToken, EmailVerificationToken
 from django.db.models import Count, Avg, Sum, Q
 from django.utils import timezone
 from datetime import timedelta
-from Marketplace.models import Shop, Product, Category, ProductImage
+from Marketplace.models import Shop, Product, Category, ProductImage, ProductView, ProductLike, SearchHistory, Review
 from payments.models import Order as OrderModel, MethodPaid
 
 from django.core.mail import send_mail
@@ -257,7 +259,116 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     if not request.user.is_seller:
-        return render(request, 'account/client/dashboard.html')
+        # Statistiques principales
+        total_orders = OrderModel.objects.filter(user=request.user).count()
+        
+        # Boutiques favorites
+        favorite_shops = Shop.objects.filter(
+            favorited_by__user=request.user
+        ).distinct()
+        favorite_shops_count = favorite_shops.count()
+        
+        # Produits suivis (likés ou dans les favoris)
+        products_tracked = Product.objects.filter(
+            Q(fav_product__user=request.user) | 
+            Q(productlike__user=request.user)
+        ).distinct().count()
+        
+        # Avis publiés
+        total_reviews = Review.objects.filter(user=request.user).count()
+        
+        # Commandes récentes (30 derniers jours)
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        recent_orders = OrderModel.objects.filter(
+            user=request.user,
+            created_at__gte=thirty_days_ago
+        ).order_by('-created_at')[:10]
+
+        
+        # Boutiques favorites avec plus d'informations
+        favorite_shops_detailed = favorite_shops.annotate(
+            product_count=Count('category__products', distinct=True),
+            avg_rating=Avg('reviews__rating', distinct=True)
+        )[:6]
+
+        
+        # Produits récemment consultés (7 derniers jours)
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        
+        # D'abord, récupérer les IDs des produits consultés
+        viewed_product_ids = ProductView.objects.filter(
+            user=request.user,
+            viewed_at__gte=seven_days_ago
+        ).values_list('product_id', flat=True).distinct()[:12]
+        
+        # Ensuite, récupérer les produits avec leurs images
+        recent_products = Product.objects.filter(id__in=viewed_product_ids
+        ).select_related('category__shop').prefetch_related('images')[:8]
+        
+        # Si pas assez de produits consultés, ajouter des suggestions
+        if recent_products.count() < 4:
+            # Produits les plus populaires des boutiques favorites
+            suggested_products = Product.objects.filter(
+            category__shop__in=favorite_shops
+            ).order_by('?')[:8]
+
+            
+            # Combiner les listes
+            product_ids = list(recent_products.values_list('id', flat=True))
+            for product in suggested_products:
+                if product.id not in product_ids and len(product_ids) < 8:
+                    product_ids.append(product.id)
+            
+            recent_products = Product.objects.filter(id__in=product_ids).select_related('category__shop').prefetch_related('images')
+        
+        # Produits likés par l'utilisateur (pour suggestions alternatives)
+        liked_products = Product.objects.filter(
+            productlike__user=request.user
+        ).select_related('category__shop').prefetch_related('images')[:4]
+        
+        # Historique de recherche récent
+        recent_searches = SearchHistory.objects.filter(
+            user=request.user
+        ).order_by('-searched_at')[:5]
+        
+        # Commandes en cours (non livrées)
+        pending_orders = OrderModel.objects.filter(
+            user=request.user
+        ).exclude(
+            status__in=['delivered', 'cancelled']
+        ).count()
+        
+        # Contexte enrichi
+        context = {
+            # Statistiques
+            'total_orders': total_orders,
+            'favorite_shops_count': favorite_shops_count,
+            'products_tracked': products_tracked,
+            'total_reviews': total_reviews,
+            
+            # Commandes
+            'recent_orders': recent_orders,
+            'pending_orders': pending_orders,
+            
+            # Boutiques
+            'favorite_shops': favorite_shops_detailed,
+            
+            # Produits
+            'recent_products': recent_products,
+            'liked_products': liked_products,
+            
+            # Historique
+            'recent_searches': recent_searches,
+            
+            # Informations utilisateur
+            'user': request.user,
+            
+            # Dates pour référence
+            'thirty_days_ago': thirty_days_ago,
+            'seven_days_ago': seven_days_ago,
+        }
+        
+        return render(request, 'account/client/dashboard.html', context)
     
     try:
         # Récupération de la boutique de l'utilisateur
@@ -617,3 +728,27 @@ def update_password(request):
             update_session_auth_hash(request, request.user)
     
     return redirect('profile')
+def update_avatar(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "message": "Méthode invalide."}, status=400)
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"success": False, "message": "Utilisateur non connecté."}, status=401)
+
+    if "profile_image" not in request.FILES:
+        return JsonResponse({"success": False, "message": "Aucun fichier reçu."}, status=400)
+
+    try:
+        image = request.FILES["profile_image"]
+        user = request.user
+        user.profile_picture = image
+        user.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Avatar mis à jour avec succès.",
+            "image_url": user.profile_picture.url
+        })
+
+    except Exception as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=500)
