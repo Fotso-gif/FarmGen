@@ -150,7 +150,7 @@ def create_category(request):
             category = Category.objects.create(
                 shop=shop,
                 name=request.POST['name'],
-                description=request.POST.get('description', '')
+                #description=request.POST.get('description', '')
             )
             
             # Générer le slug automatiquement
