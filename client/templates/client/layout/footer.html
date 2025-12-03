@@ -67,10 +67,11 @@
     /* Boutons flottants */
     .floating-buttons {
         position: fixed;
-        width:100%;
+        
         bottom: 5rem;
         right: 0px;
-        z-index: 1000;
+        z-index: 0;
+        width:100%;
         padding:2rem;
         display: flex;
         flex-direction: row;
@@ -79,6 +80,9 @@
     }
 
     .floating-btn {
+        position:fixed;
+        z-index:1000;
+        bottom:5rem;
         width: 60px;
         height: 60px;
         border-radius: 50%;
@@ -93,6 +97,12 @@
         transition: var(--transition);
         position: relative;
         animation: float 1.5s infinite ease-in-out;
+    }
+    .floating-btn:nth-child(1){
+        left:1rem;
+    }
+    .floating-btn:nth-child(2){
+        right:1rem;
     }
 
     @keyframes float {
@@ -720,7 +730,7 @@
 
             // Salutations
             if (msg.includes('bonjour') || msg.includes('salut') || msg.includes('hello')) {
-                return "Bonjour ! Comment puis-je vous aider avec votre automatisation Make ?";
+                return "Bonjour ! Comment puis-je vous aider?";
             }
 
             // Scénario / workflow
