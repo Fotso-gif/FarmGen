@@ -140,29 +140,44 @@ def update_shop(request):
     
     return redirect('marketplace_list')
 
+
 @login_required
 def create_category(request):
-    """Création d'une nouvelle catégorie"""
     if request.method == 'POST':
         try:
             shop = get_object_or_404(Shop, user=request.user)
-            
+
+            name = request.POST.get("name")
+            description = request.POST.get("description", "")
+
             category = Category.objects.create(
                 shop=shop,
-                name=request.POST['name'],
-                #description=request.POST.get('description', '')
+                name=name
+                #description=description
             )
-            
-            # Générer le slug automatiquement
-            from django.utils.text import slugify
-            category.slug = slugify(category.name)
+
+            category.slug = slugify(name)
             category.save()
-            
+
+            # Si la requête est AJAX :
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Catégorie créée avec succès!",
+                    "category": {
+                        "id": category.id,
+                        "name": category.name,
+                        "slug": category.slug,
+                    }
+                })
+
             messages.success(request, "Catégorie créée avec succès!")
-            
+
         except Exception as e:
-            messages.error(request, f"Erreur lors de la création: {str(e)}")
-    
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"status": "error", "message": str(e)}, status=400)
+            messages.error(request, f"Erreur : {str(e)}")
+
     return redirect('marketplace_list')
 
 @login_required
