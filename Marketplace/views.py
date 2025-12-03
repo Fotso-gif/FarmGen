@@ -852,7 +852,7 @@ def order_history(request):
 
     elif hasattr(request.user, 'shop'):
         # Vendeur → uniquement commandes de sa boutique
-        shop = request.user.shop
+        shop = request.user.shop.first()
         orders = Order.objects.filter(shop_id=shop.id).order_by('-created_at')
         all_shops = None
         customers = User.objects.filter(
@@ -922,7 +922,8 @@ def order_history(request):
     if request.user.is_superuser:
         base_orders = Order.objects.all()
     elif hasattr(request.user, 'shop'):
-        base_orders = Order.objects.filter(shop_id=request.user.shop.id)
+        shop = request.user.shop.first()
+        base_orders = Order.objects.filter(shop_id=shop.id)
     else:
         base_orders = Order.objects.filter(
             Q(customer_email=request.user.email) |
