@@ -3,11 +3,14 @@ import qrcode
 import base64
 from decimal import Decimal
 import json
-
+# Import pour ExtractHour
+from collections import defaultdict
+from django.db.models.functions import ExtractHour
+from django.db.models import Max
 from django.views.static import serve
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse, FileResponse
-from django.db.models import Q, Avg, Count, Sum
+from django.db.models import Count, Sum, Avg, Q, F
 from django.core.paginator import Paginator
 from django.utils.text import slugify
 from django.contrib import messages
@@ -23,8 +26,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
-
-
+from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
 
 
 
@@ -829,7 +831,7 @@ def export_orders(request, format_type):
 @login_required
 def order_history(request):
     """Affiche l'historique des commandes avec filtres selon le rôle utilisateur."""
-
+    
     # 🔹 Récupération des filtres
     status_filter = request.GET.getlist('status')
     payment_filter = request.GET.get('payment')
@@ -837,10 +839,11 @@ def order_history(request):
     date_to = request.GET.get('date_to')
     shop_filter = request.GET.get('shop')
     customer_filter = request.GET.get('customer')
+    payment_method_filter = request.GET.get('payment_method')
 
     # 🔹 Base queryset selon le rôle
     if request.user.is_superuser:
-        orders = Order.objects.all().order_by('-created_at')
+        orders = Order.objects.order_by('-created_at')
         all_shops = Shop.objects.all()
         customers = User.objects.filter(
             Q(orders__isnull=False) |
@@ -883,6 +886,10 @@ def order_history(request):
             orders = orders.filter(status__in=[
                 Order.STATUS_FAILED, Order.STATUS_REFUNDED
             ])
+
+    # 🔹 Filtre méthode de paiement
+    if payment_method_filter:
+        orders = orders.filter(payment_method=payment_method_filter)
 
     # 🔹 Filtres par dates
     if date_from:
@@ -934,42 +941,13 @@ def order_history(request):
     ).count()
 
     # 🔹 Pagination
-    paginator = Paginator(orders, 10)
+    paginator = Paginator(orders, 15)
     page_number = request.GET.get('page')
     page_orders = paginator.get_page(page_number)
 
-    # 🔹 Formatage des données
-    orders_data = []
-    for order in page_orders:
-        total_items = sum(
-            item.get('quantity', 0) for item in (order.cart_items or [])
-        )
-
-        shop_info = None
-        if request.user.is_superuser:
-            shop_info = Shop.objects.filter(id=order.shop_id).first()
-
-        orders_data.append({
-            'id': order.id,
-            'order_number': str(order.id)[:8].upper(),
-            'created_at': order.created_at,
-            'status': order.status,
-            'payment_status': 'paid' if order.status in [
-                Order.STATUS_PAID, Order.STATUS_PAYMENT_VERIFIED
-            ] else 'pending',
-            'total_amount': order.final_amount,
-            'customer_name': f"{order.customer_first_name} {order.customer_last_name}",
-            'customer_email': order.customer_email,
-            'customer_phone': order.customer_phone,
-            'payment_method': order.payment_method,
-            'cart_items': order.cart_items,
-            'shop': shop_info,
-            'total_items': total_items
-        })
-
     # 🔹 Contexte final
     context = {
-        'orders': orders_data,
+        'orders': page_orders,
         'page_orders': page_orders,
         'total_orders': total_orders,
         'pending_orders': pending_orders,
@@ -977,32 +955,161 @@ def order_history(request):
         'cancelled_orders': cancelled_orders,
         'all_shops': all_shops,
         'customers': customers,
+        'status_choices': Order.STATUS_CHOICES,
+        'payment_methods': Order.PAYMENT_METHODS,
     }
 
     return render(request, 'marketplace/historiqueCommande.html', context)
+
+
+@login_required
+def order_detail(request, order_id):
+    """Affiche les détails d'une commande spécifique."""
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        # Vérification des permissions
+        if not request.user.is_superuser:
+            if hasattr(request.user, 'shop'):
+                if order.shop_id != request.user.shop.id:
+                    return JsonResponse({'error': 'Non autorisé'}, status=403)
+            else:
+                if (order.customer_email != request.user.email and 
+                    order.customer_phone != request.user.phone):
+                    return JsonResponse({'error': 'Non autorisé'}, status=403)
+        
+        # Calculer le total des articles
+        total_items = sum(item.get('quantity', 0) for item in (order.cart_items or []))
+        
+        # Récupérer les informations de la boutique
+        shop_info = None
+        if request.user.is_superuser:
+            shop_info = Shop.objects.filter(id=order.shop_id).first()
+        
+        data = {
+            'id': str(order.id),
+            'order_number': str(order.id)[:8].upper(),
+            'created_at': order.created_at.strftime('%d/%m/%Y à %H:%M'),
+            'updated_at': order.updated_at.strftime('%d/%m/%Y à %H:%M'),
+            'status': order.status,
+            'status_display': order.get_status_display(),
+            'total_amount': order.total_amount,
+            'tax_amount': order.tax_amount,
+            'final_amount': order.final_amount,
+            'customer_name': f"{order.customer_first_name} {order.customer_last_name}",
+            'customer_email': order.customer_email,
+            'customer_phone': order.customer_phone,
+            'payment_method': order.payment_method,
+            'payment_method_display': order.get_payment_method_display(),
+            'payment_phone': order.payment_phone,
+            'payment_proof': order.payment_proof.url if order.payment_proof else None,
+            'payment_verified': order.payment_verified,
+            'payment_verified_at': order.payment_verified_at.strftime('%d/%m/%Y %H:%M') if order.payment_verified_at else None,
+            'cart_items': order.cart_items,
+            'total_items': total_items,
+            'shop': shop_info.title if shop_info else None,
+            'qr_code_data': order.qr_code_data,
+            'ussd_code': order.ussd_code,
+            'whatsapp_link': order.whatsapp_link,
+        }
+        
+        return JsonResponse(data)
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'error': 'Commande non trouvée'}, status=404)
+
+
 @login_required
 def update_order_status(request, order_id):
-    """Mettre à jour le statut d'une commande"""
-    if request.method == 'POST':
-        order = get_object_or_404(Order, id=order_id)
-        
-        # Vérifier les permissions
-        if not (request.user.is_superuser or 
-                (hasattr(request.user, 'shop') and order.shop == request.user.shop) or
-                (order.user == request.user and request.POST.get('status') == 'cancelled')):
-            return JsonResponse({'success': False, 'message': 'Permission denied'})
-        
-        new_status = request.POST.get('status')
-        if new_status in dict(Order.ORDER_STATUS):
-            order.status = new_status
-            order.save()
-            return JsonResponse({'success': True, 'message': 'Statut mis à jour'})
-        
-        return JsonResponse({'success': False, 'message': 'Statut invalide'})
+    """Met à jour le statut d'une commande."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
     
-    return JsonResponse({'success': False, 'message': 'Méthode non autorisée'})
+    try:
+        order = Order.objects.get(id=order_id)
+        new_status = request.POST.get('status')
+        
+        # Vérification des permissions
+        if not request.user.is_superuser and not hasattr(request.user, 'shop'):
+            return JsonResponse({'error': 'Non autorisé'}, status=403)
+        
+        # Vérifier que le statut est valide
+        valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
+        if new_status not in valid_statuses:
+            return JsonResponse({'error': 'Statut invalide'}, status=400)
+        
+        # Si le statut est "livré", vérifier que le paiement est vérifié
+        if new_status == Order.STATUS_PAID and not order.payment_verified:
+            return JsonResponse({
+                'error': 'Le paiement doit être vérifié avant de marquer comme livré'
+            }, status=400)
+        
+        # Mettre à jour le statut
+        old_status = order.status
+        order.status = new_status
+        
+        # Si marqué comme vérifié, mettre à jour payment_verified
+        if new_status == Order.STATUS_PAYMENT_VERIFIED:
+            order.payment_verified = True
+            order.payment_verified_at = timezone.now()
+        
+        order.save()
+        
+        # Journaliser l'action
+        ActivityLog.objects.create(
+            user=request.user,
+            action=f"Statut commande {order.id} modifié: {old_status} → {new_status}",
+            content_type=ContentType.objects.get_for_model(Order),
+            object_id=order.id
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Statut mis à jour: {order.get_status_display()}',
+            'new_status': order.status,
+            'status_display': order.get_status_display()
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'error': 'Commande non trouvée'}, status=404)
 
 
+@login_required
+def delete_order(request, order_id):
+    """Supprime une commande (soft delete)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+    
+    try:
+        order = Order.objects.get(id=order_id)
+        
+        # Vérification des permissions (admin ou propriétaire de la boutique)
+        if not request.user.is_superuser:
+            if hasattr(request.user, 'shop'):
+                if order.shop_id != request.user.shop.id:
+                    return JsonResponse({'error': 'Non autorisé'}, status=403)
+            else:
+                return JsonResponse({'error': 'Non autorisé'}, status=403)
+        
+        # Soft delete: changer le statut à annulé
+        order.status = Order.STATUS_FAILED
+        order.save()
+        
+        # Journaliser
+        ActivityLog.objects.create(
+            user=request.user,
+            action=f"Commande {order.id} supprimée",
+            content_type=ContentType.objects.get_for_model(Order),
+            object_id=order.id
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Commande annulée avec succès'
+        })
+        
+    except Order.DoesNotExist:
+        return JsonResponse({'error': 'Commande non trouvée'}, status=404)
 
 @csrf_exempt
 def payment_methods_list(request):
@@ -1063,13 +1170,6 @@ def deactivate_payment_method(request, method_id):
             
         except MethodPaid.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Méthode non trouvée'})
-@login_required
-def export_orders(request, format):
-    """Exporter les commandes en CSV ou PDF"""
-    # Implémentation de l'export selon le format
-    # CSV: utiliser csv module
-    # PDF: utiliser reportlab ou weasyprint
-    pass
 
 def api_shops(request):
     """
@@ -1853,3 +1953,468 @@ def format_file_size(size_bytes):
         return f"{size_bytes:.2f} TB"
     except (ValueError, TypeError):
         return "Inconnu"
+    
+
+@login_required
+def shop_stat(request):
+    """Tableau de bord complet de la boutique avec statistiques et graphiques."""
+    
+    # Vérifier que l'utilisateur est un vendeur
+    if not hasattr(request.user, 'shop'):
+        return render(request, 'marketplace/access_denied.html', {
+            'message': 'Vous devez être propriétaire d\'une boutique pour accéder à cette page.'
+        })
+    
+    shop = request.user.shop.first()
+    today = timezone.now()
+    thirty_days_ago = today - timedelta(days=30)
+    
+    # 🔹 Statistiques principales
+    stats = {
+        # Commandes
+        'total_orders': Order.objects.filter(shop_id=shop.id).count(),
+        'orders_today': Order.objects.filter(shop_id=shop.id, created_at__date=today.date()).count(),
+        'orders_this_month': Order.objects.filter(shop_id=shop.id, created_at__gte=thirty_days_ago).count(),
+        
+        # Chiffre d'affaires
+        'total_revenue': Order.objects.filter(
+            shop_id=shop.id, 
+            status__in=['paid', 'payment_verified']
+        ).aggregate(total=Sum('final_amount'))['total'] or 0,
+        
+        'revenue_today': Order.objects.filter(
+            shop_id=shop.id, 
+            status__in=['paid', 'payment_verified'],
+            created_at__date=today.date()
+        ).aggregate(total=Sum('final_amount'))['total'] or 0,
+        
+        'revenue_this_month': Order.objects.filter(
+            shop_id=shop.id, 
+            status__in=['paid', 'payment_verified'],
+            created_at__gte=thirty_days_ago
+        ).aggregate(total=Sum('final_amount'))['total'] or 0,
+        
+        # Produits
+        'total_products': Product.objects.filter(category__shop=shop).count(),
+        'low_stock_products': Product.objects.filter(
+            category__shop=shop,
+            #quantity__lt=F('LOW_STOCK_THRESHOLD'),
+            quantity__gt=0
+        ).count(),
+        
+        'out_of_stock_products': Product.objects.filter(
+            category__shop=shop,
+            quantity=0
+        ).count(),
+        
+        # Clients
+        'total_customers': Order.objects.filter(shop_id=shop.id).values('customer_email').distinct().count(),
+        'new_customers_today': Order.objects.filter(
+            shop_id=shop.id,
+            created_at__date=today.date()
+        ).values('customer_email').distinct().count(),
+        
+        # Ventes moyennes
+        'avg_order_value': Order.objects.filter(
+            shop_id=shop.id,
+            status__in=['paid', 'payment_verified']
+        ).aggregate(avg=Avg('final_amount'))['avg'] or 0,
+        
+        'conversion_rate': calculate_conversion_rate(shop.id) if shop else 0,
+    }
+    
+    # 🔹 Graphique 1: Évolution du chiffre d'affaires (30 derniers jours)
+    revenue_data = get_revenue_chart_data(shop.id, 30)
+    
+    # 🔹 Graphique 2: Commandes par statut (pie chart)
+    orders_by_status = get_orders_by_status(shop.id)
+    
+    # 🔹 Graphique 3: Top 10 produits les plus vendus
+    top_products = get_top_products(shop.id, 10)
+    
+    # 🔹 Graphique 4: Méthodes de paiement utilisées
+    payment_methods_data = get_payment_methods_data(shop.id)
+    
+    # 🔹 Graphique 5: Répartition des ventes par heure de la journée
+    sales_by_hour = get_sales_by_hour(shop.id)
+    
+    # 🔹 Dernières commandes
+    recent_orders = Order.objects.filter(shop_id=shop.id).order_by('-created_at')[:10]
+    
+    # 🔹 Produits nécessitant une attention
+    attention_products = Product.objects.filter(
+        category__shop=shop
+    ).filter(
+         
+        Q(expiry_date__lt=today.date() + timedelta(days=7))
+    )[:5]
+    
+    # 🔹 Meilleurs clients
+    top_customers = get_top_customers(shop.id, 5)
+    
+    # 🔹 Tendance mensuelle
+    monthly_trend = get_monthly_trend(shop.id)
+    
+    context = {
+        'shop': shop,
+        'stats': stats,
+        'revenue_data': json.dumps(revenue_data),
+        'orders_by_status': json.dumps(orders_by_status),
+        'top_products': json.dumps(top_products),
+        'payment_methods_data': json.dumps(payment_methods_data),
+        'sales_by_hour': json.dumps(sales_by_hour),
+        'recent_orders': recent_orders,
+        'attention_products': attention_products,
+        'top_customers': top_customers,
+        'monthly_trend': monthly_trend,
+        'today': today,
+    }
+    
+    return render(request, 'marketplace/statistiques.html', context)
+
+def calculate_conversion_rate(shop_id):
+    """Calcule le taux de conversion de la boutique."""
+    total_orders = Order.objects.filter(shop_id=shop_id).count()
+    # Ici on pourrait diviser par le nombre de visites si on a ce tracking
+    # Pour l'instant, on retourne un placeholder
+    if total_orders > 0:
+        return round(min(100, total_orders * 2), 2)  # Placeholder
+    return 0
+
+def get_revenue_chart_data(shop_id, days=30):
+    """Génère les données pour le graphique de revenue sur N jours."""
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=days)
+    
+    # Récupérer les données quotidiennes
+    daily_data = Order.objects.filter(
+        shop_id=shop_id,
+        status__in=['paid', 'payment_verified'],
+        created_at__range=[start_date, end_date]
+    ).annotate(
+        date=TruncDay('created_at')
+    ).values('date').annotate(
+        total=Sum('final_amount'),
+        count=Count('id')
+    ).order_by('date')
+    
+    # Préparer les données pour Chart.js
+    dates = []
+    revenues = []
+    orders_count = []
+    
+    # Remplir les 30 derniers jours
+    for i in range(days):
+        current_date = start_date + timedelta(days=i)
+        date_str = current_date.strftime('%d/%m')
+        
+        # Chercher les données pour cette date
+        day_data = next((d for d in daily_data if d['date'].date() == current_date.date()), None)
+        
+        dates.append(date_str)
+        revenues.append(float(day_data['total']) if day_data else 0)
+        orders_count.append(day_data['count'] if day_data else 0)
+    
+    return {
+        'labels': dates,
+        'datasets': [
+            {
+                'label': 'Chiffre d\'affaires (FCFA)',
+                'data': revenues,
+                'borderColor': '#2ecc71',
+                'backgroundColor': 'rgba(46, 204, 113, 0.1)',
+                'fill': True,
+                'tension': 0.4
+            },
+            {
+                'label': 'Nombre de commandes',
+                'data': orders_count,
+                'borderColor': '#a4de02',
+                'backgroundColor': 'rgba(164, 222, 2, 0.1)',
+                'fill': True,
+                'tension': 0.4,
+                'hidden': True
+            }
+        ]
+    }
+
+def get_orders_by_status(shop_id):
+    """Récupère la répartition des commandes par statut."""
+    status_data = Order.objects.filter(shop_id=shop_id).values('status').annotate(
+        count=Count('id'),
+        revenue=Sum('final_amount')
+    )
+    
+    labels = []
+    counts = []
+    revenues = []
+    background_colors = [
+        'rgba(46, 204, 113, 0.8)',   # Paid
+        'rgba(164, 222, 2, 0.8)',    # Payment verified
+        'rgba(241, 196, 15, 0.8)',   # Pending
+        'rgba(52, 152, 219, 0.8)',   # Waiting payment
+        'rgba(155, 89, 182, 0.8)',   # Refunded
+        'rgba(231, 76, 60, 0.8)',    # Failed
+    ]
+    
+    status_mapping = {
+        'paid': 'Payée',
+        'payment_verified': 'Paiement vérifié',
+        'pending': 'En attente',
+        'waiting_payment': 'En attente paiement',
+        'refunded': 'Remboursée',
+        'failed': 'Échouée'
+    }
+    
+    for item in status_data:
+        labels.append(status_mapping.get(item['status'], item['status']))
+        counts.append(item['count'])
+        revenues.append(float(item['revenue'] or 0))
+    
+    return {
+        'labels': labels,
+        'datasets': [
+            {
+                'label': 'Nombre de commandes',
+                'data': counts,
+                'backgroundColor': background_colors[:len(labels)],
+                'borderWidth': 1
+            }
+        ],
+        'revenues': revenues
+    }
+
+
+
+def get_top_products(shop_id, limit=10):
+    orders = Order.objects.filter(shop_id=shop_id)
+    
+    product_sales = defaultdict(int)
+    
+    for order in orders:
+        for item in order.cart_items:
+            product_sales[item['product_id']] += item.get('quantity', 1)
+    
+    products = Product.objects.filter(category__shop_id=shop_id, id__in=product_sales.keys())
+    
+    labels = []
+    sold_counts = []
+    revenues = []
+    
+    for product in products:
+        sold = product_sales[product.id]
+        labels.append(product.name[:20] + '...' if len(product.name) > 20 else product.name)
+        sold_counts.append(sold)
+        revenues.append(float(sold * product.price))
+    
+    # Trier par ventes décroissantes
+    sorted_data = sorted(zip(labels, sold_counts, revenues), key=lambda x: x[1], reverse=True)[:limit]
+    
+    if sorted_data:  # ✅ Evite l'erreur quand c'est vide
+        labels, sold_counts, revenues = zip(*sorted_data)
+        labels, sold_counts, revenues = list(labels), list(sold_counts), list(revenues)
+    else:
+        labels, sold_counts, revenues = [], [], []
+    
+    return {
+        'labels': labels,
+        'sold': sold_counts,
+        'revenue': revenues
+    }
+
+def get_payment_methods_data(shop_id):
+    """Récupère la répartition des méthodes de paiement."""
+    payment_data = Order.objects.filter(shop_id=shop_id).values('payment_method').annotate(
+        count=Count('id'),
+        total=Sum('final_amount')
+    )
+    
+    labels = []
+    counts = []
+    totals = []
+    
+    method_mapping = {
+        'whatsapp': 'WhatsApp',
+        'om': 'Orange Money',
+        'momo': 'MTN Mobile Money'
+    }
+    
+    for item in payment_data:
+        labels.append(method_mapping.get(item['payment_method'], item['payment_method']))
+        counts.append(item['count'])
+        totals.append(float(item['total'] or 0))
+    
+    return {
+        'labels': labels,
+        'counts': counts,
+        'totals': totals,
+        'colors': [
+            'rgba(37, 211, 102, 0.8)',   # WhatsApp vert
+            'rgba(255, 165, 0, 0.8)',     # Orange Money orange
+            'rgba(255, 204, 0, 0.8)'      # MOMO jaune
+        ]
+    }
+
+def get_sales_by_hour(shop_id):
+    """Récupère les ventes par heure de la journée."""
+    # Compter les commandes par heure (sur les 7 derniers jours)
+    week_ago = timezone.now() - timedelta(days=7)
+    
+    hourly_data = Order.objects.filter(
+        shop_id=shop_id,
+        created_at__gte=week_ago,
+        status__in=['paid', 'payment_verified']
+    ).annotate(
+        hour=ExtractHour('created_at')
+    ).values('hour').annotate(
+        count=Count('id'),
+        total=Sum('final_amount')
+    ).order_by('hour')
+    
+    # Préparer les données pour 24 heures
+    hours = list(range(24))
+    counts = [0] * 24
+    totals = [0] * 24
+    
+    for item in hourly_data:
+        hour = item['hour']
+        counts[hour] = item['count']
+        totals[hour] = float(item['total'] or 0)
+    
+    return {
+        'labels': [f'{h:02d}h' for h in hours],
+        'counts': counts,
+        'totals': totals
+    }
+
+def get_top_customers(shop_id, limit=5):
+    """Récupère les meilleurs clients."""
+    customers = Order.objects.filter(shop_id=shop_id).values(
+        'customer_email', 'customer_first_name', 'customer_last_name'
+    ).annotate(
+        order_count=Count('id'),
+        total_spent=Sum('final_amount'),
+        last_order=Max('created_at')
+    ).order_by('-total_spent')[:limit]
+    
+    return [
+        {
+            'email': c['customer_email'],
+            'name': f"{c['customer_first_name']} {c['customer_last_name']}",
+            'orders': c['order_count'],
+            'total_spent': float(c['total_spent'] or 0),
+            'last_order': c['last_order']
+        }
+        for c in customers
+    ]
+
+def get_monthly_trend(shop_id):
+    """Calcule la tendance mensuelle."""
+    current_month = timezone.now().month
+    last_month = current_month - 1 if current_month > 1 else 12
+    
+    current_month_data = Order.objects.filter(
+        shop_id=shop_id,
+        created_at__month=current_month,
+        status__in=['paid', 'payment_verified']
+    ).aggregate(
+        total=Sum('final_amount'),
+        count=Count('id')
+    )
+    
+    last_month_data = Order.objects.filter(
+        shop_id=shop_id,
+        created_at__month=last_month,
+        status__in=['paid', 'payment_verified']
+    ).aggregate(
+        total=Sum('final_amount'),
+        count=Count('id')
+    )
+    
+    current_total = float(current_month_data['total'] or 0)
+    last_total = float(last_month_data['total'] or 0)
+    
+    if last_total > 0:
+        revenue_change = ((current_total - last_total) / last_total) * 100
+    else:
+        revenue_change = 100 if current_total > 0 else 0
+    
+    current_count = current_month_data['count'] or 0
+    last_count = last_month_data['count'] or 0
+    
+    if last_count > 0:
+        order_change = ((current_count - last_count) / last_count) * 100
+    else:
+        order_change = 100 if current_count > 0 else 0
+    
+    return {
+        'revenue': {
+            'current': current_total,
+            'last': last_total,
+            'change': round(revenue_change, 1)
+        },
+        'orders': {
+            'current': current_count,
+            'last': last_count,
+            'change': round(order_change, 1)
+        }
+    }
+
+
+@login_required
+@csrf_exempt
+def dashboard_stats_api(request):
+    """API pour récupérer les statistiques en temps réel."""
+    if not hasattr(request.user, 'shop'):
+        return JsonResponse({'error': 'Non autorisé'}, status=403)
+    
+    shop = request.user.shop
+    
+    # Récupérer les données en temps réel
+    data = {
+        'revenue_today': Order.objects.filter(
+            shop_id=shop.id,
+            status__in=['paid', 'payment_verified'],
+            created_at__date=timezone.now().date()
+        ).aggregate(total=Sum('final_amount'))['total'] or 0,
+        
+        'orders_today': Order.objects.filter(
+            shop_id=shop.id,
+            created_at__date=timezone.now().date()
+        ).count(),
+        
+        'new_customers_today': Order.objects.filter(
+            shop_id=shop.id,
+            created_at__date=timezone.now().date()
+        ).values('customer_email').distinct().count(),
+    }
+    
+    return JsonResponse(data)
+
+@login_required
+@csrf_exempt
+def dashboard_charts_api(request):
+    """API pour récupérer les données des graphiques."""
+    if not hasattr(request.user, 'shop'):
+        return JsonResponse({'error': 'Non autorisé'}, status=403)
+    
+    shop = request.user.shop
+    period = request.GET.get('period', '30days')
+    
+    # Logique pour récupérer les données selon la période
+    if period == '7days':
+        days = 7
+    elif period == '30days':
+        days = 30
+    elif period == '90days':
+        days = 90
+    else:
+        days = 30
+    
+    revenue_data = get_revenue_chart_data(shop.id, days)
+    
+    return JsonResponse({
+        'revenue_data': revenue_data,
+        'period': period,
+        'last_update': timezone.now().isoformat()
+    })

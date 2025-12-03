@@ -1,0 +1,949 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+{% load blog_filters %} 
+{% block content %}
+<style>
+    /* Variables CSS pour la prévisualisation */
+    :root {
+        
+        --dark: #5a5c69;
+        --light: #f8f9fc;
+        --radius: 0.35rem;
+        --shadow: 0 .15rem 1.75rem 0 rgba(58, 59, 69, .15);
+    }
+
+    /* Conteneur principal */
+    .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px 20px;
+        background: #f8f9fc;
+        min-height: 100vh;
+    }
+
+    /* En-tête de prévisualisation */
+    .preview-header {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 25px 30px;
+        margin-bottom: 30px;
+        border-left: 5px solid var(--primary);
+    }
+
+    .preview-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0 0 10px 0;
+    }
+
+    .preview-subtitle {
+        color: var(--secondary);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .preview-badge {
+        display: inline-block;
+        padding: 5px 15px;
+        background: var(--primary);
+        color: white;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-top: 15px;
+    }
+
+    /* Contenu de l'article */
+    .article-content {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 40px;
+        margin-bottom: 30px;
+    }
+
+    /* Type d'article */
+    .article-type-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 20px;
+        background: #f0f4ff;
+        border-radius: 20px;
+        color: var(--primary);
+        font-weight: 500;
+        margin-bottom: 25px;
+    }
+
+    /* Contenu média */
+    .media-container {
+        margin-bottom: 30px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: #f8f9fc;
+    }
+
+    .media-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+        max-height: 500px;
+        object-fit: contain;
+    }
+
+    .media-container video,
+    .media-container audio {
+        width: 100%;
+        max-height: 500px;
+        background: #000;
+    }
+
+    /* Contenu texte */
+    .text-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #333;
+    }
+
+    .text-content h1,
+    .text-content h2,
+    .text-content h3,
+    .text-content h4 {
+        color: var(--dark);
+        margin-top: 30px;
+        margin-bottom: 15px;
+    }
+
+    .text-content h1 { font-size: 2.2rem; }
+    .text-content h2 { font-size: 1.8rem; }
+    .text-content h3 { font-size: 1.5rem; }
+    .text-content h4 { font-size: 1.3rem; }
+
+    .text-content p {
+        margin-bottom: 20px;
+    }
+
+    .text-content ul,
+    .text-content ol {
+        margin-left: 30px;
+        margin-bottom: 20px;
+    }
+
+    .text-content li {
+        margin-bottom: 8px;
+    }
+
+    .text-content blockquote {
+        border-left: 4px solid var(--primary);
+        padding-left: 20px;
+        margin: 25px 0;
+        font-style: italic;
+        color: var(--secondary);
+    }
+
+    .text-content a {
+        color: var(--primary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .text-content a:hover {
+        color: #2e59d9;
+        text-decoration: underline;
+    }
+
+    .text-content strong {
+        font-weight: 600;
+    }
+
+    .text-content em {
+        font-style: italic;
+    }
+
+    .text-content u {
+        text-decoration: underline;
+    }
+
+    /* Métadonnées */
+    .article-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 25px;
+        border-top: 1px solid #e3e6f0;
+        margin-top: 30px;
+        color: var(--secondary);
+        font-size: 0.95rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Informations de boutique */
+    .shop-info {
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 25px 30px;
+        margin-bottom: 30px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .shop-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        background: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .shop-avatar i {
+        font-size: 2.5rem;
+        color: var(--primary);
+    }
+
+    .shop-details h3 {
+        margin: 0 0 5px 0;
+        color: var(--dark);
+        font-size: 1.3rem;
+    }
+
+    .shop-details p {
+        margin: 0;
+        color: var(--secondary);
+    }
+
+    /* Actions */
+    .preview-actions {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid #e3e6f0;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        border-radius: var(--radius);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #2e59d9;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(78, 115, 223, 0.3);
+    }
+
+    .btn-outline {
+        background: white;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: var(--secondary);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #6c757d;
+        transform: translateY(-2px);
+    }
+
+    /* État vide */
+    .empty-preview {
+        text-align: center;
+        padding: 60px 30px;
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .empty-preview i {
+        font-size: 4rem;
+        color: var(--secondary);
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+
+    .empty-preview h3 {
+        color: var(--dark);
+        margin-bottom: 15px;
+    }
+
+    .empty-preview p {
+        color: var(--secondary);
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Avertissement prévisualisation */
+    .preview-warning {
+        background: #fff3cd;
+        border: 1px solid #ffecb5;
+        border-radius: var(--radius);
+        padding: 20px;
+        margin-bottom: 30px;
+        color: #856404;
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .preview-warning i {
+        color: #ffc107;
+        font-size: 1.5rem;
+    }
+
+    /* Style spécifique pour les affiches */
+    .affiche-container {
+        text-align: center;
+    }
+
+    .affiche-container .media-container {
+        margin-bottom: 20px;
+    }
+
+    .affiche-description {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--secondary);
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Style spécifique pour les podcasts */
+    .podcast-container .media-container {
+        background: #000;
+    }
+
+    .podcast-description {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--dark);
+        margin-top: 20px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .preview-container {
+            padding: 20px 15px;
+        }
+
+        .preview-header {
+            padding: 20px;
+        }
+
+        .preview-title {
+            font-size: 1.6rem;
+        }
+
+        .article-content {
+            padding: 25px;
+        }
+
+        .text-content {
+            font-size: 1rem;
+        }
+
+        .text-content h1 { font-size: 1.8rem; }
+        .text-content h2 { font-size: 1.5rem; }
+        .text-content h3 { font-size: 1.3rem; }
+
+        .shop-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .preview-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn {
+            justify-content: center;
+        }
+
+        .article-meta {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .preview-header,
+    .article-content,
+    .shop-info {
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    /* Améliorations d'affichage du contenu HTML */
+    .text-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        overflow-x: auto;
+        display: block;
+    }
+
+    .text-content th,
+    .text-content td {
+        padding: 12px 15px;
+        border: 1px solid #e3e6f0;
+        text-align: left;
+    }
+
+    .text-content th {
+        background: #f8f9fc;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .text-content tr:nth-child(even) {
+        background: #f8f9fc;
+    }
+
+    .text-content code {
+        background: #f8f9fc;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #e74a3b;
+    }
+
+    .text-content pre {
+        background: #f8f9fc;
+        padding: 20px;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 20px 0;
+        border: 1px solid #e3e6f0;
+    }
+
+    .text-content pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+    }
+
+    /* Style pour les images dans le contenu */
+    .text-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius);
+        margin: 20px 0;
+    }
+
+    /* Style pour les vidéos dans le contenu */
+    .text-content video {
+        max-width: 100%;
+        border-radius: var(--radius);
+        margin: 20px 0;
+    }
+</style>
+
+<div class="preview-container">
+    {% if is_preview and preview_data %}
+        <!-- Mode prévisualisation avec données temporaires -->
+        <div class="preview-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>Mode prévisualisation</strong>
+                <p>Vous visualisez une version temporaire de l'article. Il n'a pas encore été publié.</p>
+            </div>
+        </div>
+
+        <div class="preview-header">
+            <h1 class="preview-title">{{ preview_data.titre }}</h1>
+            <div class="preview-badge">
+                {% if preview_data.type_contenu == 'article' %}
+                    <i class="fas fa-font"></i> Article en prévisualisation
+                {% elif preview_data.type_contenu == 'affiche' %}
+                    <i class="fas fa-image"></i> Affiche en prévisualisation
+                {% elif preview_data.type_contenu == 'podcast' %}
+                    <i class="fas fa-podcast"></i> Podcast en prévisualisation
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="article-content">
+            <div class="article-type-indicator">
+                {% if preview_data.type_contenu == 'article' %}
+                    <i class="fas fa-font"></i> Article
+                {% elif preview_data.type_contenu == 'affiche' %}
+                    <i class="fas fa-image"></i> Affiche
+                {% elif preview_data.type_contenu == 'podcast' %}
+                    <i class="fas fa-podcast"></i> Podcast
+                {% endif %}
+            </div>
+
+            {% if preview_data.type_contenu == 'article' %}
+                <!-- Article texte -->
+                <div class="text-content">
+                    {{ preview_data.contenu|safe }}
+                </div>
+
+            {% elif preview_data.type_contenu == 'affiche' %}
+                <!-- Affiche -->
+                <div class="affiche-container">
+                    {% if preview_data.image_data %}
+                    <div class="media-container">
+                        <img src="data:{{ preview_data.image_data.content_type }};base64,{{ preview_data.image_data.data }}" 
+                             alt="{{ preview_data.titre }}">
+                    </div>
+                    {% endif %}
+                    
+                    {% if preview_data.contenu %}
+                    <div class="affiche-description">
+                        {{ preview_data.contenu|linebreaks }}
+                    </div>
+                    {% endif %}
+                </div>
+
+            {% elif preview_data.type_contenu == 'podcast' %}
+                <!-- Podcast -->
+                <div class="podcast-container">
+                    {% if article.video_url %}
+                    <div class="media-container">
+                        {% if article.video_url|get_media_type == 'video' %}
+                            <video controls>
+                                <source src="{{ article.video_url }}" type="video/mp4">
+                                Votre navigateur ne supporte pas la lecture de vidéos.
+                            </video>
+                        {% elif article.video_url|get_media_type == 'audio' %}
+                            <audio controls>
+                                <source src="{{ article.video_url }}" type="audio/mpeg">
+                                Votre navigateur ne supporte pas la lecture audio.
+                            </audio>
+                        {% else %}
+                            <!-- Fallback simple -->
+                            <video controls style="display: none;">
+                                <source src="{{ article.video_url }}" type="video/mp4">
+                            </video>
+                            <audio controls style="display: none;">
+                                <source src="{{ article.video_url }}" type="audio/mpeg">
+                            </audio>
+                            <div class="media-fallback">
+                                <p>Média disponible : <a href="{{ article.video_url }}" target="_blank">Télécharger le fichier</a></p>
+                            </div>
+                            <script>
+                                // Détection automatique du type de média
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    var video = document.querySelector('video');
+                                    var audio = document.querySelector('audio');
+                                    var url = "{{ article.video_url|escapejs }}".toLowerCase();
+                                    
+                                    if (url.includes('.mp4') || url.includes('.avi') || url.includes('.mov') || url.includes('.mkv') || url.includes('video')) {
+                                        video.style.display = 'block';
+                                    } else if (url.includes('.mp3') || url.includes('.wav') || url.includes('.ogg') || url.includes('audio')) {
+                                        audio.style.display = 'block';
+                                    }
+                                });
+                            </script>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if preview_data.image_data %}
+                    <div class="media-container">
+                        <img src="data:{{ preview_data.image_data.content_type }};base64,{{ preview_data.image_data.data }}" 
+                             alt="Couverture du podcast">
+                    </div>
+                    {% endif %}
+                    
+                    {% if preview_data.contenu %}
+                    <div class="podcast-description">
+                        {{ preview_data.contenu|linebreaks }}
+                    </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="article-meta">
+                <div class="meta-item">
+                    <i class="far fa-calendar"></i>
+                    <span>Date de prévisualisation : {{ preview_data.date_formatted|default:"Aujourd'hui" }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Statut : Non publié</span>
+                </div>
+            </div>
+        </div>
+
+    {% elif article %}
+        <!-- Mode prévisualisation d'un article existant -->
+        <div class="preview-header">
+            <h1 class="preview-title">{{ article.titre }}</h1>
+            <div class="preview-badge">
+                {% if article.type_contenu == 'article' %}
+                    <i class="fas fa-font"></i> Article publié
+                {% elif article.type_contenu == 'affiche' %}
+                    <i class="fas fa-image"></i> Affiche publiée
+                {% elif article.type_contenu == 'podcast' %}
+                    <i class="fas fa-podcast"></i> Podcast publié
+                {% endif %}
+            </div>
+            <p class="preview-subtitle">Publié le {{ article.date_formatted }}</p>
+        </div>
+
+        <div class="article-content">
+            <div class="article-type-indicator">
+                {% if article.type_contenu == 'article' %}
+                    <i class="fas fa-font"></i> Article
+                {% elif article.type_contenu == 'affiche' %}
+                    <i class="fas fa-image"></i> Affiche
+                {% elif article.type_contenu == 'podcast' %}
+                    <i class="fas fa-podcast"></i> Podcast
+                {% endif %}
+            </div>
+
+            {% if article.type_contenu == 'article' %}
+                <!-- Article texte -->
+                {% if article.image_url %}
+                <div class="media-container">
+                    <img src="{{ article.image_url }}" alt="{{ article.titre }}">
+                </div>
+                {% endif %}
+                
+                <div class="text-content">
+                    {{ article.contenu|safe }}
+                </div>
+
+            {% elif article.type_contenu == 'affiche' %}
+                <!-- Affiche -->
+                <div class="affiche-container">
+                    {% if article.image_url %}
+                    <div class="media-container">
+                        <img src="{{ article.image_url }}" alt="{{ article.titre }}">
+                    </div>
+                    {% endif %}
+                    
+                    {% if article.contenu %}
+                    <div class="affiche-description">
+                        {{ article.contenu|linebreaks }}
+                    </div>
+                    {% endif %}
+                </div>
+
+            {% elif article.type_contenu == 'podcast' %}
+            <!-- Podcast -->
+            <div class="podcast-container">
+                {% if article.video_url %}
+                <div class="media-container">
+                    {# Détection du type de média #}
+                    {% with url_lower=article.video_url|lower %}
+                        {% with extension=url_lower|slice:'-4:' %}
+                            {% if 'video' in url_lower or extension == '.mp4' or extension == '.avi' or extension == '.mov' or extension == '.mkv' or extension == '.webm' %}
+                                {# C'est une vidéo #}
+                                <video controls>
+                                    <source src="{{ article.video_url }}" 
+                                            {% if extension == '.mp4' %}type="video/mp4"
+                                            {% elif extension == '.webm' %}type="video/webm"
+                                            {% elif extension == '.avi' %}type="video/x-msvideo"
+                                            {% else %}type="video/mp4"{% endif %}>
+                                    Votre navigateur ne supporte pas la lecture de vidéos.
+                                </video>
+                            {% elif 'audio' in url_lower or extension == '.mp3' or extension == '.wav' or extension == '.ogg' or extension == '.m4a' or extension == '.flac' %}
+                                {# C'est un audio #}
+                                <audio controls>
+                                    <source src="{{ article.video_url }}"
+                                            {% if extension == '.mp3' %}type="audio/mpeg"
+                                            {% elif extension == '.wav' %}type="audio/wav"
+                                            {% elif extension == '.ogg' %}type="audio/ogg"
+                                            {% else %}type="audio/mpeg"{% endif %}>
+                                    Votre navigateur ne supporte pas la lecture audio.
+                                </audio>
+                            {% else %}
+                                {# Type inconnu - essayer les deux #}
+                                <video controls style="display: none;">
+                                    <source src="{{ article.video_url }}" type="video/mp4">
+                                </video>
+                                <audio controls style="display: none;">
+                                    <source src="{{ article.video_url }}" type="audio/mpeg">
+                                </audio>
+                                <div class="media-fallback">
+                                    <p><a href="{{ article.video_url }}" target="_blank">Télécharger le fichier média</a></p>
+                                </div>
+                                <script>
+                                    // Détection automatique
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var video = document.querySelector('video');
+                                        var audio = document.querySelector('audio');
+                                        var url = "{{ article.video_url|escapejs }}".toLowerCase();
+                                        
+                                        if (url.includes('.mp4') || url.includes('.avi') || 
+                                            url.includes('.mov') || url.includes('.mkv') || 
+                                            url.includes('video')) {
+                                            video.style.display = 'block';
+                                            video.load();
+                                        } else if (url.includes('.mp3') || url.includes('.wav') || 
+                                                url.includes('.ogg') || url.includes('audio')) {
+                                            audio.style.display = 'block';
+                                            audio.load();
+                                        }
+                                    });
+                                </script>
+                            {% endif %}
+                        {% endwith %}
+                    {% endwith %}
+                </div>
+                {% endif %}
+                
+                {% if article.image_url %}
+                <div class="media-container">
+                    <img src="{{ article.image_url }}" alt="Couverture du podcast">
+                </div>
+                {% endif %}
+                
+                {% if article.contenu %}
+                <div class="podcast-description">
+                    {{ article.contenu|linebreaks }}
+                </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+            <div class="article-meta">
+                <div class="meta-item">
+                    <i class="far fa-calendar"></i>
+                    <span>Publié le : {{ article.date_formatted }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-store"></i>
+                    <span>Boutique : {{ article.shop.title }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations de la boutique -->
+        {% if article.shop %}
+        <div class="shop-info">
+            <div class="shop-avatar">
+                {% if article.shop.logo %}
+                    <img src="{{ article.shop.logo.url }}" alt="{{ article.shop.title }}">
+                {% else %}
+                    <i class="fas fa-store"></i>
+                {% endif %}
+            </div>
+            <div class="shop-details">
+                <h3>{{ article.shop.title }}</h3>
+                <p>{{ article.shop.description|default:"Boutique en ligne" }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Aucune donnée disponible -->
+        <div class="empty-preview">
+            <i class="fas fa-newspaper"></i>
+            <h3>Aucun contenu à prévisualiser</h3>
+            <p>Il n'y a pas de données disponibles pour la prévisualisation. Veuillez créer ou sélectionner un article.</p>
+            <div class="preview-actions">
+                <a href="{% url 'seller_blog' %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Retour au blog
+                </a>
+                <button onclick="window.close()" class="btn btn-outline">
+                    <i class="fas fa-times"></i> Fermer la fenêtre
+                </button>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Actions -->
+    {% if article or preview_data %}
+    <div class="preview-actions">
+        {% if article and not is_preview %}
+            <a href="{% url 'seller_blog' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Retour au blog
+            </a>
+            <a href="{% url 'edit_article' article.id %}" class="btn btn-outline">
+                <i class="fas fa-edit"></i> Éditer cet article
+            </a>
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i class="fas fa-print"></i> Imprimer
+            </button>
+        {% elif is_preview %}
+            <button onclick="window.close()" class="btn btn-primary">
+                <i class="fas fa-times"></i> Fermer la prévisualisation
+            </button>
+            <button onclick="window.print()" class="btn btn-outline">
+                <i class="fas fa-print"></i> Imprimer la prévisualisation
+            </button>
+        {% endif %}
+        
+        <button onclick="sharePreview()" class="btn btn-secondary">
+            <i class="fas fa-share"></i> Partager
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Fonction de partage
+    function sharePreview() {
+        if (navigator.share) {
+            navigator.share({
+                title: document.title,
+                text: 'Regardez cet article intéressant !',
+                url: window.location.href,
+            })
+            .then(() => console.log('Partage réussi'))
+            .catch((error) => console.log('Erreur de partage:', error));
+        } else {
+            // Fallback pour les navigateurs qui ne supportent pas l'API Web Share
+            const url = window.location.href;
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    alert('Lien copié dans le presse-papier !');
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la copie:', err);
+                    prompt('Copiez ce lien pour partager:', url);
+                });
+        }
+    }
+
+    // Gestion de l'impression
+    function setupPrintStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            @media print {
+                .preview-container {
+                    padding: 0;
+                    background: white;
+                }
+                .preview-actions,
+                .preview-warning,
+                .shop-info {
+                    display: none;
+                }
+                .article-content {
+                    box-shadow: none;
+                    border: 1px solid #ddd;
+                }
+                .text-content {
+                    font-size: 12pt;
+                    line-height: 1.6;
+                }
+                a {
+                    color: #000;
+                    text-decoration: underline;
+                }
+                .preview-header {
+                    border-left: none;
+                    box-shadow: none;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // Chargement automatique des médias
+    document.addEventListener('DOMContentLoaded', function() {
+        setupPrintStyles();
+        
+        // Démarrer automatiquement les vidéos/audios si nécessaire
+        const mediaElements = document.querySelectorAll('video, audio');
+        mediaElements.forEach(media => {
+            // Vous pouvez ajouter une logique pour le démarrage automatique si souhaité
+            // media.play().catch(e => console.log('Lecture automatique bloquée:', e));
+        });
+
+        // Gérer le chargement des images
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            img.onerror = function() {
+                this.src = '{% static "images/default-article.jpg" %}';
+                this.alt = 'Image non disponible';
+            };
+        });
+    });
+
+    // Gestion des touches clavier
+    document.addEventListener('keydown', function(e) {
+        switch(e.key) {
+            case 'Escape':
+                if (window.opener) {
+                    window.close();
+                } else {
+                    window.history.back();
+                }
+                break;
+            case 'p':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    window.print();
+                }
+                break;
+            case 'ArrowLeft':
+                if (e.altKey && window.opener) {
+                    window.close();
+                }
+                break;
+        }
+    });
+
+    // Message de confirmation avant fermeture (si en mode prévisualisation)
+    window.addEventListener('beforeunload', function(e) {
+        {% if is_preview %}
+        if (!window.isClosingIntentionally) {
+            e.preventDefault();
+            e.returnValue = 'Les modifications non sauvegardées seront perdues. Voulez-vous vraiment quitter ?';
+        }
+        {% endif %}
+    });
+
+    // Marquer la fermeture comme intentionnelle pour les boutons de fermeture
+    document.querySelectorAll('[onclick*="close"], [onclick*="window.close"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            window.isClosingIntentionally = true;
+        });
+    });
+</script>
+{% endblock %}

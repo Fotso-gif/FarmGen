@@ -1,14 +1,123 @@
 {% extends 'account/layout/base_dashboard.html' %}
 {% load static %}
-{% comment %} {% load custom_filters %} {% endcomment %}
+{% load custom_filters %}
+
 {% block content %}
 <style>
-    /* Styles existants étendus */
+    /* Variables CSS */
+    :root {
+        
+        --success: #2ecc71;
+        --warning: #f8961e;
+        --danger: #f72585;
+        --dark: #8B4513;
+        --light: #f8f9fa;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
+        --radius: 12px;
+    }
+
+    /* Styles généraux */
+    .profile-container {
+        position: relative;
+        z-index: 1;
+        padding: 30px;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .section-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .section-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .section-title i {
+        color: var(--primary);
+        font-size: 2rem;
+    }
+
+    /* Statistiques */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 2rem;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        
+        background: white;
+        border-radius: var(--radius);
+        padding: 25px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        border-left: 5px solid;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), transparent);
+    }
+
+    .stat-card.total { border-left-color: var(--primary); }
+    .stat-card.pending { border-left-color: var(--warning); }
+    .stat-card.paid { border-left-color: var(--success); }
+    .stat-card.cancelled { border-left-color: var(--danger); }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        opacity: 0.8;
+    }
+
+    .stat-number {
+        font-size: 2.8rem;
+        font-weight: 800;
+        margin: 10px 0;
+        background: linear-gradient(45deg, var(--dark), var(--primary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    /* Filtres */
     .filters-container {
         background: white;
         border-radius: var(--radius);
-        padding: 20px;
-        margin-bottom: 25px;
+        padding: 25px;
+        margin-bottom: 30px;
         box-shadow: var(--shadow);
     }
 
@@ -16,979 +125,1654 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         cursor: pointer;
+        padding: 15px;
+        background: var(--light);
+        border-radius: 10px;
     }
 
     .filters-title {
         margin: 0;
         color: var(--primary);
-        font-size: 1.1rem;
+        font-size: 1.2rem;
+        font-weight: 600;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
+    }
+
+    .filters-title i {
+        transition: var(--transition);
     }
 
     .filters-content {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.3s ease;
+        opacity: 0;
+        transition: all 0.5s ease;
     }
 
     .filters-content.show {
         max-height: 500px;
-        margin-top: 15px;
+        opacity: 1;
+        padding-top: 20px;
     }
 
     .filter-group {
         margin-bottom: 0;
     }
 
-    .filter-group label {
+    .filter-label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
+        margin-bottom: 8px;
+        font-weight: 600;
         color: var(--dark);
         font-size: 0.9rem;
     }
 
-    .filter-select {
+    .filter-select, .filter-input {
         width: 100%;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: var(--radius);
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
         background: white;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
+        transition: var(--transition);
     }
 
-    .date-inputs {
+    .filter-select:focus, .filter-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        outline: none;
+    }
+
+    .date-group {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 10px;
-    }
-
-    .stats-overview {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 15px;
-        margin-bottom: 25px;
     }
 
-    .stat-card {
+    .filter-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 15px;
+        justify-content: flex-end;
+        margin-top: 10px;
+    }
+
+    /* Actions d'export */
+    .export-section {
         background: white;
         border-radius: var(--radius);
         padding: 20px;
-        text-align: center;
+        margin-bottom: 30px;
         box-shadow: var(--shadow);
-        border-left: 4px solid var(--primary);
     }
 
-    .stat-card.total { border-left-color: var(--primary); }
-    .stat-card.pending { border-left-color: var(--warning); }
-    .stat.card.delivered { border-left-color: var(--success); }
-    .stat-card.cancelled { border-left-color: var(--danger); }
-
-    .stat-number {
-        font-size: 1.8rem;
-        font-weight: 700;
-        margin: 0 0 5px;
+    .export-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
     }
 
-    .stat-label {
-        color: #7f8c8d;
-        font-size: 0.85rem;
+    .export-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
         margin: 0;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .export-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+    }
+
+    .export-btn.csv {
+        background: #28a745;
+        color: white;
+    }
+
+    .export-btn.pdf {
+        background: #dc3545;
+        color: white;
+    }
+
+    .export-btn.reset {
+        background: #6c757d;
+        color: white;
+    }
+
+    .export-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Liste des commandes */
+    .orders-container {
+        min-height: 300px;
     }
 
     .order-card {
         background: white;
         border-radius: var(--radius);
-        padding: 0;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
         box-shadow: var(--shadow);
-        border-left: 4px solid var(--primary);
         transition: var(--transition);
+        overflow: hidden;
+        border: 1px solid #e9ecef;
     }
 
     .order-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        border-color: var(--primary);
     }
 
     .order-header {
-        padding: 20px;
-        border-bottom: 1px solid #eee;
+        padding: 25px;
+        border-bottom: 1px solid #f1f3f4;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     }
 
     .order-info {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .order-number {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .order-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .meta-item i {
+        color: var(--primary);
+        font-size: 0.9rem;
+    }
+
+    .order-status {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-end;
+        min-width: 200px;
+    }
+
+    .status-badge {
+        padding: 8px 20px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-badge:before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-pending { 
+        background: rgba(248, 150, 30, 0.1); 
+        color: var(--warning);
+        border: 1px solid rgba(248, 150, 30, 0.3);
+    }
+    .status-pending:before { background: var(--warning); }
+
+    .status-waiting_payment { 
+        background: rgba(23, 162, 184, 0.1); 
+        color: #17a2b8;
+        border: 1px solid rgba(23, 162, 184, 0.3);
+    }
+    .status-waiting_payment:before { background: #17a2b8; }
+
+    .status-payment_verified { 
+        background: rgba(40, 167, 69, 0.1); 
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    .status-payment_verified:before { background: #28a745; }
+
+    .status-paid { 
+        background: rgba(76, 201, 240, 0.1); 
+        color: var(--success);
+        border: 1px solid rgba(76, 201, 240, 0.3);
+    }
+    .status-paid:before { background: var(--success); }
+
+    .status-failed { 
+        background: rgba(247, 37, 133, 0.1); 
+        color: var(--danger);
+        border: 1px solid rgba(247, 37, 133, 0.3);
+    }
+    .status-failed:before { background: var(--danger); }
+
+    .status-refunded { 
+        background: rgba(111, 66, 193, 0.1); 
+        color: #6f42c1;
+        border: 1px solid rgba(111, 66, 193, 0.3);
+    }
+    .status-refunded:before { background: #6f42c1; }
+
+    .payment-badge {
+        padding: 6px 15px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        background: var(--light);
+        color: var(--dark);
+        border: 1px solid #dee2e6;
+    }
+
+    .order-amount {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark);
+    }
+
+    /* Corps de la commande */
+    .order-body {
+        padding: 25px;
+    }
+
+    .section-title-sm {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f1f3f4;
+    }
+
+    .items-grid {
+        display: grid;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .order-item {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        gap: 20px;
+        align-items: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .order-item:hover {
+        background: #e9ecef;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dee2e6;
+    }
+
+    .item-image i {
+        font-size: 1.5rem;
+        color: #adb5bd;
+    }
+
+    .item-details {
         display: flex;
         flex-direction: column;
         gap: 5px;
     }
 
-    .order-number {
-        font-weight: 700;
-        color: var(--primary);
-        font-size: 1.1rem;
-        margin: 0;
-    }
-
-    .order-date {
-        color: #7f8c8d;
-        font-size: 0.9rem;
-        margin: 0;
-    }
-
-    .order-status {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    .status-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
-    .status-confirmed { background: rgba(0, 123, 255, 0.1); color: #007bff; }
-    .status-processing { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
-    .status-shipped { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
-    .status-delivered { background: rgba(40, 167, 69, 0.1); color: var(--success); }
-    .status-cancelled { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
-    .status-refunded { background: rgba(111, 66, 193, 0.1); color: #6f42c1; }
-
-    .payment-badge {
-        padding: 4px 8px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        background: rgba(40, 167, 69, 0.1);
-        color: var(--success);
-    }
-
-    .payment-pending { background: rgba(255, 193, 7, 0.1); color: var(--warning); }
-    .payment-failed { background: rgba(220, 53, 69, 0.1); color: var(--danger); }
-
-    .order-body {
-        padding: 20px;
-    }
-
-    .order-items {
-        margin-bottom: 15px;
-    }
-
-    .order-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #f8f9fa;
-    }
-
-    .order-item:last-child {
-        border-bottom: none;
-    }
-
-    .item-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        flex: 1;
-    }
-
-    .item-image {
-        width: 50px;
-        height: 50px;
-        border-radius: 8px;
-        object-fit: cover;
-    }
-
-    .item-details {
-        flex: 1;
-    }
-
     .item-name {
-        font-weight: 500;
-        margin: 0 0 5px;
+        font-weight: 600;
         color: var(--dark);
+        margin: 0;
     }
 
     .item-price {
-        color: #7f8c8d;
+        color: #6c757d;
         font-size: 0.9rem;
         margin: 0;
     }
 
     .item-quantity {
+        font-weight: 600;
         color: var(--dark);
-        font-weight: 500;
+        background: white;
+        padding: 5px 12px;
+        border-radius: 20px;
+        border: 1px solid #dee2e6;
     }
 
-    .order-totals {
-        background: var(--light);
-        padding: 15px;
+    .item-total {
+        font-weight: 700;
+        color: var(--primary);
+        font-size: 1.1rem;
+    }
+
+    /* Totaux */
+    .totals-section {
+        background: #f8f9fa;
         border-radius: var(--radius);
-        margin-top: 15px;
+        padding: 20px;
+        margin: 25px 0;
     }
 
     .total-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 5px 0;
+        padding: 10px 0;
+        color: var(--dark);
+    }
+
+    .total-row:not(:last-child) {
+        border-bottom: 1px solid #dee2e6;
     }
 
     .total-row.final {
-        border-top: 1px solid #ddd;
-        margin-top: 10px;
-        padding-top: 10px;
+        font-size: 1.3rem;
         font-weight: 700;
-        font-size: 1.1rem;
+        color: var(--primary);
+        margin-top: 10px;
+        padding-top: 15px;
+        border-top: 2px solid var(--primary);
+    }
+
+    /* Informations de paiement */
+    .payment-info-section {
+        background: #e8f4f8;
+        border-radius: var(--radius);
+        padding: 25px;
+        margin: 25px 0;
+    }
+
+    .payment-method {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    .payment-icon {
+        font-size: 2rem;
         color: var(--primary);
     }
 
+    .payment-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .detail-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* Pied de commande */
     .order-footer {
-        padding: 15px 20px;
+        padding: 20px 25px;
         background: var(--light);
-        border-top: 1px solid #eee;
+        border-top: 1px solid #e9ecef;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
-        gap: 10px;
+        gap: 20px;
     }
 
     .customer-info {
         flex: 1;
+        min-width: 300px;
+    }
+
+    .customer-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 15px;
     }
 
     .customer-name {
-        font-weight: 500;
-        margin: 0 0 5px;
+        font-size: 1.2rem;
+        font-weight: 600;
         color: var(--dark);
+        margin: 0;
     }
 
-    .customer-email {
-        color: #7f8c8d;
-        font-size: 0.9rem;
-        margin: 0;
+    .customer-details {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .customer-detail {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #6c757d;
+        font-size: 0.95rem;
+    }
+
+    .customer-detail i {
+        width: 16px;
+        color: var(--primary);
     }
 
     .order-actions {
         display: flex;
-        gap: 10px;
+        gap: 12px;
         flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
-    .empty-orders {
-        text-align: center;
-        padding: 60px 20px;
-        color: #7f8c8d;
+    .action-btn {
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
     }
 
-    .empty-orders i {
-        font-size: 4rem;
-        margin-bottom: 20px;
+    .action-btn.details {
+        background: var(--primary);
+        color: white;
+    }
+
+    .action-btn.verify {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .action-btn.delivered {
+        background: #28a745;
+        color: white;
+    }
+
+    .action-btn.delete {
+        background: var(--danger);
+        color: white;
+    }
+
+    .action-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .action-btn:disabled {
         opacity: 0.5;
+        cursor: not-allowed;
     }
 
-    .export-actions {
+    /* État vide */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #adb5bd;
+        margin-bottom: 20px;
+    }
+
+    .empty-title {
+        font-size: 1.8rem;
+        color: var(--dark);
+        margin-bottom: 10px;
+    }
+
+    .empty-text {
+        color: #6c757d;
+        margin-bottom: 30px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Pagination */
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 40px;
+    }
+
+    .pagination {
         display: flex;
         gap: 10px;
-        margin-bottom: 20px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .page-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid #dee2e6;
+        transition: var(--transition);
+    }
+
+    .page-item:hover:not(.disabled):not(.active) {
+        border-color: var(--primary);
+        background: #f8f9fa;
+    }
+
+    .page-item.active {
+        background: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .page-item.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .page-link {
+        text-decoration: none;
+        color: var(--dark);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+    }
+
+    .page-item.active .page-link {
+        color: white;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: var(--radius);
+        width: 100%;
+        max-width: 900px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 25px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .modal-close {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 1.2rem;
+    }
+
+    .modal-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .modal-body {
+        padding: 0;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-tabs {
+        display: flex;
+        border-bottom: 1px solid #e9ecef;
+        background: #f8f9fa;
+    }
+
+    .modal-tab {
+        padding: 18px 30px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        font-weight: 600;
+        color: #6c757d;
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-tab:hover {
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.05);
+    }
+
+    .modal-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+        background: white;
+    }
+
+    .tab-content {
+        display: none;
+        padding: 30px;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .modal-footer {
+        padding: 20px 30px;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        background: #f8f9fa;
+    }
+
+    /* Payment proof image */
+    .payment-proof-container {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .payment-proof-image {
+        max-width: 100%;
+        max-height: 500px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid #dee2e6;
+    }
+
+    /* Loading state */
+    .loading {
+        opacity: 0.7;
+        pointer-events: none;
+        position: relative;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
     }
 
     /* Responsive */
     @media (max-width: 768px) {
-        .order-header {
+        .profile-container {
+            padding: 20px 15px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
             flex-direction: column;
-            align-items: flex-start;
+            text-align: center;
+            gap: 10px;
         }
 
-        .order-status {
-            align-self: stretch;
-            justify-content: space-between;
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
         }
 
-        .order-footer {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .order-actions {
-            width: 100%;
-            justify-content: space-between;
+        .stat-number {
+            font-size: 2.2rem;
         }
 
         .filters-content {
             grid-template-columns: 1fr;
         }
 
-        .date-inputs {
+        .date-group {
             grid-template-columns: 1fr;
+        }
+
+        .order-header, .order-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .order-status {
+            align-items: stretch;
+            min-width: auto;
+        }
+
+        .order-item {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .item-image {
+            margin: 0 auto;
+        }
+
+        .modal-content {
+            max-height: 95vh;
+        }
+
+        .modal-tabs {
+            flex-direction: column;
+        }
+
+        .modal-tab {
+            justify-content: center;
         }
     }
 
-    /* Animation pour le chargement */
-    .loading {
-        opacity: 0.7;
-        pointer-events: none;
-    }
+    @media (max-width: 480px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
 
-    .skeleton {
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading 1.5s infinite;
-    }
+        .export-buttons, .order-actions {
+            flex-direction: column;
+            width: 100%;
+        }
 
-    @keyframes loading {
-        0% { background-position: 200% 0; }
-        100% { background-position: -200% 0; }
+        .export-btn, .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
-<!-- Gradient background circles -->
-<div class="gradient-circles">
-    <div class="gradient-circle circle-1"></div>
-    <div class="gradient-circle circle-2"></div>
-</div>
-
 <!-- Main Content -->
 <main>
-    <div class="profile-container animate__animated animate__fadeIn">
+    <div class="profile-container">
+        <!-- En-tête -->
         <div class="section-header">
             <h3 class="section-title">
                 <i class="fas fa-history"></i> 
                 {% if user.is_superuser %}
                     Historique des Commandes - Toutes les boutiques
                 {% elif user.user_type == 'seller' %}
-                    Historique des Commandes - {{ shop.title }}
+                    Historique des Commandes - {{ user.shop.title }}
                 {% else %}
                     Mes Commandes
                 {% endif %}
             </h3>
         </div>
 
-        <!-- Statistiques rapides -->
-<div class="stats-overview">
-    <div class="stat-card total">
-        <div class="stat-number">{{ total_orders }}</div>
-        <div class="stat-label">Total des commandes</div>
-    </div>
-    <div class="stat-card pending">
-        <div class="stat-number">{{ pending_orders }}</div>
-        <div class="stat-label">En attente</div>
-    </div>
-    <div class="stat-card delivered">
-        <div class="stat-number">{{ delivered_orders }}</div>
-        <div class="stat-label">Payées</div>  <!-- Changé de "Livrées" à "Payées" -->
-    </div>
-    <div class="stat-card cancelled">
-        <div class="stat-number">{{ cancelled_orders }}</div>
-        <div class="stat-label">Annulées/Échouées</div>  <!-- Adapté -->
-    </div>
-</div>
-
-        <!-- Filtres avancés -->
-        <div class="filters-content" id="filtersContent">
-    <div class="filter-group">
-        <label>Statut de la commande</label>
-        <select class="filter-select" id="statusFilter" multiple>
-            <option value="pending">En attente</option>
-            <option value="waiting_payment">En attente de paiement</option>
-            <option value="payment_verified">Paiement vérifié</option>
-            <option value="paid">Payée</option>
-            <option value="failed">Échec</option>
-            <option value="refunded">Remboursée</option>
-        </select>
-    </div>
-
-    <div class="filter-group">
-        <label>Statut de paiement</label>
-        <select class="filter-select" id="paymentFilter">
-            <option value="">Tous</option>
-            <option value="paid">Payée</option>
-            <option value="pending">En attente</option>
-            <option value="failed">Échouée</option>
-        </select>
-    </div>
-
-    {% if user.is_superuser %}
-    <div class="filter-group">
-        <label>Boutique</label>
-        <select class="filter-select" id="shopFilter">
-            <option value="">Toutes les boutiques</option>
-            {% for shop in all_shops %}
-            <option value="{{ shop.id }}">{{ shop.title }}</option>
-            {% endfor %}
-        </select>
-    </div>
-    {% endif %}
-
-    <div class="filter-group">
-        <label>Méthode de paiement</label>
-        <select class="filter-select" id="paymentMethodFilter">
-            <option value="">Toutes</option>
-            <option value="whatsapp">WhatsApp</option>
-            <option value="om">Orange Money</option>
-            <option value="momo">MTN Mobile Money</option>
-        </select>
-    </div>
-
-    <div class="filter-group">
-        <label>Période</label>
-        <div class="date-inputs">
-            <input type="date" class="filter-select" id="dateFrom" placeholder="De">
-            <input type="date" class="filter-select" id="dateTo" placeholder="À">
-        </div>
-    </div>
-
-    <div class="filter-group">
-        <label>Montant minimum</label>
-        <input type="number" class="filter-select" id="amountMin" placeholder="Montant min" min="0">
-    </div>
-
-    <div class="filter-group">
-        <label>Montant maximum</label>
-        <input type="number" class="filter-select" id="amountMax" placeholder="Montant max" min="0">
-    </div>
-</div>
-
-        <!-- Actions d'export -->
-        <div class="export-actions">
-            <button class="btn btn-secondary" onclick="exportOrders('csv')">
-                <i class="fas fa-file-csv"></i> Exporter CSV
-            </button>
-            <button class="btn btn-secondary" onclick="exportOrders('pdf')">
-                <i class="fas fa-file-pdf"></i> Exporter PDF
-            </button>
-            <button class="btn btn-primary" onclick="resetFilters()">
-                <i class="fas fa-refresh"></i> Réinitialiser
-            </button>
-        </div>
-
-        <!-- Liste des commandes -->
-        <!-- Liste des commandes -->
-<div id="ordersContainer">
-    {% if orders %}
-        {% for order in orders %}
-        <div class="order-card" data-order-id="{{ order.id }}" 
-             data-status="{{ order.status }}" 
-             data-payment-status="{{ order.payment_status }}"
-             data-shop-id="{{ order.shop.id|default:'' }}"
-             data-customer-email="{{ order.customer_email }}"
-             data-amount="{{ order.total_amount }}"
-             data-date="{{ order.created_at|date:'Y-m-d' }}"
-             data-payment-method="{{ order.payment_method }}">
-            
-            <!-- En-tête de la commande -->
-            <div class="order-header">
-                <div class="order-info">
-                    <h4 class="order-number">#{{ order.order_number }}</h4>
-                    <p class="order-date">
-                        <i class="far fa-calendar"></i> 
-                        {{ order.created_at|date:"d/m/Y à H:i" }}
-                    </p>
-                    {% if user.is_superuser and order.shop %}
-                    <p class="order-shop">
-                        <i class="fas fa-store"></i> {{ order.shop.title }}
-                    </p>
-                    {% endif %}
-                    <p class="order-items-count">
-                        <i class="fas fa-cube"></i> {{ order.total_items }} article(s)
-                    </p>
+        <!-- Statistiques -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-shopping-cart"></i>
                 </div>
-                <div class="order-status">
-                    <span class="status-badge status-{{ order.status }}">
-                        {{ order.get_status_display }}
-                    </span>
-                    <span class="payment-badge payment-{{ order.payment_method }}">
-                        {{ order.get_payment_method_display }}
-                    </span>
-                    <strong class="order-amount">{{ order.total_amount }} FCFA</strong>
+                <div class="stat-number">{{ total_orders }}</div>
+                <div class="stat-label">Total des commandes</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number">{{ pending_orders }}</div>
+                <div class="stat-label">En attente</div>
+            </div>
+            <div class="stat-card paid">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ delivered_orders }}</div>
+                <div class="stat-label">Payées</div>
+            </div>
+            <div class="stat-card cancelled">
+                <div class="stat-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-number">{{ cancelled_orders }}</div>
+                <div class="stat-label">Annulées</div>
+            </div>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters-container">
+            <div class="filters-header" onclick="toggleFilters()">
+                <h4 class="filters-title">
+                    <i class="fas fa-filter" id="filtersIcon"></i>
+                    Filtres avancés
+                    <span class="badge bg-primary" id="activeFiltersCount">0</span>
+                </h4>
+                <i class="fas fa-chevron-down" id="filtersArrow"></i>
+            </div>
+            <div class="filters-content" id="filtersContent">
+                <!-- Statut -->
+                <div class="filter-group">
+                    <label class="filter-label">Statut</label>
+                    <select class="filter-select" id="statusFilter" multiple>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Méthode de paiement -->
+                <div class="filter-group">
+                    <label class="filter-label">Méthode de paiement</label>
+                    <select class="filter-select" id="paymentMethodFilter">
+                        <option value="">Toutes</option>
+                        {% for value, label in payment_methods %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Statut de paiement -->
+                <div class="filter-group">
+                    <label class="filter-label">Statut paiement</label>
+                    <select class="filter-select" id="paymentStatusFilter">
+                        <option value="">Tous</option>
+                        <option value="verified">Vérifié</option>
+                        <option value="pending">En attente</option>
+                        <option value="failed">Échoué</option>
+                    </select>
+                </div>
+
+                <!-- Boutique (admin uniquement) -->
+                {% if user.is_superuser %}
+                <div class="filter-group">
+                    <label class="filter-label">Boutique</label>
+                    <select class="filter-select" id="shopFilter">
+                        <option value="">Toutes</option>
+                        {% for shop in all_shops %}
+                        <option value="{{ shop.id }}">{{ shop.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <!-- Période -->
+                <div class="filter-group">
+                    <label class="filter-label">Période</label>
+                    <div class="date-group">
+                        <input type="date" class="filter-input" id="dateFrom" placeholder="Date de début">
+                        <input type="date" class="filter-input" id="dateTo" placeholder="Date de fin">
+                    </div>
+                </div>
+
+                <!-- Montant -->
+                <div class="filter-group">
+                    <label class="filter-label">Montant minimum</label>
+                    <input type="number" class="filter-input" id="amountMin" placeholder="0" min="0">
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">Montant maximum</label>
+                    <input type="number" class="filter-input" id="amountMax" placeholder="∞" min="0">
+                </div>
+
+                <!-- Actions -->
+                <div class="filter-actions">
+                    <button class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> Appliquer
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                        <i class="fas fa-redo"></i> Réinitialiser
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Corps de la commande -->
-            <div class="order-body">
-                <div class="order-items">
-                    {% for item in order.cart_items %}
-                    <div class="order-item">
-                        <div class="item-info">
-                            <div class="item-image" style="background: #f8f9fa; display: flex; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 8px;">
-                                <i class="fas fa-cube text-muted"></i>
-                            </div>
-                            <div class="item-details">
-                                <h5 class="item-name">{{ item.name }}</h5>
-                                <p class="item-price">{{ item.price }} FCFA l'unité</p>
-                                {% if item.expiry_date %}
-                                <p class="item-expiry">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock"></i> 
-                                        Expire le {{ item.expiry_date }}
-                                    </small>
-                                </p>
+        <!-- Export -->
+        <div class="export-section">
+            <div class="export-header">
+                <h4 class="export-title">Exporter les commandes</h4>
+                <div class="export-buttons">
+                    <button class="export-btn csv" onclick="exportOrders('csv')">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <button class="export-btn pdf" onclick="exportOrders('pdf')">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                    <button class="export-btn reset" onclick="refreshOrders()">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des commandes -->
+        <div class="orders-container" id="ordersContainer">
+            {% if page_orders %}
+                {% for order in page_orders %}
+                {% with total_items=order.cart_items|sum_items %}
+                <div class="order-card" 
+                     data-order-id="{{ order.id }}"
+                     data-status="{{ order.status }}"
+                     data-payment-method="{{ order.payment_method }}"
+                     data-payment-verified="{{ order.payment_verified|yesno:'true,false' }}"
+                     data-shop-id="{{ order.shop_id }}"
+                     data-amount="{{ order.final_amount }}"
+                     data-date="{{ order.created_at|date:'Y-m-d' }}"
+                     data-customer="{{ order.customer_email }}">
+                    
+                    <!-- En-tête -->
+                    <div class="order-header">
+                        <div class="order-info">
+                            <h4 class="order-number">
+                                <i class="fas fa-hashtag"></i>
+                                #{{ order.id|stringformat:"s"|slice:":8"|upper }}
+                            </h4>
+                            <div class="order-meta">
+                                <span class="meta-item">
+                                    <i class="far fa-calendar"></i>
+                                    {{ order.created_at|date:"d/m/Y" }}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="far fa-clock"></i>
+                                    {{ order.created_at|date:"H:i" }}
+                                </span>
+                                <span class="meta-item">
+                                    <i class="fas fa-cubes"></i>
+                                    {{ total_items }} article{{ total_items|pluralize:"s" }}
+                                </span>
+                                {% if user.is_superuser %}
+                                <span class="meta-item">
+                                    <i class="fas fa-store"></i>
+                                    Boutique: {{ order.shop_id }}
+                                </span>
                                 {% endif %}
                             </div>
                         </div>
-
-                        <div class="item-quantity">
-                            x{{ item.quantity }}
-                        </div>
-                        <div class="item-total">
-                            <strong>{{ item.price }} FCFA</strong>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <div class="order-totals">
-                    <div class="total-row">
-                        <span>Sous-total:</span>
-                        <span>{{ order.total_amount }} FCFA</span>
-                    </div>
-                    <div class="total-row">
-                        <span>Taxes:</span>
-                        <span>{{ order.tax_amount }} FCFA</span>
-                    </div>
-                    <div class="total-row final">
-                        <span>Total:</span>
-                        <span>{{ order.final_amount }} FCFA</span>
-                    </div>
-                </div>
-
-                <!-- Informations de paiement -->
-                <div class="payment-info mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
-                    <h6><i class="fas fa-credit-card"></i> Informations de paiement</h6>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <strong>Méthode:</strong> {{ order.get_payment_method_display }}<br>
-                            <strong>Statut:</strong> 
-                            <span class="badge {% if order.payment_verified %}bg-success{% else %}bg-warning{% endif %}">
-                                {{ order.payment_verified|yesno:"Vérifié,En attente" }}
+                        <div class="order-status">
+                            <span class="status-badge status-{{ order.status }}">
+                                {{ order.get_status_display }}
                             </span>
+                            <span class="payment-badge">
+                                <i class="fas fa-{{ order.payment_method|payment_method_icon }}"></i>
+                                {{ order.get_payment_method_display }}
+                            </span>
+                            <div class="order-amount">{{ order.final_amount }} FCFA</div>
                         </div>
-                        <div class="col-md-6">
-                            {% if order.payment_phone %}
-                            <strong>Téléphone:</strong> {{ order.payment_phone }}<br>
-                            {% endif %}
-                            {% if order.payment_verified_at %}
-                            <strong>Vérifié le:</strong> {{ order.payment_verified_at|date:"d/m/Y H:i" }}
+                    </div>
+
+                    <!-- Corps -->
+                    <div class="order-body">
+                        <!-- Articles -->
+                        <h5 class="section-title-sm">
+                            <i class="fas fa-shopping-basket"></i> Articles commandés
+                        </h5>
+                        <div class="items-grid">
+                            {% for item in order.cart_items %}
+                            <div class="order-item">
+                                <div class="item-image">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="item-details">
+                                    <h6 class="item-name">{{ item.name }}</h6>
+                                    <p class="item-price">{{ item.price }} FCFA l'unité</p>
+                                </div>
+                                <div class="item-quantity">
+                                    x{{ item.quantity }}
+                                </div>
+                                <div class="item-total">
+                                    {{ item.price|multiply:item.quantity }} FCFA
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Totaux -->
+                        <div class="totals-section">
+                            <div class="total-row">
+                                <span>Sous-total:</span>
+                                <span>{{ order.total_amount }} FCFA</span>
+                            </div>
+                            <div class="total-row">
+                                <span>Taxes:</span>
+                                <span>{{ order.tax_amount }} FCFA</span>
+                            </div>
+                            <div class="total-row final">
+                                <span>Total à payer:</span>
+                                <span>{{ order.final_amount }} FCFA</span>
+                            </div>
+                        </div>
+
+                        <!-- Informations de paiement -->
+                        <div class="payment-info-section">
+                            <h5 class="section-title-sm">
+                                <i class="fas fa-credit-card"></i> Informations de paiement
+                            </h5>
+                            <div class="payment-method">
+                                <div class="payment-icon">
+                                    <i class="fas fa-{{ order.payment_method|payment_method_icon }}"></i>
+                                </div>
+                                <div>
+                                    <h6 style="margin: 0; color: var(--dark);">{{ order.get_payment_method_display }}</h6>
+                                    {% if order.payment_phone %}
+                                    <p style="margin: 5px 0 0 0; color: #6c757d;">
+                                        <i class="fas fa-phone"></i> {{ order.payment_phone }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="payment-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Statut paiement</span>
+                                    <span class="detail-value">
+                                        {% if order.payment_verified %}
+                                        <span class="badge bg-success">Vérifié</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">En attente</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Date vérification</span>
+                                    <span class="detail-value">
+                                        {% if order.payment_verified_at %}
+                                        {{ order.payment_verified_at|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                        Non vérifié
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pied -->
+                    <div class="order-footer">
+                        <div class="customer-info">
+                            <div class="customer-header">
+                                <i class="fas fa-user-circle fa-2x" style="color: var(--primary);"></i>
+                                <h5 class="customer-name">{{ order.customer_first_name }} {{ order.customer_last_name }}</h5>
+                            </div>
+                            <div class="customer-details">
+                                <div class="customer-detail">
+                                    <i class="fas fa-envelope"></i>
+                                    {{ order.customer_email }}
+                                </div>
+                                <div class="customer-detail">
+                                    <i class="fas fa-phone"></i>
+                                    {{ order.customer_phone }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-actions">
+                            <button class="action-btn details" onclick="viewOrderDetails('{{ order.id }}')">
+                                <i class="fas fa-eye"></i> Détails
+                            </button>
+                            
+                            {% if user.user_type == 'seller' or user.is_superuser %}
+                            <!-- Vérifier paiement -->
+                            <button class="action-btn verify" 
+                                    onclick="updateOrderStatus('{{ order.id }}', 'payment_verified')"
+                                    {% if order.status != 'waiting_payment' or order.payment_verified %}disabled{% endif %}>
+                                <i class="fas fa-check-circle"></i> Vérifier
+                            </button>
+                            
+                            <!-- Marquer comme livré -->
+                            <button class="action-btn delivered" 
+                                    onclick="updateOrderStatus('{{ order.id }}', 'paid')"
+                                    {% if order.status not in 'waiting_payment,payment_verified' or not order.payment_verified %}disabled{% endif %}>
+                                <i class="fas fa-truck"></i> Livrer
+                            </button>
+                            
+                            <!-- Supprimer -->
+                            <button class="action-btn delete" onclick="deleteOrder('{{ order.id }}')">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Pied de la commande -->
-            <div class="order-footer">
-                <div class="customer-info">
-                    <h5 class="customer-name">
-                        <i class="fas fa-user"></i> 
-                        {{ order.customer_name }}
-                    </h5>
-                    <p class="customer-email">
-                        <i class="fas fa-envelope"></i> {{ order.customer_email }}
+                {% endwith %}
+                {% endfor %}
+            {% else %}
+                <!-- État vide -->
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <h3 class="empty-title">Aucune commande trouvée</h3>
+                    <p class="empty-text">
+                        {% if user.user_type == 'customer' %}
+                        Vous n'avez pas encore passé de commande. Découvrez nos produits et faites votre première commande !
+                        {% else %}
+                        Aucune commande n'a été passée pour le moment. Les commandes apparaîtront ici lorsqu'elles seront créées.
+                        {% endif %}
                     </p>
-                    <p class="customer-phone">
-                        <i class="fas fa-phone"></i> {{ order.customer_phone }}
-                    </p>
-                </div>
-                <div class="order-actions">
-                    {% if user.user_type == 'seller' or user.is_superuser %}
-                    <button class="btn btn-sm btn-success" 
-                            onclick="updateOrderStatus('{{ order.id }}', 'payment_verified')"
-                            {% if order.status != 'waiting_payment' %}disabled{% endif %}>
-                        <i class="fas fa-check-circle"></i> Vérifier paiement
-                    </button>
-                    {% comment %} <button class="btn btn-sm btn-primary"  
-                            onclick="updateOrderStatus('{{ order.id }}', 'paid')"
-                            {% if order.status not in ['pending', 'payment_verified'] %}disabled{% endif %}>
-                        <i class="fas fa-check"></i> Marquer payée
-                    </button>{% endcomment %}
-                    {% endif %}
-                    
-                    <button class="btn btn-sm btn-info" 
-                            onclick="viewOrderDetails('{{ order.id }}')">
-                        <i class="fas fa-eye"></i> Détails
-                    </button>
-                    
-                    {% comment %} {% if user.user_type == 'customer' and order.status in ['pending', 'waiting_payment'] %}
-                    <button class="btn btn-sm btn-danger" 
-                            onclick="cancelOrder('{{ order.id }}')">
-                        <i class="fas fa-times"></i> Annuler
-                    </button>
-                    {% endif %} {% endcomment %}
-
-                    {% if order.payment_proof %}
-                    <button class="btn btn-sm btn-warning" 
-                            onclick="viewPaymentProof('{{ order.id }}')">
-                        <i class="fas fa-receipt"></i> Preuve
-                    </button>
+                    {% if user.user_type == 'customer' %}
+                    <a href="{% url 'marketplace' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-shopping-cart"></i> Explorer la marketplace
+                    </a>
                     {% endif %}
                 </div>
-            </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="empty-orders">
-            <i class="fas fa-shopping-bag"></i>
-            <h4>Aucune commande trouvée</h4>
-            <p>
-                {% if user.user_type == 'customer' %}
-                Vous n'avez pas encore passé de commande.
-                {% else %}
-                Aucune commande n'a été passée.
-                {% endif %}
-            </p>
-            {% if user.user_type == 'customer' %}
-            <a href="{% url 'marketplace' %}" class="btn btn-primary">
-                <i class="fas fa-shopping-cart"></i> Découvrir la marketplace
-            </a>
             {% endif %}
         </div>
-    {% endif %}
-</div>
+
         <!-- Pagination -->
-        {% comment %} {% if orders.has_other_pages %}
-        <nav aria-label="Pagination des commandes">
-            <ul class="pagination justify-content-center">
-                {% if orders.has_previous %}
+        {% if page_orders.has_other_pages %}
+        <div class="pagination-container">
+            <ul class="pagination">
+                {% if page_orders.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ orders.previous_page_number }}">Précédent</a>
+                    <a class="page-link" href="?page={{ page_orders.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
                 </li>
                 {% endif %}
 
-                {% for num in orders.paginator.page_range %}
-                <li class="page-item {% if orders.number == num %}active{% endif %}">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
+                {% for num in page_orders.paginator.page_range %}
+                    {% if page_orders.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_orders.number|add:'-3' and num < page_orders.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
                 {% endfor %}
 
-                {% if orders.has_next %}
+                {% if page_orders.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ orders.next_page_number }}">Suivant</a>
+                    <a class="page-link" href="?page={{ page_orders.next_page_number }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
                 </li>
                 {% endif %}
             </ul>
-        </nav>
-        {% endif %} {% endcomment %}
+        </div>
+        {% endif %}
     </div>
 </main>
 
+<!-- Modal pour les détails -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="fas fa-receipt"></i>
+                Détails de la commande
+            </h3>
+            <button class="modal-close" onclick="closeModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="modal-tabs">
+            <button class="modal-tab active" data-tab="details">
+                <i class="fas fa-info-circle"></i> Détails
+            </button>
+            <button class="modal-tab" data-tab="items">
+                <i class="fas fa-shopping-basket"></i> Articles
+            </button>
+            <button class="modal-tab" data-tab="payment">
+                <i class="fas fa-credit-card"></i> Paiement
+            </button>
+            <button class="modal-tab" data-tab="proof" id="proofTab">
+                <i class="fas fa-receipt"></i> Preuve
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <!-- Onglet Détails -->
+            <div class="tab-content active" id="detailsTab">
+                <div class="loading" id="detailsLoading">
+                    Chargement des détails...
+                </div>
+                <div id="detailsContent"></div>
+            </div>
+            
+            <!-- Onglet Articles -->
+            <div class="tab-content" id="itemsTab">
+                <div class="loading" id="itemsLoading">
+                    Chargement des articles...
+                </div>
+                <div id="itemsContent"></div>
+            </div>
+            
+            <!-- Onglet Paiement -->
+            <div class="tab-content" id="paymentTab">
+                <div class="loading" id="paymentLoading">
+                    Chargement des informations de paiement...
+                </div>
+                <div id="paymentContent"></div>
+            </div>
+            
+            <!-- Onglet Preuve -->
+            <div class="tab-content" id="proofTabContent">
+                <div class="loading" id="proofLoading">
+                    Chargement de la preuve de paiement...
+                </div>
+                <div class="payment-proof-container" id="proofContent"></div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="closeModal()">
+                <i class="fas fa-times"></i> Fermer
+            </button>
+            {% if user.user_type == 'seller' or user.is_superuser %}
+            <button class="btn btn-success" id="verifyPaymentBtn" style="display: none;">
+                <i class="fas fa-check-circle"></i> Vérifier paiement
+            </button>
+            <button class="btn btn-primary" id="markDeliveredBtn" style="display: none;">
+                <i class="fas fa-truck"></i> Marquer livré
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 <script>
-    // Filtres dynamiques
+    // Variables globales
+    let currentOrderId = null;
     let activeFilters = {
         status: [],
-        payment: '',
+        paymentMethod: '',
+        paymentStatus: '',
         shop: '',
-        customer: '',
         dateFrom: '',
         dateTo: '',
         amountMin: '',
         amountMax: ''
     };
 
+    // Initialisation
     document.addEventListener('DOMContentLoaded', function() {
         initializeFilters();
-        setupFilterListeners();
+        setupEventListeners();
+        loadURLFilters();
     });
 
+    // Initialiser les filtres
     function initializeFilters() {
-        // Récupérer les filtres depuis l'URL
+        const statusFilter = document.getElementById('statusFilter');
+        if (statusFilter) {
+            new Choices(statusFilter, {
+                removeItemButton: true,
+                searchEnabled: true,
+                placeholder: true,
+                placeholderValue: 'Sélectionnez...'
+            });
+        }
+    }
+
+    // Écouteurs d'événements
+    function setupEventListeners() {
+        // Filtres
+        const filters = ['paymentMethodFilter', 'paymentStatusFilter', 'shopFilter', 
+                        'dateFrom', 'dateTo', 'amountMin', 'amountMax'];
+        
+        filters.forEach(filterId => {
+            const element = document.getElementById(filterId);
+            if (element) {
+                element.addEventListener('change', applyFilters);
+            }
+        });
+
+        // Tabs modal
+        document.querySelectorAll('.modal-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                switchTab(tabId);
+            });
+        });
+
+        // Actions modal
+        document.getElementById('verifyPaymentBtn')?.addEventListener('click', function() {
+            if (currentOrderId) {
+                updateOrderStatus(currentOrderId, 'payment_verified');
+            }
+        });
+
+        document.getElementById('markDeliveredBtn')?.addEventListener('click', function() {
+            if (currentOrderId) {
+                updateOrderStatus(currentOrderId, 'paid');
+            }
+        });
+    }
+
+    // Charger les filtres depuis l'URL
+    function loadURLFilters() {
         const urlParams = new URLSearchParams(window.location.search);
         
-        if (urlParams.get('status')) {
-            activeFilters.status = urlParams.get('status').split(',');
-            document.getElementById('statusFilter').value = activeFilters.status;
+        // Statut
+        const statusParam = urlParams.get('status');
+        if (statusParam) {
+            activeFilters.status = statusParam.split(',');
+            if (document.getElementById('statusFilter')) {
+                document.getElementById('statusFilter').value = activeFilters.status;
+            }
         }
         
-        if (urlParams.get('payment')) {
-            activeFilters.payment = urlParams.get('payment');
-            document.getElementById('paymentFilter').value = activeFilters.payment;
+        // Méthode de paiement
+        const paymentMethod = urlParams.get('payment_method');
+        if (paymentMethod && document.getElementById('paymentMethodFilter')) {
+            activeFilters.paymentMethod = paymentMethod;
+            document.getElementById('paymentMethodFilter').value = paymentMethod;
         }
         
-        // Appliquer les filtres initiaux
+        // Appliquer les filtres
         applyFilters();
     }
 
-    function setupFilterListeners() {
-        // Filtre statut (multiple)
-        document.getElementById('statusFilter').addEventListener('change', function(e) {
-            activeFilters.status = Array.from(e.target.selectedOptions).map(option => option.value);
-            applyFilters();
-        });
-
-        // Filtre paiement
-        document.getElementById('paymentFilter').addEventListener('change', function(e) {
-            activeFilters.payment = e.target.value;
-            applyFilters();
-        });
-
-        // Filtre boutique (admin seulement)
-        const shopFilter = document.getElementById('shopFilter');
-        if (shopFilter) {
-            shopFilter.addEventListener('change', function(e) {
-                activeFilters.shop = e.target.value;
-                applyFilters();
-            });
-        }
-
-        // Filtre client (seller/admin)
-        const customerFilter = document.getElementById('customerFilter');
-        if (customerFilter) {
-            customerFilter.addEventListener('change', function(e) {
-                activeFilters.customer = e.target.value;
-                applyFilters();
-            });
-        }
-
-        // Filtres date
-        document.getElementById('dateFrom').addEventListener('change', function(e) {
-            activeFilters.dateFrom = e.target.value;
-            applyFilters();
-        });
-
-        document.getElementById('dateTo').addEventListener('change', function(e) {
-            activeFilters.dateTo = e.target.value;
-            applyFilters();
-        });
-
-        // Filtres montant
-        document.getElementById('amountMin').addEventListener('input', debounce(function(e) {
-            activeFilters.amountMin = e.target.value;
-            applyFilters();
-        }, 500));
-
-        document.getElementById('amountMax').addEventListener('input', debounce(function(e) {
-            activeFilters.amountMax = e.target.value;
-            applyFilters();
-        }, 500));
-
-         // Filtre méthode de paiement
-        document.getElementById('paymentMethodFilter').addEventListener('change', function(e) {
-            activeFilters.paymentMethod = e.target.value;
-            applyFilters();
-        });
+    // Toggle des filtres
+    function toggleFilters() {
+        const filtersContent = document.getElementById('filtersContent');
+        const filtersArrow = document.getElementById('filtersArrow');
+        
+        filtersContent.classList.toggle('show');
+        filtersArrow.classList.toggle('fa-chevron-down');
+        filtersArrow.classList.toggle('fa-chevron-up');
     }
 
+    // Appliquer les filtres
     function applyFilters() {
-        const orders = document.querySelectorAll('.order-card');
+        // Récupérer les valeurs des filtres
+        if (document.getElementById('statusFilter')) {
+            const statusSelect = document.getElementById('statusFilter');
+            activeFilters.status = Array.from(statusSelect.selectedOptions).map(opt => opt.value);
+        }
+        
+        activeFilters.paymentMethod = document.getElementById('paymentMethodFilter')?.value || '';
+        activeFilters.paymentStatus = document.getElementById('paymentStatusFilter')?.value || '';
+        activeFilters.shop = document.getElementById('shopFilter')?.value || '';
+        activeFilters.dateFrom = document.getElementById('dateFrom')?.value || '';
+        activeFilters.dateTo = document.getElementById('dateTo')?.value || '';
+        activeFilters.amountMin = document.getElementById('amountMin')?.value || '';
+        activeFilters.amountMax = document.getElementById('amountMax')?.value || '';
+        
+        // Filtrer les cartes
+        const orderCards = document.querySelectorAll('.order-card');
         let visibleCount = 0;
         let activeFilterCount = 0;
-
-        orders.forEach(order => {
+        
+        orderCards.forEach(card => {
             let show = true;
-
+            
             // Filtre statut
             if (activeFilters.status.length > 0) {
-                const orderStatus = order.getAttribute('data-status');
-                if (!activeFilters.status.includes(orderStatus)) {
+                const status = card.getAttribute('data-status');
+                if (!activeFilters.status.includes(status)) {
                     show = false;
                 }
             }
-
-            // Filtre paiement
-            if (activeFilters.payment && activeFilters.payment !== '') {
-                const paymentStatus = order.getAttribute('data-payment-status');
-                if (paymentStatus !== activeFilters.payment) {
-                    show = false;
-                }
-            }
-
-            // Filtre boutique
-            if (activeFilters.shop && activeFilters.shop !== '') {
-                const shopId = order.getAttribute('data-shop-id');
-                if (shopId !== activeFilters.shop) {
-                    show = false;
-                }
-            }
-
-            // Filtre client
-            if (activeFilters.customer && activeFilters.customer !== '') {
-                const customerId = order.getAttribute('data-customer-id');
-                if (customerId !== activeFilters.customer) {
-                    show = false;
-                }
-            }
-
-            // Filtre date
-            if (activeFilters.dateFrom) {
-                const orderDate = order.getAttribute('data-date');
-                if (orderDate < activeFilters.dateFrom) {
-                    show = false;
-                }
-            }
-
-            if (activeFilters.dateTo) {
-                const orderDate = order.getAttribute('data-date');
-                if (orderDate > activeFilters.dateTo) {
-                    show = false;
-                }
-            }
-
-            // Filtre montant
-            if (activeFilters.amountMin) {
-                const orderAmount = parseFloat(order.getAttribute('data-amount'));
-                if (orderAmount < parseFloat(activeFilters.amountMin)) {
-                    show = false;
-                }
-            }
-
-            if (activeFilters.amountMax) {
-                const orderAmount = parseFloat(order.getAttribute('data-amount'));
-                if (orderAmount > parseFloat(activeFilters.amountMax)) {
-                    show = false;
-                }
-            }
-
             
-
             // Filtre méthode de paiement
-            if (activeFilters.paymentMethod && activeFilters.paymentMethod !== '') {
-                const paymentMethod = order.getAttribute('data-payment-method');
+            if (activeFilters.paymentMethod) {
+                const paymentMethod = card.getAttribute('data-payment-method');
                 if (paymentMethod !== activeFilters.paymentMethod) {
                     show = false;
                 }
             }
-
-            // Afficher/masquer la commande
-            order.style.display = show ? 'block' : 'none';
-            if (show) visibleCount++
+            
+            // Filtre vérification paiement
+            if (activeFilters.paymentStatus) {
+                const paymentVerified = card.getAttribute('data-payment-verified');
+                if (activeFilters.paymentStatus === 'verified' && paymentVerified !== 'true') {
+                    show = false;
+                }
+                if (activeFilters.paymentStatus === 'pending' && paymentVerified !== 'false') {
+                    show = false;
+                }
+            }
+            
+            // Filtre boutique
+            if (activeFilters.shop) {
+                const shopId = card.getAttribute('data-shop-id');
+                if (shopId !== activeFilters.shop) {
+                    show = false;
+                }
+            }
+            
+            // Filtre date
+            if (activeFilters.dateFrom) {
+                const orderDate = card.getAttribute('data-date');
+                if (orderDate < activeFilters.dateFrom) {
+                    show = false;
+                }
+            }
+            
+            if (activeFilters.dateTo) {
+                const orderDate = card.getAttribute('data-date');
+                if (orderDate > activeFilters.dateTo) {
+                    show = false;
+                }
+            }
+            
+            // Filtre montant
+            if (activeFilters.amountMin) {
+                const amount = parseFloat(card.getAttribute('data-amount'));
+                if (amount < parseFloat(activeFilters.amountMin)) {
+                    show = false;
+                }
+            }
+            
+            if (activeFilters.amountMax) {
+                const amount = parseFloat(card.getAttribute('data-amount'));
+                if (amount > parseFloat(activeFilters.amountMax)) {
+                    show = false;
+                }
+            }
+            
+            // Afficher/masquer
+            card.style.display = show ? 'block' : 'none';
+            if (show) visibleCount++;
         });
-
-        // Mettre à jour le compteur de filtres actifs
-        activeFilterCount = Object.values(activeFilters).filter(value => {
-            if (Array.isArray(value)) return value.length > 0;
-            return value !== '';
-        }).length;
-
-        document.getElementById('activeFiltersCount').textContent = activeFilterCount;
-
-        // Afficher message si aucun résultat
-        const ordersContainer = document.getElementById('ordersContainer');
-        const existingEmptyMessage = ordersContainer.querySelector('.no-results-message');
         
-        if (visibleCount === 0 && !existingEmptyMessage) {
+        // Mettre à jour le compteur
+        activeFilterCount = Object.values(activeFilters).filter(val => {
+            if (Array.isArray(val)) return val.length > 0;
+            return val !== '';
+        }).length;
+        
+        document.getElementById('activeFiltersCount').textContent = activeFilterCount;
+        
+        // Gérer l'état vide
+        const ordersContainer = document.getElementById('ordersContainer');
+        const existingMessage = ordersContainer.querySelector('.no-results-message');
+        
+        if (visibleCount === 0 && !existingMessage) {
             const noResults = document.createElement('div');
-            noResults.className = 'empty-orders no-results-message';
+            noResults.className = 'empty-state no-results-message';
             noResults.innerHTML = `
-                <i class="fas fa-search"></i>
-                <h4>Aucune commande ne correspond aux filtres</h4>
-                <p>Essayez de modifier vos critères de recherche</p>
-                <button class="btn btn-primary" onclick="resetFilters()">
-                    <i class="fas fa-refresh"></i> Réinitialiser les filtres
+                <div class="empty-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3 class="empty-title">Aucune commande trouvée</h3>
+                <p class="empty-text">Aucune commande ne correspond aux critères de recherche sélectionnés.</p>
+                <button class="btn btn-primary btn-lg" onclick="resetFilters()">
+                    <i class="fas fa-redo"></i> Réinitialiser les filtres
                 </button>
             `;
             ordersContainer.appendChild(noResults);
-        } else if (existingEmptyMessage && visibleCount > 0) {
-            existingEmptyMessage.remove();
+        } else if (existingMessage && visibleCount > 0) {
+            existingMessage.remove();
         }
     }
 
-    // Fonctions pour les actions de commande
-    function updateOrderStatus(orderId, newStatus) {
-        if (confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
-            fetch(`/api/orders/${orderId}/update-status/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCSRFToken()
-                },
-                body: JSON.stringify({
-                    status: newStatus
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Erreur: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Une erreur est survenue');
-            });
-        }
-    }
-
-    function viewPaymentProof(orderId) {
-        window.open(`/orders/${orderId}/payment-proof/`, '_blank');
-    }
-
-    function getCSRFToken() {
-        return document.querySelector('[name=csrfmiddlewaretoken]').value;
-    }
-
-    function toggleFilters() {
-        const filtersContent = document.getElementById('filtersContent');
-        const filtersIcon = document.getElementById('filtersIcon');
-        
-        filtersContent.classList.toggle('show');
-        filtersIcon.classList.toggle('fa-chevron-down');
-        filtersIcon.classList.toggle('fa-chevron-up');
-    }
-
+    // Réinitialiser les filtres
     function resetFilters() {
-        // Réinitialiser les valeurs des filtres
-        document.getElementById('statusFilter').selectedIndex = -1;
-        document.getElementById('paymentFilter').value = '';
-        
-        if (document.getElementById('shopFilter')) {
-            document.getElementById('shopFilter').value = '';
+        // Réinitialiser les valeurs
+        if (document.getElementById('statusFilter')) {
+            document.getElementById('statusFilter').selectedIndex = -1;
         }
         
-        if (document.getElementById('customerFilter')) {
-            document.getElementById('customerFilter').value = '';
-        }
+        const filters = ['paymentMethodFilter', 'paymentStatusFilter', 'shopFilter', 
+                        'dateFrom', 'dateTo', 'amountMin', 'amountMax'];
         
-        document.getElementById('dateFrom').value = '';
-        document.getElementById('dateTo').value = '';
-        document.getElementById('amountMin').value = '';
-        document.getElementById('amountMax').value = '';
-
-        // Réinitialiser l'objet activeFilters
+        filters.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.value = '';
+        });
+        
+        // Réinitialiser l'objet
         activeFilters = {
             status: [],
-            payment: '',
+            paymentMethod: '',
+            paymentStatus: '',
             shop: '',
-            customer: '',
             dateFrom: '',
             dateTo: '',
             amountMin: '',
             amountMax: ''
         };
-
+        
+        // Appliquer
         applyFilters();
     }
 
+    // Rafraîchir la liste
+    function refreshOrders() {
+        location.reload();
+    }
+
+    // Exporter les commandes
     function exportOrders(format) {
-        // Construire l'URL d'export avec les filtres actuels
         const params = new URLSearchParams();
         
+        // Ajouter les filtres actifs
         if (activeFilters.status.length > 0) {
             params.append('status', activeFilters.status.join(','));
         }
         
-        if (activeFilters.payment) {
-            params.append('payment', activeFilters.payment);
-        }
-        
-        if (activeFilters.shop) {
-            params.append('shop', activeFilters.shop);
+        if (activeFilters.paymentMethod) {
+            params.append('payment_method', activeFilters.paymentMethod);
         }
         
         if (activeFilters.dateFrom) {
@@ -998,59 +1782,464 @@
         if (activeFilters.dateTo) {
             params.append('date_to', activeFilters.dateTo);
         }
-
+        
+        if (activeFilters.shop) {
+            params.append('shop', activeFilters.shop);
+        }
+        
         const url = `/orders/export/${format}/?${params.toString()}`;
         window.open(url, '_blank');
     }
 
-    function updateOrderStatus(orderId, newStatus) {
-        if (confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
-            fetch(`/api/orders/${orderId}/update-status/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    status: newStatus
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Erreur: ' + data.message);
+    // Voir les détails d'une commande
+    function viewOrderDetails(orderId) {
+        currentOrderId = orderId;
+        
+        // Ouvrir la modal
+        const modal = document.getElementById('orderModal');
+        modal.classList.add('show');
+        
+        // Charger les détails
+        loadOrderDetails(orderId);
+    }
+
+    // Charger les détails de la commande
+    function loadOrderDetails(orderId) {
+        // Afficher le chargement
+        document.querySelectorAll('.tab-content .loading').forEach(loading => {
+            loading.style.display = 'block';
+        });
+        document.querySelectorAll('.tab-content > div:not(.loading)').forEach(content => {
+            content.innerHTML = '';
+        });
+        
+        // Requête AJAX
+        fetch(`/marketplace/orders/${orderId}/detail/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
                 }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Remplir les onglets
+                populateDetailsTab(data);
+                populateItemsTab(data);
+                populatePaymentTab(data);
+                populateProofTab(data);
+                
+                // Afficher/masquer les boutons d'action
+                const verifyBtn = document.getElementById('verifyPaymentBtn');
+                const deliveredBtn = document.getElementById('markDeliveredBtn');
+                
+                if (verifyBtn && deliveredBtn) {
+                    const canVerify = data.status === 'waiting_payment' && !data.payment_verified;
+                    const canDeliver = data.status === 'payment_verified' && data.payment_verified;
+                    
+                    verifyBtn.style.display = canVerify ? 'block' : 'none';
+                    deliveredBtn.style.display = canDeliver ? 'block' : 'none';
+                    
+                    if (canVerify) {
+                        verifyBtn.onclick = () => updateOrderStatus(orderId, 'payment_verified');
+                    }
+                    if (canDeliver) {
+                        deliveredBtn.onclick = () => updateOrderStatus(orderId, 'paid');
+                    }
+                }
+                
+                // Activer l'onglet preuve si disponible
+                const proofTab = document.getElementById('proofTab');
+                if (data.payment_proof) {
+                    proofTab.style.display = 'block';
+                } else {
+                    proofTab.style.display = 'none';
+                }
+                
+                // Cacher les loadings
+                document.querySelectorAll('.tab-content .loading').forEach(loading => {
+                    loading.style.display = 'none';
+                });
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('Une erreur est survenue');
+                console.error('Erreur:', error);
+                alert('Erreur lors du chargement des détails: ' + error.message);
+                
+                document.querySelectorAll('.tab-content .loading').forEach(loading => {
+                    loading.style.display = 'none';
+                });
+                
+                document.getElementById('detailsContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Impossible de charger les détails de la commande.
+                    </div>
+                `;
             });
+    }
+
+    // Remplir l'onglet Détails
+    function populateDetailsTab(data) {
+        const content = document.getElementById('detailsContent');
+        
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Numéro de commande</label>
+                        <div class="detail-value">#${data.order_number}</div>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Date de création</label>
+                        <div class="detail-value">${data.created_at}</div>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Dernière mise à jour</label>
+                        <div class="detail-value">${data.updated_at || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Statut</label>
+                        <div class="detail-value">
+                            <span class="status-badge status-${data.status}">
+                                ${data.status_display}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Client</label>
+                        <div class="detail-value">${data.customer_name}</div>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Email</label>
+                        <div class="detail-value">${data.customer_email}</div>
+                    </div>
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Téléphone</label>
+                        <div class="detail-value">${data.customer_phone}</div>
+                    </div>
+                    ${data.shop ? `
+                    <div class="detail-item mb-3">
+                        <label class="detail-label">Boutique</label>
+                        <div class="detail-value">${data.shop}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="totals-section">
+                        <div class="total-row">
+                            <span>Sous-total:</span>
+                            <span>${data.total_amount} FCFA</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Taxes:</span>
+                            <span>${data.tax_amount} FCFA</span>
+                        </div>
+                        <div class="total-row final">
+                            <span>Total final:</span>
+                            <span>${data.final_amount} FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Remplir l'onglet Articles
+    function populateItemsTab(data) {
+        const content = document.getElementById('itemsContent');
+        
+        if (!data.cart_items || data.cart_items.length === 0) {
+            content.innerHTML = '<p class="text-muted">Aucun article dans cette commande.</p>';
+            return;
+        }
+        
+        let itemsHTML = '<div class="items-grid">';
+        data.cart_items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            itemsHTML += `
+                <div class="order-item">
+                    <div class="item-image">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="item-details">
+                        <h6 class="item-name">${item.name}</h6>
+                        <p class="item-price">${item.price} FCFA l'unité</p>
+                    </div>
+                    <div class="item-quantity">
+                        x${item.quantity}
+                    </div>
+                    <div class="item-total">
+                        ${itemTotal} FCFA
+                    </div>
+                </div>
+            `;
+        });
+        itemsHTML += '</div>';
+        
+        content.innerHTML = `
+            <h6 class="mb-3">Total: ${data.total_items} article${data.total_items > 1 ? 's' : ''}</h6>
+            ${itemsHTML}
+        `;
+    }
+
+    // Remplir l'onglet Paiement
+    function populatePaymentTab(data) {
+        const content = document.getElementById('paymentContent');
+        
+        content.innerHTML = `
+            <div class="payment-info-section">
+                <div class="payment-method">
+                    <div class="payment-icon">
+                        <i class="fas fa-${getPaymentMethodIcon(data.payment_method)}"></i>
+                    </div>
+                    <div>
+                        <h6 style="margin: 0; color: var(--dark);">${data.payment_method_display}</h6>
+                        ${data.payment_phone ? `
+                        <p style="margin: 5px 0 0 0; color: #6c757d;">
+                            <i class="fas fa-phone"></i> ${data.payment_phone}
+                        </p>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="payment-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Statut du paiement</span>
+                        <span class="detail-value">
+                            ${data.payment_verified ? 
+                                '<span class="badge bg-success"><i class="fas fa-check-circle"></i> Vérifié</span>' : 
+                                '<span class="badge bg-warning"><i class="fas fa-clock"></i> En attente</span>'}
+                        </span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Date de vérification</span>
+                        <span class="detail-value">
+                            ${data.payment_verified_at || 'Non vérifié'}
+                        </span>
+                    </div>
+                    ${data.qr_code_data ? `
+                    <div class="detail-item">
+                        <span class="detail-label">QR Code</span>
+                        <span class="detail-value">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewQRCode('${data.qr_code_data}')">
+                                <i class="fas fa-qrcode"></i> Voir QR Code
+                            </button>
+                        </span>
+                    </div>
+                    ` : ''}
+                    ${data.ussd_code ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Code USSD</span>
+                        <span class="detail-value">
+                            <code>${data.ussd_code}</code>
+                        </span>
+                    </div>
+                    ` : ''}
+                    ${data.whatsapp_link ? `
+                    <div class="detail-item">
+                        <span class="detail-label">Lien WhatsApp</span>
+                        <span class="detail-value">
+                            <a href="${data.whatsapp_link}" target="_blank" class="btn btn-sm btn-success">
+                                <i class="fab fa-whatsapp"></i> Ouvrir WhatsApp
+                            </a>
+                        </span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    // Remplir l'onglet Preuve
+    function populateProofTab(data) {
+        const content = document.getElementById('proofContent');
+        
+        if (data.payment_proof) {
+            content.innerHTML = `
+                <h6 class="mb-3">Preuve de paiement</h6>
+                <img src="${data.payment_proof}" alt="Preuve de paiement" class="payment-proof-image">
+                <div class="mt-3">
+                    <a href="${data.payment_proof}" download="preuve_paiement_${data.order_number}.jpg" 
+                       class="btn btn-primary">
+                        <i class="fas fa-download"></i> Télécharger
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="window.open('${data.payment_proof}', '_blank')">
+                        <i class="fas fa-expand"></i> Plein écran
+                    </button>
+                </div>
+            `;
+        } else {
+            content.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                    <h6 class="text-muted">Aucune preuve de paiement disponible</h6>
+                </div>
+            `;
         }
     }
 
-    function viewOrderDetails(orderId) {
-        window.open(`/orders/${orderId}/details/`, '_blank');
+    // Changer d'onglet dans la modal
+    function switchTab(tabId) {
+        // Désactiver tous les onglets
+        document.querySelectorAll('.modal-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Activer l'onglet sélectionné
+        document.querySelector(`.modal-tab[data-tab="${tabId}"]`).classList.add('active');
+        document.getElementById(`${tabId}Tab`).classList.add('active');
     }
 
-    function cancelOrder(orderId) {
-        if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
-            updateOrderStatus(orderId, 'cancelled');
+    // Fermer la modal
+    function closeModal() {
+        document.getElementById('orderModal').classList.remove('show');
+        currentOrderId = null;
+    }
+
+    // Mettre à jour le statut d'une commande
+    function updateOrderStatus(orderId, newStatus) {
+        if (!confirm('Êtes-vous sûr de vouloir modifier le statut de cette commande ?')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('status', newStatus);
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        fetch(`/marketplace/orders/${orderId}/update-status/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue lors de la mise à jour.');
+        });
+    }
+
+    // Supprimer une commande
+    function deleteOrder(orderId) {
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.')) {
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        
+        fetch(`/marketplace/orders/${orderId}/delete/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Erreur: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Une erreur est survenue lors de la suppression.');
+        });
+    }
+
+    // Voir QR Code
+    function viewQRCode(qrData) {
+        const modalContent = `
+            <div class="text-center p-4">
+                <h5>QR Code de paiement</h5>
+                <div id="qrcode" class="my-4"></div>
+                <button class="btn btn-primary" onclick="printQRCode()">
+                    <i class="fas fa-print"></i> Imprimer
+                </button>
+            </div>
+        `;
+        
+        // Afficher dans une modal simple
+        const qrModal = document.createElement('div');
+        qrModal.className = 'modal-overlay show';
+        qrModal.innerHTML = `
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h5 class="modal-title">QR Code</h5>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ${modalContent}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(qrModal);
+        
+        // Générer le QR code
+        setTimeout(() => {
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(document.getElementById("qrcode"), {
+                    text: qrData,
+                    width: 200,
+                    height: 200
+                });
+            }
+        }, 100);
+    }
+
+    // Obtenir le token CSRF
+    function getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    // Obtenir l'icône de méthode de paiement
+    function getPaymentMethodIcon(method) {
+        switch(method) {
+            case 'whatsapp': return 'whatsapp';
+            case 'om': return 'mobile-alt';
+            case 'momo': return 'money-bill-wave';
+            default: return 'credit-card';
         }
     }
 
-    // Utilitaires
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+    // Fermer la modal en cliquant à l'extérieur
+    document.getElementById('orderModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Fermer avec Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
 </script>
+
+<!-- Inclure Choices.js pour les select multiples -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+
+<!-- Inclure QRCode.js -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
 {% endblock %}

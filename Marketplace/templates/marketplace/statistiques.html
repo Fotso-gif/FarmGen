@@ -1,0 +1,1231 @@
+{% extends 'account/layout/base_dashboard.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<style>
+    :root {
+        --primary-text: "Chapaza", sans-serif;
+        --primary-green: #2ecc71;
+        --dark-green: #27ae60;
+        --forest-green: #1e5631;
+        --light-green: #a4de02;
+        --earth-brown: #8B4513;
+        --white: #ffffff;
+        --light-gray: #f8f9fa;
+        --text-dark: #2c3e50;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Reset et base */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: var(--text-dark);
+        min-height: 100vh;
+    }
+
+    .dashboard-container {
+        padding: 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+
+    /* En-tête */
+    .dashboard-header {
+        margin-bottom: 2.5rem;
+        text-align: center;
+    }
+
+    .dashboard-title {
+        font-family: var(--primary-text), sans-serif;
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: var(--forest-green);
+        margin-bottom: 0.5rem;
+        background: linear-gradient(45deg, var(--forest-green), var(--primary-green));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+        display: inline-block;
+    }
+
+    .dashboard-title::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+        border-radius: 2px;
+    }
+
+    .shop-info {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-top: 1rem;
+    }
+
+    /* Cartes de statistiques principales */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 1.8rem;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+        border: 1px solid rgba(46, 204, 113, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-green), var(--light-green));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(46, 204, 113, 0.15);
+        border-color: rgba(46, 204, 113, 0.3);
+    }
+
+    .stat-card.glass {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.2rem;
+        font-size: 1.8rem;
+        color: var(--white);
+    }
+
+    .stat-icon.revenue { background: linear-gradient(135deg, var(--primary-green), var(--dark-green)); }
+    .stat-icon.orders { background: linear-gradient(135deg, #3498db, #2980b9); }
+    .stat-icon.products { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+    .stat-icon.customers { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    .stat-icon.conversion { background: linear-gradient(135deg, #f1c40f, #f39c12); }
+    .stat-icon.average { background: linear-gradient(135deg, #1abc9c, #16a085); }
+
+    .stat-content h3 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+
+    .stat-content p {
+        color: #6c757d;
+        font-size: 0.95rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .stat-change.positive {
+        background: rgba(46, 204, 113, 0.1);
+        color: var(--dark-green);
+    }
+
+    .stat-change.negative {
+        background: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+    }
+
+    /* Grille des graphiques */
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 1.8rem;
+        margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 1200px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+
+    .chart-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .chart-title i {
+        color: var(--primary-green);
+        font-size: 1.2rem;
+    }
+
+    .chart-period {
+        font-size: 0.9rem;
+        color: #6c757d;
+        background: var(--light-gray);
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    /* Tableaux */
+    .tables-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 1.8rem;
+        margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 1000px) {
+        .tables-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .table-card {
+        background: var(--white);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+
+    .table-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .table-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .table-title i {
+        color: var(--primary-green);
+        font-size: 1.2rem;
+    }
+
+    .view-all {
+        color: var(--primary-green);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+
+    .view-all:hover {
+        color: var(--dark-green);
+        text-decoration: underline;
+    }
+
+    /* Table styles */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: var(--light-gray);
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-dark);
+        border-bottom: 2px solid rgba(46, 204, 113, 0.2);
+    }
+
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: var(--transition);
+    }
+
+    .table tr:hover td {
+        background: rgba(46, 204, 113, 0.05);
+    }
+
+    .status-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .status-paid { background: rgba(46, 204, 113, 0.1); color: var(--dark-green); }
+    .status-pending { background: rgba(241, 196, 15, 0.1); color: #f39c12; }
+    .status-waiting { background: rgba(52, 152, 219, 0.1); color: #3498db; }
+
+    /* Alertes produits */
+    .product-alert {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        background: rgba(231, 76, 60, 0.05);
+        border-left: 4px solid #e74c3c;
+        transition: var(--transition);
+    }
+
+    .product-alert:hover {
+        background: rgba(231, 76, 60, 0.1);
+        transform: translateX(5px);
+    }
+
+    .product-alert.warning {
+        background: rgba(241, 196, 15, 0.05);
+        border-left-color: #f1c40f;
+    }
+
+    .product-alert.warning:hover {
+        background: rgba(241, 196, 15, 0.1);
+    }
+
+    .alert-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e74c3c;
+        color: white;
+        font-size: 1rem;
+    }
+
+    .product-alert.warning .alert-icon {
+        background: #f1c40f;
+    }
+
+    .alert-content h4 {
+        font-size: 1rem;
+        margin-bottom: 0.3rem;
+        color: var(--text-dark);
+    }
+
+    .alert-content p {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    /* Clients */
+    .customer-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 12px;
+        background: var(--light-gray);
+        transition: var(--transition);
+    }
+
+    .customer-item:hover {
+        background: rgba(46, 204, 113, 0.1);
+        transform: translateX(5px);
+    }
+
+    .customer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .customer-info h4 {
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+        color: var(--text-dark);
+    }
+
+    .customer-info p {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .customer-stats {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .customer-stats .amount {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-green);
+    }
+
+    .customer-stats .orders {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+
+    /* Section tendance */
+    .trend-section {
+        background: linear-gradient(135deg, var(--forest-green), var(--dark-green));
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .trend-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
+    }
+
+    .trend-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .trend-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .trend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .trend-item {
+        text-align: center;
+    }
+
+    .trend-value {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .trend-label {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+
+    .trend-change {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        background: rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Actions rapides */
+    .quick-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        background: var(--white);
+        color: var(--text-dark);
+        text-decoration: none;
+        font-weight: 500;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+        border: 2px solid transparent;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        border-color: var(--primary-green);
+        color: var(--primary-green);
+    }
+
+    .action-btn.primary {
+        background: var(--primary-green);
+        color: white;
+    }
+
+    .action-btn.primary:hover {
+        background: var(--dark-green);
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 1rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .charts-grid,
+        .tables-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        .trend-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .delay-1 { animation-delay: 0.1s; opacity: 0; }
+    .delay-2 { animation-delay: 0.2s; opacity: 0; }
+    .delay-3 { animation-delay: 0.3s; opacity: 0; }
+    .delay-4 { animation-delay: 0.4s; opacity: 0; }
+</style>
+
+<div class="dashboard-container">
+    <!-- En-tête -->
+    <div class="dashboard-header fade-in-up">
+        <h1 class="dashboard-title">Tableau des stats</h1>
+        <div class="shop-info">
+            <i class="fas fa-store"></i> {{ shop.title }} • 
+            <i class="fas fa-map-marker-alt"></i> {{ shop.localisation }} • 
+            <i class="fas fa-chart-line"></i> Mis à jour: {{ today|date:"d/m/Y à H:i" }}
+        </div>
+    </div>
+
+    <!-- Statistiques principales -->
+    <div class="stats-grid">
+        <div class="stat-card glass fade-in-up delay-1">
+            <div class="stat-icon revenue">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_revenue|intcomma }} FCFA</h3>
+                <p>Chiffre d'affaires total</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    {{ stats.revenue_this_month|intcomma }} FCFA ce mois
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card glass fade-in-up delay-2">
+            <div class="stat-icon orders">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_orders }}</h3>
+                <p>Commandes totales</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    {{ stats.orders_this_month }} ce mois
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card glass fade-in-up delay-3">
+            <div class="stat-icon customers">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.total_customers }}</h3>
+                <p>Clients uniques</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-user-plus"></i>
+                    {{ stats.new_customers_today }} nouveaux aujourd'hui
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card glass fade-in-up delay-4">
+            <div class="stat-icon average">
+                <i class="fas fa-chart-bar"></i>
+            </div>
+            <div class="stat-content">
+                <h3>{{ stats.avg_order_value|intcomma }} FCFA</h3>
+                <p>Panier moyen</p>
+                <div class="stat-change positive">
+                    <i class="fas fa-trend-up"></i>
+                    +12% vs mois dernier
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section tendance mensuelle -->
+    <div class="trend-section fade-in-up">
+        <div class="trend-header">
+            <h2 class="trend-title">
+                <i class="fas fa-chart-line"></i> Tendance Mensuelle
+            </h2>
+            <div class="chart-period">Comparaison mois en cours / mois précédent</div>
+        </div>
+        <div class="trend-grid">
+            <div class="trend-item">
+                <div class="trend-value">{{ monthly_trend.revenue.current|intcomma }} FCFA</div>
+                <div class="trend-label">Chiffre d'affaires</div>
+                <div class="trend-change">
+                    {% if monthly_trend.revenue.change >= 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% endif %}
+                    {{ monthly_trend.revenue.change }}% vs mois dernier
+                </div>
+            </div>
+            <div class="trend-item">
+                <div class="trend-value">{{ monthly_trend.orders.current }}</div>
+                <div class="trend-label">Commandes</div>
+                <div class="trend-change">
+                    {% if monthly_trend.orders.change >= 0 %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% else %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% endif %}
+                    {{ monthly_trend.orders.change }}% vs mois dernier
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts-grid">
+        <!-- Graphique 1: Évolution du CA -->
+        <div class="chart-card fade-in-up">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-line"></i> Évolution du Chiffre d'Affaires
+                </h3>
+                <div class="chart-period">30 derniers jours</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Graphique 2: Commandes par statut -->
+        <div class="chart-card fade-in-up">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-chart-pie"></i> Répartition des Commandes
+                </h3>
+                <div class="chart-period">Toutes périodes</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="ordersChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Graphique 3: Top produits -->
+        <div class="chart-card fade-in-up">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-star"></i> Top 10 Produits
+                </h3>
+                <div class="chart-period">Par volume de ventes</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="productsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Graphique 4: Méthodes de paiement -->
+        <div class="chart-card fade-in-up">
+            <div class="chart-header">
+                <h3 class="chart-title">
+                    <i class="fas fa-credit-card"></i> Méthodes de Paiement
+                </h3>
+                <div class="chart-period">Répartition d'utilisation</div>
+            </div>
+            <div class="chart-container">
+                <canvas id="paymentChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableaux et listes -->
+    <div class="tables-grid">
+        <!-- Dernières commandes -->
+        <div class="table-card fade-in-up">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-history"></i> Dernières Commandes
+                </h3>
+                <a href="{% url 'order_history' %}" class="view-all">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Client</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>#{{ order.id|stringformat:"s"|slice:":8"|upper }}</td>
+                            <td>{{ order.customer_first_name }}</td>
+                            <td>{{ order.final_amount|intcomma }} FCFA</td>
+                            <td>
+                                <span class="status-badge status-{{ order.status }}">
+                                    {{ order.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ order.created_at|date:"d/m H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">
+                                Aucune commande récente
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Produits nécessitant attention -->
+        <div class="table-card fade-in-up">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-exclamation-triangle"></i> Attention Requise
+                </h3>
+                 <a href="{% url 'dashboard' %}" class="view-all">
+                    Gérer <i class="fas fa-arrow-right"></i>
+                </a> 
+            </div>
+            <div class="alerts-container">
+                {% for product in attention_products %}
+                <div class="product-alert {% if product.quantity == 0 %}danger{% else %}warning{% endif %}">
+                    <div class="alert-icon">
+                        <i class="fas fa-{% if product.quantity == 0 %}times{% else %}exclamation{% endif %}"></i>
+                    </div>
+                    <div class="alert-content">
+                        <h4>{{ product.name }}</h4>
+                        <p>
+                            {% if product.quantity == 0 %}
+                                Stock épuisé • Dernier prix: {{ product.price|intcomma }} FCFA
+                            {% else %}
+                                Stock bas: {{ product.quantity }} unités restantes
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p>Tous les produits sont en bon état</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Meilleurs clients -->
+        <div class="table-card fade-in-up">
+            <div class="table-header">
+                <h3 class="table-title">
+                    <i class="fas fa-crown"></i> Meilleurs Clients
+                </h3>
+                <a href="#" class="view-all">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="customers-list">
+                {% for customer in top_customers %}
+                <div class="customer-item">
+                    <div class="customer-avatar">
+                        {{ customer.name|first|upper }}
+                    </div>
+                    <div class="customer-info">
+                        <h4>{{ customer.name }}</h4>
+                        <p>{{ customer.email }}</p>
+                    </div>
+                    <div class="customer-stats">
+                        <div class="amount">{{ customer.total_spent|intcomma }} FCFA</div>
+                        <div class="orders">{{ customer.orders }} commandes</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <p>Aucune donnée client disponible</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+        <a href="{% url 'marketplace_list' %}" class="action-btn primary">
+            <i class="fas fa-plus-circle"></i> Ajouter un produit
+        </a>
+        <a href="{% url 'order_history' %}" class="action-btn">
+            <i class="fas fa-shopping-cart"></i> Voir toutes les commandes
+        </a>
+        <a href="{% url 'dashboard' %}" class="action-btn">
+            <i class="fas fa-boxes"></i> Gérer les produits
+        </a>
+        
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+<script>
+    // Initialiser les graphiques quand la page est chargée
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Graphique Évolution CA
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueData = {{ revenue_data|safe }};
+        
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: revenueData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: 'Inter'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.datasetIndex === 0) {
+                                    label += new Intl.NumberFormat('fr-FR').format(context.parsed.y) + ' FCFA';
+                                } else {
+                                    label += context.parsed.y + ' commande(s)';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // 2. Graphique Commandes par statut
+        const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+        const ordersData = {{ orders_by_status|safe }};
+        
+        new Chart(ordersCtx, {
+            type: 'doughnut',
+            data: ordersData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            font: {
+                                family: 'Inter'
+                            },
+                            padding: 20,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} commandes (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Graphique Top produits
+        const productsCtx = document.getElementById('productsChart').getContext('2d');
+        const productsData = {{ top_products|safe }};
+        
+        new Chart(productsCtx, {
+            type: 'bar',
+            data: {
+                labels: productsData.labels,
+                datasets: [
+                    {
+                        label: 'Quantité vendue',
+                        data: productsData.sold,
+                        backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                        borderColor: '#2ecc71',
+                        borderWidth: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Revenue (FCFA)',
+                        data: productsData.revenue,
+                        backgroundColor: 'rgba(164, 222, 2, 0.7)',
+                        borderColor: '#a4de02',
+                        borderWidth: 1,
+                        yAxisID: 'y1',
+                        type: 'line',
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Quantité vendue'
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.05)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Revenue (FCFA)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return new Intl.NumberFormat('fr-FR').format(value) + ' FCFA';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+
+        // 4. Graphique Méthodes de paiement
+        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        const paymentData = {{ payment_methods_data|safe }};
+        
+        new Chart(paymentCtx, {
+            type: 'polarArea',
+            data: {
+                labels: paymentData.labels,
+                datasets: [{
+                    data: paymentData.counts,
+                    backgroundColor: paymentData.colors,
+                    borderWidth: 2,
+                    borderColor: 'rgba(255,255,255,0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                const amount = paymentData.totals[context.dataIndex];
+                                return `${label}: ${value} fois (${percentage}%) • ${new Intl.NumberFormat('fr-FR').format(amount)} FCFA`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        ticks: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // 5. Animation au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, observerOptions);
+
+        // Observer tous les éléments à animer
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Rafraîchissement automatique des données toutes les 5 minutes
+        setInterval(() => {
+            // Ici vous pourriez ajouter une requête AJAX pour rafraîchir les données
+            console.log('Rafraîchissement des données...');
+        }, 300000); // 5 minutes
+    });
+
+    // Fonction pour exporter les données
+    function exportDashboardData(format) {
+        const url = `/shop/{{ shop.id }}/export/${format}/`;
+        window.open(url, '_blank');
+    }
+
+    // Notification de mise à jour
+    function showUpdateNotification() {
+        if (Notification.permission === 'granted') {
+            new Notification('Tableau de Bord', {
+                body: 'Les données ont été mises à jour',
+                icon: '/static/images/logo.png'
+            });
+        }
+    }
+
+    // Demander la permission de notification
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+</script>
+
+<!-- Animation CSS supplémentaire -->
+<style>
+    .animated {
+        animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .pulse {
+        animation: pulse 2s infinite;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: rgba(46, 204, 113, 0.1);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, var(--primary-green), var(--dark-green));
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, var(--dark-green), var(--forest-green));
+    }
+</style>
+{% endblock %}

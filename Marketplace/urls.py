@@ -33,14 +33,28 @@ urlpatterns = [
     path('orders/history/', views.order_history, name='order_history'),
     path('api/orders/<uuid:order_id>/update-status/', views.update_order_status, name='update_order_status'),
     path('orders/<uuid:order_id>/invoice/download/', views.download_invoice, name='download_invoice'),
-    path('api/orders/<uuid:order_id>/update-status/', views.update_order_status, name='update_order_status'),
     path('orders/export/<str:format_type>/', views.export_orders, name='export_orders'),
     path('orders/<uuid:order_id>/details/', views.order_details, name='order_details'),
+    #
+    # Détails d'une commande (AJAX)
+    path('orders/<uuid:order_id>/detail/', views.order_detail, name='order_detail'),
+    # Supprimer une commande
+    path('orders/<uuid:order_id>/delete/', views.delete_order, name='delete_order'),
+    
+    # 
     path('orders/<uuid:order_id>/payment-proof/', views.payment_proof, name='payment_proof'),
     path('orders/export/<str:format>/', views.export_orders, name='export_orders'),# Methode de Paiement
     # Paiement
     path('api/payment-methods/', views.payment_methods_list, name='payment_methods_list'),
     path('api/payment-methods/create/', views.create_payment_method, name='create_payment_method'),
+    # Statistiques
+    path('statistiques/', views.shop_stat, name='stat'),
+    # Export des données
+    # path('dashboard/export/<str:format>/', views.export_dashboard_data, name='export_dashboard'),
+    
+    # API pour données dynamiques
+    path('api/dashboard/stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
+    path('api/dashboard/charts/', views.dashboard_charts_api, name='dashboard_charts_api'),
 ]
 #/api/payment-methods/create/',
 
