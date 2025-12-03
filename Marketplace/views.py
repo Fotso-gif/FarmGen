@@ -2189,34 +2189,51 @@ def get_orders_by_status(shop_id):
 
 def get_top_products(shop_id, limit=10):
     orders = Order.objects.filter(shop_id=shop_id)
-    
+
     product_sales = defaultdict(int)
-    
+
+    # Utilisation du product_id (clé du cart)
     for order in orders:
         for item in order.cart_items:
-            product_sales[item['product_id']] += item.get('quantity', 1)
-    
-    products = Product.objects.filter(category__shop_id=shop_id, id__in=product_sales.keys())
-    
-    labels = []
-    sold_counts = []
-    revenues = []
-    
+            # Récupère l'ID depuis la structure du cart
+            pid = item.get('product_id') or item.get('id') or None
+            
+            # Si l'ID n'est pas présent, on le récupère via la clé du JSON
+            if not pid and isinstance(item, dict):
+                # Certaines structures de cart_items stockent l'id en clé du parent
+                pid = item.get('productId') or item.get('product')  # sécurité
+            
+            if pid:
+                product_sales[int(pid)] += item.get('quantity', 1)
+
+    # Récupération des produits via ID (la seule manière fiable)
+    products = Product.objects.filter(
+        category__shop_id=shop_id,
+        id__in=product_sales.keys()
+    )
+
+    labels, sold_counts, revenues = [], [], []
+
     for product in products:
-        sold = product_sales[product.id]
-        labels.append(product.name[:20] + '...' if len(product.name) > 20 else product.name)
+        sold = product_sales.get(product.id, 0)
+
+        label = product.name[:20] + '...' if len(product.name) > 20 else product.name
+        labels.append(label)
+
         sold_counts.append(sold)
         revenues.append(float(sold * product.price))
-    
-    # Trier par ventes décroissantes
-    sorted_data = sorted(zip(labels, sold_counts, revenues), key=lambda x: x[1], reverse=True)[:limit]
-    
-    if sorted_data:  # ✅ Evite l'erreur quand c'est vide
-        labels, sold_counts, revenues = zip(*sorted_data)
-        labels, sold_counts, revenues = list(labels), list(sold_counts), list(revenues)
+
+    sorted_data = sorted(
+        zip(labels, sold_counts, revenues),
+        key=lambda x: x[1],
+        reverse=True
+    )[:limit]
+
+    if sorted_data:
+        labels, sold_counts, revenues = map(list, zip(*sorted_data))
     else:
-        labels, sold_counts, revenues = [], [], []
-    
+        labels, sold_counts, revenues = [], [], [],
+
     return {
         'labels': labels,
         'sold': sold_counts,
