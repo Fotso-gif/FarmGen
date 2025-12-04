@@ -21,5 +21,14 @@ urlpatterns = [
      # Product
     path('api/products/<int:product_id>/', views.get_product_data, name='get_product_data'),
     path('api/products/create/', views.create_product, name='create_product_api'),
-    path('api/orders/<uuid:order_id>/', views.get_order_data, name='get_order_data'),
+    #path('api/orders/<uuid:order_id>/', views.get_order_data, name='get_order_data'),
+    # API endpoints pour les modals
+    path('api/shop/<int:shop_id>/', views.api_shop_detail, name='api_shop_detail'),
+    path('api/products/<int:product_id>/', views.api_product_detail, name='api_product_detail'),
+    path('api/products/<int:product_id>/update/', views.api_product_update, name='api_product_update'),
+    path('api/orders/<uuid:order_id>/', views.api_order_detail, name='api_order_detail'),
+    path('api/orders/<uuid:order_id>/update/', views.api_order_update, name='api_order_update'),
+    path('api/statistics/', views.api_statistics, name='api_statistics'),
+    path('api/shop/<int:shop_id>/categories/', views.api_shop_categories, name='api_shop_categories'),
+    path('api/products/<int:product_id>/update-advanced/', views.api_product_update_advanced, name='api_product_update_advanced'),
 ]

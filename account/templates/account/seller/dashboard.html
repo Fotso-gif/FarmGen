@@ -512,7 +512,7 @@
 </div>
 
 <!-- Modal Voir Commandes -->
-<div class="modal fade" id="viewOrdersModal" tabindex="-1" aria-labelledby="viewOrdersModalLabel" aria-hidden="true">
+ {% comment %} <div class="modal fade" id="viewOrdersModal" tabindex="-1" aria-labelledby="viewOrdersModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
@@ -528,7 +528,7 @@
             </div>
         </div>
     </div>
-</div>
+</div>  {% endcomment %}
 
 <!-- Modal Traiter Commande -->
 <div class="modal fade" id="processOrderModal" tabindex="-1" aria-labelledby="processOrderModalLabel" aria-hidden="true">
@@ -550,7 +550,7 @@
 </div>
 
 <!-- Modal Voir Produits -->
-<div class="modal fade" id="viewProductsModal" tabindex="-1" aria-labelledby="viewProductsModalLabel" aria-hidden="true">
+ {% comment %} <div class="modal fade" id="viewProductsModal" tabindex="-1" aria-labelledby="viewProductsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -566,10 +566,10 @@
             </div>
         </div>
     </div>
-</div>
+</div>  {% endcomment %}
 
 <!-- Modal Statistiques -->
-<div class="modal fade" id="statisticsModal" tabindex="-1" aria-labelledby="statisticsModalLabel" aria-hidden="true">
+ {% comment %} <div class="modal fade" id="statisticsModal" tabindex="-1" aria-labelledby="statisticsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
@@ -585,7 +585,272 @@
             </div>
         </div>
     </div>
+</div>  {% endcomment %}
+
+<!-- Modal Tous les Produits (contenu pré-chargé) -->
+ <div class="modal fade" id="viewProductsModal" tabindex="-1" aria-labelledby="viewProductsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewProductsModalLabel">
+                    <i class="fas fa-seedling me-2"></i>Tous les produits ({{ all_products.count }})
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Prix</th>
+                                <th>Stock</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in all_products %}
+                            <tr>
+                                <td>
+                                    {% if product.images.first %}
+                                    <img src="{{ product.images.first.image.url }}" 
+                                         alt="{{ product.name }}"
+                                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px;">
+                                    {% else %}
+                                    <div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 5px; display: flex; align-items: center; justify-content: center;">
+                                        <i class="fas fa-seedling text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.category.name }}</td>
+                                <td class="fw-bold text-success">{{ product.price }} FCFA</td>
+                                <td>
+                                    <span class="{% if product.is_low_stock %}stock-low{% else %}stock-good{% endif %}">
+                                        {{ product.quantity }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if product.quantity > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ product.quantity|yesno:"Disponible,Rupture" }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            onclick="loadProductData({{ product.id }})"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#editProductModal">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucun produit trouvé</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal Toutes les Commandes (contenu pré-chargé) -->
+<div class="modal fade" id="viewOrdersModal" tabindex="-1" aria-labelledby="viewOrdersModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="viewOrdersModalLabel">
+                    <i class="fas fa-shopping-cart me-2"></i>Toutes les commandes ({{ all_orders.count }})
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Montant</th>
+                                <th>Méthode</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in all_orders %}
+                            <tr>
+                                <td><small>#{{ order.id|stringformat:".8s" }}</small></td>
+                                <td>{{ order.customer_first_name }} {{ order.customer_last_name }}</td>
+                                <td>{{ order.created_at|date:"d/m/Y H:i" }}</td>
+                                <td class="fw-bold">{{ order.final_amount }} FCFA</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {{ order.get_payment_method_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'paid' %}bg-success
+                                        {% elif order.status == 'pending' %}bg-warning
+                                        {% elif order.status == 'failed' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info"
+                                            onclick="loadOrderData('{{ order.id }}')"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#processOrderModal">
+                                        <i class="fas fa-cog"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Aucune commande trouvée</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Statistiques (contenu pré-chargé) -->
+<div class="modal fade" id="statisticsModal" tabindex="-1" aria-labelledby="statisticsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="statisticsModalLabel">
+                    <i class="fas fa-chart-bar me-2"></i>Statistiques détaillées
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <!-- Statistiques par statut de commande -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">Commandes par statut</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    {% for stat in orders_by_status %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ stat.status|title }}
+                                        <span class="badge bg-primary rounded-pill">
+                                            {{ stat.count }} ({{ stat.total|default:0 }} FCFA)
+                                        </span>
+                                    </li>
+                                    {% empty %}
+                                    <li class="list-group-item text-muted text-center">
+                                        Aucune donnée disponible
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Produits en faible stock -->
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-warning text-white">
+                                <h6 class="mb-0">Produits en faible stock</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Produit</th>
+                                                <th>Stock</th>
+                                                <th>Prix</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for product in all_products %}
+                                            {% if product.is_low_stock %}
+                                            <tr>
+                                                <td>{{ product.name }}</td>
+                                                <td class="stock-low">{{ product.quantity }}</td>
+                                                <td>{{ product.price }} FCFA</td>
+                                            </tr>
+                                            {% endif %}
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">
+                                                    Aucun produit en faible stock
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Top produits -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">Top produits</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    {% for product in top_products %}
+                                    <div class="col-md-4 mb-3">
+                                        <div class="card h-100">
+                                            {% if product.images.first %}
+                                            <img src="{{ product.images.first.image.url }}" 
+                                                 class="card-img-top" 
+                                                 alt="{{ product.name }}"
+                                                 style="height: 100px; object-fit: cover;">
+                                            {% endif %}
+                                            <div class="card-body">
+                                                <h6 class="card-title">{{ product.name }}</h6>
+                                                <p class="card-text text-success fw-bold">
+                                                    {{ product.price }} FCFA
+                                                </p>
+                                                <p class="card-text">
+                                                    <small>Stock: {{ product.quantity }}</small>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-12 text-center py-4">
+                                        <p class="text-muted">Aucune donnée de vente disponible</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
 
 <script>
 // Gestion de l'aperçu des images
@@ -606,10 +871,121 @@ document.getElementById('productImages').addEventListener('change', function(e) 
         }
     }
 });
+// Dans votre fichier template, ajoutez ces fonctions JavaScript supplémentaires :
+
+// Fonction pour charger les détails de la boutique
+async function loadShopDetails(shopId) {
+    try {
+        const response = await fetch(`/account/api/shop/${shopId}/`);
+        if (!response.ok) throw new Error('Erreur de chargement');
+        
+        const data = await response.json();
+        
+        // Remplir le formulaire d'édition de boutique
+        // (À implémenter selon votre interface)
+        console.log('Données boutique:', data);
+        
+        return data;
+    } catch (error) {
+        console.error('Erreur:', error);
+        showAlert('danger', 'Erreur lors du chargement des données de la boutique');
+        return null;
+    }
+}
+
+// Fonction pour mettre à jour un produit (version améliorée)
+async function updateProduct(event, productId) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    // Ajouter les images marquées pour suppression
+    const deletedImages = [];
+    document.querySelectorAll('[data-image-delete="true"]').forEach(img => {
+        const imgId = img.dataset.imageId;
+        if (imgId) deletedImages.push(imgId);
+    });
+    
+    if (deletedImages.length > 0) {
+        formData.append('deleted_images', deletedImages.join(','));
+    }
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    try {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Mise à jour...';
+        
+        const response = await fetch(`/account/api/products/${productId}/update/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', data.message || 'Produit mis à jour avec succès');
+            
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+                if (modal) modal.hide();
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('danger', data.error || data.errors?.join(', ') || 'Erreur lors de la mise à jour');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('danger', 'Erreur réseau lors de la mise à jour');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+// Fonction pour marquer une image à supprimer
+function markImageForDeletion(imageId, button) {
+    if (confirm('Supprimer cette image ?')) {
+        const imgElement = button.parentElement.querySelector('img');
+        if (imgElement) {
+            imgElement.style.opacity = '0.3';
+            imgElement.style.filter = 'grayscale(100%)';
+            imgElement.dataset.imageDelete = 'true';
+            imgElement.dataset.imageId = imageId;
+            
+            button.innerHTML = '<i class="fas fa-undo"></i>';
+            button.classList.remove('btn-danger');
+            button.classList.add('btn-warning');
+            button.onclick = () => unmarkImageForDeletion(imageId, button);
+        }
+    }
+}
+
+// Fonction pour annuler la suppression d'une image
+function unmarkImageForDeletion(imageId, button) {
+    const imgElement = button.parentElement.querySelector('img');
+    if (imgElement) {
+        imgElement.style.opacity = '1';
+        imgElement.style.filter = 'none';
+        delete imgElement.dataset.imageDelete;
+        delete imgElement.dataset.imageId;
+        
+        button.innerHTML = '<i class="fas fa-trash"></i>';
+        button.classList.remove('btn-warning');
+        button.classList.add('btn-danger');
+        button.onclick = () => markImageForDeletion(imageId, button);
+    }
+}
 
 // Chargement des données du produit pour édition
 function loadProductData(productId) {
-    fetch(`/api/products/${productId}/`)
+    fetch(`/account/api/products/${productId}/`)
         .then(response => response.json())
         .then(data => {
             const content = `
@@ -676,7 +1052,7 @@ function loadProductData(productId) {
 
 // Chargement des données de commande
 function loadOrderData(orderId) {
-    fetch(`/api/orders/${orderId}/`)
+    fetch(`/account/api/orders/${orderId}/`)
         .then(response => response.json())
         .then(data => {
             const content = `
@@ -740,7 +1116,7 @@ document.getElementById('addProductForm').addEventListener('submit', function(e)
     
     const formData = new FormData(this);
     
-    fetch('/api/products/create/', {
+    fetch('{% url "create_product_api" %}', {
         method: 'POST',
         body: formData,
         headers: {
@@ -786,6 +1162,444 @@ function editShopInfo() {
 
 function managePaymentMethods() {
     alert('Fonctionnalité de gestion des paiements à implémenter');
+}
+</script>
+<script>
+// Fonction pour charger les données du produit
+async function loadProductData(productId) {
+    try {
+        const response = await fetch(`/account/api/products/${productId}/`);
+        if (!response.ok) throw new Error('Erreur de chargement');
+        
+        const data = await response.json();
+        
+        // Construire le formulaire d'édition
+        const editProductContent = document.getElementById('editProductContent');
+        
+        // Préparer les options de catégorie
+        let categoryOptions = '';
+        {% for category in categories %}
+        categoryOptions += `
+            <option value="{{ category.id }}" ${data.category == {{ category.id }} ? 'selected' : ''}>
+                {{ category.name }}
+            </option>`;
+        {% endfor %}
+        
+        // Afficher les images existantes
+        let currentImages = '<p class="text-muted">Aucune image</p>';
+        if (data.images && data.images.length > 0) {
+            currentImages = data.images.map(img => 
+                `<div class="d-inline-block me-2 mb-2">
+                    <img src="${img.image}" class="image-preview" alt="${img.alt_text}" style="max-width: 100px;">
+                    <button type="button" class="btn btn-sm btn-danger btn-sm mt-1" onclick="deleteProductImage(${img.id}, this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>`
+            ).join('');
+        }
+        
+        editProductContent.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editProductName" class="form-label">Nom du produit *</label>
+                        <input type="text" class="form-control" id="editProductName" 
+                               name="name" value="${data.name || ''}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editProductCategory" class="form-label">Catégorie *</label>
+                        <select class="form-select" id="editProductCategory" name="category" required>
+                            <option value="">Sélectionnez une catégorie</option>
+                            ${categoryOptions}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editProductPrice" class="form-label">Prix (FCFA) *</label>
+                        <input type="number" class="form-control" id="editProductPrice" 
+                               name="price" value="${data.price || '0'}" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editProductQuantity" class="form-label">Quantité en stock *</label>
+                        <input type="number" class="form-control" id="editProductQuantity" 
+                               name="quantity" value="${data.quantity || '0'}" min="0" required>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="editProductExpiry" class="form-label">Date de péremption</label>
+                        <input type="date" class="form-control" id="editProductExpiry" 
+                               name="expiry_date" value="${data.expiry_date || ''}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editProductDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editProductDescription" 
+                                  name="description" rows="4">${data.description || ''}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editProductImages" class="form-label">Nouvelles images</label>
+                        <input type="file" class="form-control" id="editProductImages" 
+                               name="images" multiple accept="image/*">
+                        <div class="form-text">Ajoutez de nouvelles images (optionnel)</div>
+                    </div>
+                    
+                    <div class="current-images mb-3">
+                        <label class="form-label">Images actuelles:</label>
+                        <div id="currentImagesContainer" class="mt-2">
+                            ${currentImages}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" name="product_id" value="${productId}">
+        `;
+        
+        // Gérer l'aperçu des nouvelles images
+        document.getElementById('editProductImages').addEventListener('change', function(e) {
+            const previewContainer = document.createElement('div');
+            previewContainer.className = 'new-images-preview mt-2';
+            previewContainer.innerHTML = '<p class="text-success mb-1"><small>Nouvelles images:</small></p>';
+            
+            for (let file of e.target.files) {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'image-preview me-2 mb-2';
+                        img.style.maxWidth = '80px';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+            
+            editProductContent.querySelector('.current-images').appendChild(previewContainer);
+        });
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('editProductContent').innerHTML = 
+            '<div class="alert alert-danger">Erreur lors du chargement des données du produit</div>';
+    }
+}
+
+// Fonction pour charger les données de commande
+async function loadOrderData(orderId) {
+    try {
+        const response = await fetch(`/account/api/orders/${orderId}/`);
+        if (!response.ok) throw new Error('Erreur de chargement');
+        
+        const data = await response.json();
+        
+        // Construire le HTML pour traiter la commande
+        const processOrderContent = document.getElementById('processOrderContent');
+        
+        // Calculer le total des articles
+        let cartTotal = 0;
+        let cartItemsHtml = '';
+        
+        if (data.cart_items && Array.isArray(data.cart_items)) {
+            data.cart_items.forEach(item => {
+                const itemTotal = (item.price || 0) * (item.quantity || 1);
+                cartTotal += itemTotal;
+                cartItemsHtml += `
+                    <tr>
+                        <td>${item.name || 'Produit'}</td>
+                        <td>${item.quantity || 1}</td>
+                        <td>${item.price || 0} FCFA</td>
+                        <td>${itemTotal} FCFA</td>
+                    </tr>
+                `;
+            });
+        }
+        
+        // Options de statut
+        const statusOptions = [
+            ['pending', 'En attente'],
+            ['waiting_payment', 'En attente de paiement'],
+            ['payment_verified', 'Paiement vérifié'],
+            ['paid', 'Payé'],
+            ['failed', 'Échec'],
+            ['refunded', 'Remboursé']
+        ];
+        
+        let statusSelect = '';
+        statusOptions.forEach(([value, label]) => {
+            statusSelect += `<option value="${value}" ${data.status === value ? 'selected' : ''}>${label}</option>`;
+        });
+        
+        processOrderContent.innerHTML = `
+            <div class="order-details">
+                <h5>Commande #${data.id.substring(0, 8)}</h5>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Vous pouvez mettre à jour le statut de cette commande
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-user me-2"></i>Informations client</h6>
+                                <p class="mb-1"><strong>Nom:</strong> ${data.customer_first_name} ${data.customer_last_name}</p>
+                                <p class="mb-1"><strong>Email:</strong> ${data.customer_email}</p>
+                                <p class="mb-0"><strong>Téléphone:</strong> ${data.customer_phone}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title"><i class="fas fa-receipt me-2"></i>Détails de la commande</h6>
+                                <p class="mb-1"><strong>Date:</strong> ${data.created_at}</p>
+                                <p class="mb-1"><strong>Méthode de paiement:</strong> ${data.payment_method}</p>
+                                <p class="mb-1"><strong>Statut actuel:</strong> 
+                                    <span class="badge bg-${data.status === 'paid' ? 'success' : data.status === 'pending' ? 'warning' : 'secondary'}">
+                                        ${data.status_display}
+                                    </span>
+                                </p>
+                                <p class="mb-0"><strong>Paiement vérifié:</strong> 
+                                    ${data.payment_verified ? '✅ Oui' : '❌ Non'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h6>Articles commandés:</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th>Quantité</th>
+                                <th>Prix unitaire</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cartItemsHtml}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <td colspan="3" class="text-end"><strong>Total commande:</strong></td>
+                                <td><strong>${data.final_amount || cartTotal} FCFA</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <form id="updateOrderForm" onsubmit="updateOrderStatus(event, '${orderId}')">
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <label for="orderStatus" class="form-label">Changer le statut:</label>
+                            <select class="form-select" id="orderStatus" name="status" required>
+                                ${statusSelect}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-save me-1"></i>Mettre à jour
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <textarea class="form-control" name="notes" 
+                                  placeholder="Notes additionnelles (optionnel)" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('processOrderContent').innerHTML = 
+            '<div class="alert alert-danger">Erreur lors du chargement des données de la commande</div>';
+    }
+}
+
+// Fonction pour mettre à jour le statut d'une commande
+async function updateOrderStatus(event, orderId) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    
+    try {
+        const response = await fetch(`/account/api/orders/${orderId}/update/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', 'Statut mis à jour avec succès');
+            
+            // Fermer le modal après 1.5 secondes
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('processOrderModal'));
+                if (modal) modal.hide();
+                
+                // Recharger la page pour voir les changements
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('danger', data.error || 'Erreur lors de la mise à jour');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('danger', 'Erreur réseau');
+    }
+}
+
+// Fonction pour gérer l'aperçu des images dans l'ajout de produit
+document.getElementById('productImages').addEventListener('change', function(e) {
+    const preview = document.getElementById('imagePreview');
+    preview.innerHTML = '<p class="text-success mb-1"><small>Aperçu des images:</small></p>';
+    
+    for (let file of e.target.files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'image-preview me-2 mb-2';
+                img.style.maxWidth = '100px';
+                preview.appendChild(img);
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+});
+
+// Gestion de la soumission du formulaire d'ajout de produit
+document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    try {
+        // Désactiver le bouton pendant l'envoi
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Enregistrement...';
+        
+        const response = await fetch('/account/api/products/create/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showAlert('success', 'Produit ajouté avec succès!');
+            
+            // Fermer le modal après 1.5 secondes
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addProductModal'));
+                if (modal) modal.hide();
+                
+                // Recharger la page pour voir le nouveau produit
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('danger', data.error || 'Erreur lors de l\'ajout du produit');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('danger', 'Erreur réseau lors de l\'ajout du produit');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+});
+
+// Fonction pour supprimer une image de produit
+async function deleteProductImage(imageId, button) {
+    if (!confirm('Supprimer cette image ?')) return;
+    
+    try {
+        const response = await fetch(`/account/api/product-images/${imageId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // Supprimer l'élément visuellement
+            button.parentElement.remove();
+            showAlert('success', 'Image supprimée avec succès');
+        } else {
+            showAlert('danger', 'Erreur lors de la suppression');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('danger', 'Erreur réseau');
+    }
+}
+
+// Fonctions utilitaires
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Ajouter en haut de la page
+    const container = document.querySelector('.dashboard-content');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Fonctions placeholder pour les autres modales
+function editShopInfo() {
+    window.location.href = "{% url 'marketplace_list' %}";
+}
+
+function managePaymentMethods() {
+    window.location.href = "{% url 'marketplace_list' %}";
 }
 </script>
 {% endblock %}
