@@ -1162,8 +1162,8 @@
                     <button class="export-btn csv" onclick="exportOrders('csv')">
                         <i class="fas fa-file-csv"></i> CSV
                     </button>
-                    <button class="export-btn pdf" onclick="exportOrders('pdf')">
-                        <i class="fas fa-file-pdf"></i> PDF
+                    <button class="export-btn pdf" onclick="exportOrders('json')">
+                        <i class="fas fa-file-pdf"></i> JSON
                     </button>
                     <button class="export-btn reset" onclick="refreshOrders()">
                         <i class="fas fa-sync-alt"></i> Actualiser
@@ -1443,7 +1443,7 @@
             <button class="modal-tab" data-tab="payment">
                 <i class="fas fa-credit-card"></i> Paiement
             </button>
-            <button class="modal-tab" data-tab="proof" id="proofTab">
+            <button class="modal-tab" data-tab="proof" >
                 <i class="fas fa-receipt"></i> Preuve
             </button>
         </div>
@@ -1474,7 +1474,7 @@
             </div>
             
             <!-- Onglet Preuve -->
-            <div class="tab-content" id="proofTabContent">
+            <div class="tab-content" id="proofTab">
                 <div class="loading" id="proofLoading">
                     Chargement de la preuve de paiement...
                 </div>
@@ -1787,7 +1787,7 @@
             params.append('shop', activeFilters.shop);
         }
         
-        const url = `/orders/export/${format}/?${params.toString()}`;
+        const url = `/marketplace/orders/export/${format}/?${params.toString()}`;
         window.open(url, '_blank');
     }
 

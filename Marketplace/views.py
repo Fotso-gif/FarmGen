@@ -3,6 +3,11 @@ import qrcode
 import base64
 from decimal import Decimal
 import json
+import csv
+from django.utils.encoding import smart_str
+#from weasyprint import HTML
+from django.template.loader import render_to_string
+
 # Import pour ExtractHour
 from collections import defaultdict
 from django.db.models.functions import ExtractHour
@@ -29,8 +34,6 @@ from xhtml2pdf import pisa
 from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
 
 
-
-   
 def shop(request, shop_id):
     shop = Shop.objects.get(id = shop_id)
     produits = Product.objects.filter(category__shop=shop)
@@ -775,35 +778,74 @@ def update_order_status(request, order_id):
 
 @login_required
 def export_orders(request, format_type):
-    """Exporter les commandes en CSV ou JSON"""
-    # Appliquer les mêmes filtres que order_listing
-    # ... (code similaire à order_listing pour filtrer)
-    
-    if format_type == 'csv':
-        # Générer CSV
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="commandes.csv"'
-        
-        # Écrire le CSV
-        writer = csv.writer(response)
+    """Exporter toutes les commandes filtrées en CSV ou JSON"""
+
+    # -----------------------------
+    # 1) FILTRES (comme order_listing)
+    # -----------------------------
+    user_shops = Shop.objects.filter(user=request.user).values_list("id", flat=True)
+    orders = Order.objects.filter(shop_id__in=user_shops)
+
+
+    search = request.GET.get("search")
+    status_filter = request.GET.get("status")
+    payment_filter = request.GET.get("payment")
+
+    if search:
+        orders = orders.filter(full_name__icontains=search)
+
+    if status_filter and status_filter != "all":
+        orders = orders.filter(status=status_filter)
+
+    if payment_filter and payment_filter != "all":
+        orders = orders.filter(payment_method=payment_filter)
+
+    orders = orders.order_by("-created_at")  # tri identique à l'affichage
+
+    # --------------------------------------
+    # 2) EXPORT CSV
+    # --------------------------------------
+    if format_type == "csv":
+        # Permet à Excel de lire les caractères sans bug
+        response = HttpResponse(
+            content_type="text/csv; charset=utf-8-sig"
+        )
+        response["Content-Disposition"] = (
+            "attachment; filename=commandes_export.csv"
+        )
+
+        writer = csv.writer(response, delimiter=";")
+
+        # En-têtes
         writer.writerow([
-            'N° Commande', 'Date', 'Client', 'Email', 'Téléphone',
-            'Statut', 'Méthode Paiement', 'Montant HT', 'TVA', 'Montant TTC',
-            'Boutique', 'Articles'
+            "N° Commande",
+            "Date",
+            "Client",
+            "Email",
+            "Téléphone",
+            "Statut",
+            "Méthode Paiement",
+            "Montant HT",
+            "TVA",
+            "Montant TTC",
+            "Boutique",
+            "Articles"
         ])
-        
+
         for order in orders:
-            items_str = ', '.join([
+            # Limiter le nombre d'articles affichés dans la cellule
+            items_display = ", ".join(
                 f"{item.get('name')} (x{item.get('quantity')})"
                 for item in order.cart_items[:3]
-            ])
+            )
+
             if len(order.cart_items) > 3:
-                items_str += f'... (+{len(order.cart_items) - 3})'
-            
+                items_display += f"... (+{len(order.cart_items) - 3})"
+
             writer.writerow([
-                str(order.id)[:8].upper(),
-                order.created_at.strftime('%d/%m/%Y'),
-                order.full_name,
+                smart_str(str(order.id)[:8].upper()),
+                order.created_at.strftime("%d/%m/%Y %H:%M"),
+                smart_str(order.full_name),
                 order.customer_email,
                 order.customer_phone,
                 order.get_status_display(),
@@ -812,36 +854,39 @@ def export_orders(request, format_type):
                 order.tax_amount,
                 order.final_amount,
                 order.shop_id,
-                items_str
+                smart_str(items_display),
             ])
-        
+
         return response
-    
-    elif format_type == 'json':
-        # Générer JSON
+
+    # --------------------------------------
+    # 3) EXPORT JSON
+    # --------------------------------------
+    if format_type == "json":
         data = []
+
         for order in orders:
             data.append({
-                'id': str(order.id),
-                'order_number': str(order.id)[:8].upper(),
-                'created_at': order.created_at.isoformat(),
-                'customer': order.full_name,
-                'email': order.customer_email,
-                'phone': order.customer_phone,
-                'status': order.status,
-                'status_display': order.get_status_display(),
-                'payment_method': order.payment_method,
-                'payment_method_display': order.get_payment_method_display(),
-                'total_amount': order.total_amount,
-                'tax_amount': order.tax_amount,
-                'final_amount': order.final_amount,
-                'shop_id': order.shop_id,
-                'cart_items': order.cart_items
+                "id": str(order.id),
+                "order_number": str(order.id)[:8].upper(),
+                "created_at": order.created_at.isoformat(),
+                "customer": order.full_name,
+                "email": order.customer_email,
+                "phone": order.customer_phone,
+                "status": order.status,
+                "status_display": order.get_status_display(),
+                "payment_method": order.payment_method,
+                "payment_method_display": order.get_payment_method_display(),
+                "total_amount": float(order.total_amount),
+                "tax_amount": float(order.tax_amount),
+                "final_amount": float(order.final_amount),
+                "shop_id": order.shop_id,
+                "cart_items": order.cart_items,
             })
-        
-        return JsonResponse(data, safe=False)
-    
-    return HttpResponse('Format non supporté', status=400)
+
+        return JsonResponse(data, safe=False, json_dumps_params={'ensure_ascii': False})
+
+    return HttpResponse("Format non supporté", status=400)
 
 @login_required
 def order_history(request):
@@ -987,7 +1032,8 @@ def order_detail(request, order_id):
         # Vérification des permissions
         if not request.user.is_superuser:
             if hasattr(request.user, 'shop'):
-                if order.shop_id != request.user.shop.id:
+                shop = request.user.shop.first()
+                if order.shop_id != shop.id:
                     return JsonResponse({'error': 'Non autorisé'}, status=403)
             else:
                 if (order.customer_email != request.user.email and 

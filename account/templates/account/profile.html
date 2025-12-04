@@ -629,14 +629,14 @@
                     <div class="profile-stats">
                         <div class="stat-item">
                             <div class="stat-value">
-                                {% if user.user_type == 'seller' %}
-                                    {{ user.shop.product_set.count }}
+                                {% if user.account_type == 'seller' %}
+                                    {{ user.shop.first.first.orders.count }}
                                 {% else %}
                                     {{ user.orders.count }}
                                 {% endif %}
                             </div>
                             <div class="stat-label">
-                                {% if user.user_type == 'seller' %}
+                                {% if user.account_type == 'seller' %}
                                     Produits
                                 {% else %}
                                     Commandes
@@ -645,14 +645,14 @@
                         </div>
                         <div class="stat-item">
                             <div class="stat-value">
-                                {% if user.user_type == 'seller' %}
-                                    {{ user.shop.orders.count }}
+                                {% if user.account_type == 'seller' %}
+                                    {{ user.shop.first.orders.count }}
                                 {% else %}
                                     {{ user.favorite_shops.count }}
                                 {% endif %}
                             </div>
                             <div class="stat-label">
-                                {% if user.user_type == 'seller' %}
+                                {% if user.account_type == 'seller' %}
                                     Ventes
                                 {% else %}
                                     Favoris
@@ -669,21 +669,21 @@
                         </div>
                     </div>
 
-                    {% if user.user_type == 'seller' and user.shop %}
+                    {% if user.account_type == 'seller' and user.shop.first %}
                     <div class="shop-info">
-                        <h4><i class="fas fa-store"></i> {{ user.shop.name }}</h4>
-                        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">{{ user.shop.description|truncatewords:10 }}</p>
+                        <h4><i class="fas fa-store"></i> {{ user.shop.first.title }}</h4>
+                        <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">{{ user.shop.first.description|truncatewords:10 }}</p>
                         <div class="shop-stats">
                             <div class="shop-stat">
-                                <div class="shop-stat-value">{{ user.shop.product_set.count }}</div>
+                                <div class="shop-stat-value">{{ user.shop.first.product.count }}</div>
                                 <div class="shop-stat-label">Produits</div>
                             </div>
                             <div class="shop-stat">
-                                <div class="shop-stat-value">{{ user.shop.orders.count }}</div>
+                                <div class="shop-stat-value">{{ user.shop.first.orders.count }}</div>
                                 <div class="shop-stat-label">Ventes</div>
                             </div>
                             <div class="shop-stat">
-                                <div class="shop-stat-value">4.5</div>
+                                <div class="shop-stat-value">{{user.shop.first.note}}</div>
                                 <div class="shop-stat-label">Note</div>
                             </div>
                         </div>
@@ -704,7 +704,7 @@
                     <div class="tabs">
                         <div class="tab active" data-tab="info">Informations personnelles</div>
                         <div class="tab" data-tab="security">Sécurité</div>
-                        {% if user.user_type == 'seller' %}
+                        {% if user.account_type == 'seller' %}
                         <div class="tab" data-tab="shop">Ma Boutique</div>
                         {% endif %}
                         <div class="tab" data-tab="activity">Activité récente</div>
@@ -840,24 +840,24 @@
                     </div>
                 </div>
 
-                {% if user.user_type == 'seller' %}
+                {% if user.account_type == 'seller' %}
                 <div class="tab-content" id="shop">
-                    {% if user.shop %}
+                    {% if user.shop.first %}
                     <div class="info-card animate__animated animate__fadeIn">
                         <div class="info-header">
                             <h4 class="info-title"><i class="fas fa-store"></i> Informations de la boutique</h4>
-                            <a href="{% url 'edit_shop' %}" class="info-edit">
+                            <a href="{% url 'marketplace_list' %}" class="info-edit">
                                 <i class="fas fa-edit"></i> Modifier la boutique
                             </a>
                         </div>
                         <div class="info-content">
                             <div class="info-item">
                                 <div class="info-label">Nom de la boutique</div>
-                                <div class="info-value">{{ user.shop.name }}</div>
+                                <div class="info-value">{{ user.shop.first.title }}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Description</div>
-                                <div class="info-value">{{ user.shop.description }}</div>
+                                <div class="info-value">{{ user.shop.first.description }}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Statut</div>
@@ -867,7 +867,7 @@
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Date de création</div>
-                                <div class="info-value">{{ user.shop.created_at|date:"d/m/Y" }}</div>
+                                <div class="info-value">{{ user.shop.first.created_at|date:"d/m/Y" }}</div>
                             </div>
                         </div>
                     </div>
@@ -879,11 +879,11 @@
                         <div class="info-content">
                             <div class="info-item">
                                 <div class="info-label">Produits actifs</div>
-                                <div class="info-value">{{ user.shop.product_set.count }} produits</div>
+                                <div class="info-value">{{ user.shop.first.product_set.count }} produits</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Commandes totales</div>
-                                <div class="info-value">{{ user.shop.orders.count }} commandes</div>
+                                <div class="info-value">{{ user.shop.first.first.orders.count }} commandes</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Ventes ce mois</div>
@@ -916,7 +916,7 @@
                             <h4 class="info-title"><i class="fas fa-history"></i> Activité récente</h4>
                         </div>
                         <ul class="activity-list">
-                            {% if user.user_type == 'seller' %}
+                            {% if user.account_type == 'seller' %}
                             <li class="activity-item">
                                 <div class="activity-icon">
                                     <i class="fas fa-seedling"></i>
