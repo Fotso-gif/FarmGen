@@ -451,9 +451,15 @@
                 <span class="badge bg-primary">{{ recent_orders|length }}</span>
             </h3>
             {% if recent_orders %}
-            <a href="{% url 'order_history' %}" class="section-link">
-                Voir tout <i class="fas fa-arrow-right"></i>
-            </a>
+                {% if user.account_type == "seller" %}
+                <a href="{% url 'history' %}" class="section-link">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+                {% else %}
+                    <a href="{% url 'listing' %}" class="section-link">
+                    Voir tout <i class="fas fa-arrow-right"></i>
+                </a>
+                {% endif %}
             {% endif %}
         </div>
         

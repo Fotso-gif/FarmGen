@@ -630,7 +630,7 @@
                         <div class="stat-item">
                             <div class="stat-value">
                                 {% if user.account_type == 'seller' %}
-                                    {{ user.shop.first.first.orders.count }}
+                                     {{ products_count }}
                                 {% else %}
                                     {{ user.orders.count }}
                                 {% endif %}
@@ -646,7 +646,7 @@
                         <div class="stat-item">
                             <div class="stat-value">
                                 {% if user.account_type == 'seller' %}
-                                    {{ user.shop.first.orders.count }}
+                                    {{ orders_count }}
                                 {% else %}
                                     {{ user.favorite_shops.count }}
                                 {% endif %}
@@ -675,11 +675,11 @@
                         <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">{{ user.shop.first.description|truncatewords:10 }}</p>
                         <div class="shop-stats">
                             <div class="shop-stat">
-                                <div class="shop-stat-value">{{ user.shop.first.product.count }}</div>
+                                <div class="shop-stat-value"> {{ products_count }} </div>
                                 <div class="shop-stat-label">Produits</div>
                             </div>
                             <div class="shop-stat">
-                                <div class="shop-stat-value">{{ user.shop.first.orders.count }}</div>
+                                <div class="shop-stat-value">{{ orders_count }}</div>
                                 <div class="shop-stat-label">Ventes</div>
                             </div>
                             <div class="shop-stat">
@@ -867,7 +867,7 @@
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Date de création</div>
-                                <div class="info-value">{{ user.shop.first.created_at|date:"d/m/Y" }}</div>
+                                <div class="info-value">{{ user.created_at|date:"d/m/Y" }}</div>
                             </div>
                         </div>
                     </div>
@@ -879,19 +879,19 @@
                         <div class="info-content">
                             <div class="info-item">
                                 <div class="info-label">Produits actifs</div>
-                                <div class="info-value">{{ user.shop.first.product_set.count }} produits</div>
+                                <div class="info-value">{{ products_count }} produits</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Commandes totales</div>
-                                <div class="info-value">{{ user.shop.first.first.orders.count }} commandes</div>
+                                <div class="info-value">{{ orders_count }} commandes</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Ventes ce mois</div>
-                                <div class="info-value">0 FCFA</div>
+                                <div class="info-value">{{ revenue_today }} FCFA</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Note moyenne</div>
-                                <div class="info-value">4.5/5 ⭐</div>
+                                <div class="info-value">{{ user.shop.first.note }}/5 ⭐</div>
                             </div>
                         </div>
                     </div>
