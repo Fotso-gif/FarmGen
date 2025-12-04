@@ -683,12 +683,17 @@ def profile(request):
     user = request.user
     shop = user.shop.first()
     orders_count = OrderModel.objects.filter(shop_id=shop.id).count()
-    products_count = Product.objects.filter(category__shop=shop).count()
-    revenue_today = OrderModel.objects.filter(
+    if(user.account_type == "seller"):
+        products_count = Product.objects.filter(category__shop=shop).count()
+        revenue_today = OrderModel.objects.filter(
             shop_id=shop.id,
             status__in=['paid', 'payment_verified'],
             created_at__date=timezone.now().date()
         ).aggregate(total=Sum('final_amount'))['total'] or 0
+    else:
+        products_count = 0
+        revenue_today = 0
+    
     if request.method == 'POST':
         # Mettre à jour les informations du profil
         user.first_name = request.POST.get('first_name', user.first_name)
