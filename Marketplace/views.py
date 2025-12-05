@@ -1,4 +1,5 @@
 import io
+import os
 import qrcode
 import base64
 from decimal import Decimal
@@ -24,7 +25,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_http_methods
 from account.models import User
-from .models import Shop, Product, Favorite, Category, ProductImage, ProductLike, ProductView, SearchHistory
+from .models import Shop, Product, Favorite, Category, ProductImage, ProductLike, ProductView, SearchHistory, FAQ 
 from payments.models import Order, MethodPaid, PaymentVerification
 # Create your views here.
 from django.utils import timezone
@@ -32,6 +33,9 @@ from datetime import datetime, timedelta
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
+
+from google import genai
+from google.genai import types
 
 
 def shop(request, shop_id):
@@ -2473,6 +2477,7 @@ def dashboard_stats_api(request):
 @login_required
 @csrf_exempt
 def dashboard_charts_api(request):
+
     """API pour récupérer les données des graphiques."""
     if not hasattr(request.user, 'shop'):
         return JsonResponse({'error': 'Non autorisé'}, status=403)
@@ -2496,4 +2501,326 @@ def dashboard_charts_api(request):
         'revenue_data': revenue_data,
         'period': period,
         'last_update': timezone.now().isoformat()
+    })
+def load_documents_correctly():
+        """Version corrigée de votre fonction"""
+        
+        # Étape 1: Trouver les chemins des fichiers
+        def find_document_path(filename):
+            """Trouve le chemin d'un document"""
+            
+            # 1. Chercher dans static/documents/
+            static_docs_path = os.path.join(settings.BASE_DIR, 'static', 'desc', filename)
+            if os.path.exists(static_docs_path):
+                return static_docs_path
+            
+            # 2. Chercher directement dans static/
+            static_path = os.path.join(settings.BASE_DIR, 'static', filename)
+            if os.path.exists(static_path):
+                return static_path
+            
+            # 3. Chercher dans STATICFILES_DIRS
+            for static_dir in settings.STATICFILES_DIRS:
+                path = os.path.join(static_dir, filename)
+                if os.path.exists(path):
+                    return path
+                
+                # Chercher dans sous-dossier documents
+                path_docs = os.path.join(static_dir, 'desc', filename)
+                if os.path.exists(path_docs):
+                    return path_docs
+            
+            # 4. Chercher à la racine du projet
+            root_path = os.path.join(settings.BASE_DIR, filename)
+            if os.path.exists(root_path):
+                return root_path
+            
+            return None
+        
+        # Étape 2: Lire les fichiers .docx correctement
+        def read_docx_file(filepath):
+            """Lit un fichier .docx avec plusieurs méthodes"""
+            if not filepath or not os.path.exists(filepath):
+                return "Fichier non trouvé"
+            
+            # Essayer différentes méthodes
+            methods_to_try = []
+            
+            # Méthode 1: python-docx
+            try:
+                from docx import Document
+                methods_to_try.append(lambda: '\n'.join([p.text for p in Document(filepath).paragraphs]))
+            except ImportError:
+                pass
+            
+            # Méthode 2: docx2txt
+            try:
+                import docx2txt
+                methods_to_try.append(lambda: docx2txt.process(filepath))
+            except ImportError:
+                pass
+            
+            # Méthode 3: Lecture manuelle
+            def read_manually():
+                import zipfile
+                import re
+                
+                try:
+                    with zipfile.ZipFile(filepath) as z:
+                        # Lire le document principal
+                        with z.open('word/document.xml') as f:
+                            content = f.read().decode('utf-8')
+                            # Extraire le texte entre balises <w:t>
+                            texts = re.findall(r'<w:t[^>]*>([^<]+)</w:t>', content)
+                            return ' '.join(texts)
+                except:
+                    return ""
+            
+            methods_to_try.append(read_manually)
+            
+            # Essayer chaque méthode
+            for method in methods_to_try:
+                try:
+                    result = method()
+                    if result and len(result.strip()) > 10:  # Au moins 10 caractères
+                        return result
+                except:
+                    continue
+            
+            return "Impossible de lire le document"
+        
+        # Étape 3: Charger les deux documents
+        desc_path = find_document_path('Cahier_desc.docx')
+        charge_path = find_document_path('Cahier_de_charge.docx')
+        
+        print(f"Chemin Cahier_desc.docx: {desc_path}")
+        print(f"Chemin Cahier_de_charge.docx: {charge_path}")
+        
+        cahier_desc = read_docx_file(desc_path) if desc_path else "Document non trouvé"
+        cahier_charge = read_docx_file(charge_path) if charge_path else "Document non trouvé"
+        
+        return cahier_desc, cahier_charge
+
+
+class GeminiChatManager:
+    """Gestionnaire de conversations avec Gemini"""
+    
+    def __init__(self):
+        self.client = genai.Client(
+            api_key=os.environ.get("GEMINI_API_KEY")
+        )
+        self.model = "gemini-3-pro-preview"
+
+        # Pour des sessions plus longues, utilisez "gemini-1.5-pro" si disponible
+    
+    
+    
+    def build_system_prompt(self, shop_name=None, user_context=None):
+        """Construit le prompt système avec les documents de FarmGen"""
+        
+        # Base du prompt
+        base_prompt = """Tu es FarmGen Assistant, l'assistant intelligent de la plateforme FarmGen. 
+FarmGen est une marketplace agricole au Cameroun qui connecte directement les producteurs aux consommateurs.
+
+**Ta personnalité :**
+- Tu es chaleureux, professionnel et serviable
+- Tu parles comme un expert du secteur agricole camerounais
+- Tu encourages toujours l'agriculture locale et durable
+- Tu es précis dans tes réponses sur les produits et processus
+
+**Règles de réponse :**
+1. Toujours répondre en français (sauf demande explicite dans une autre langue)
+2. Être concis mais complet
+3. Mettre en avant les valeurs de FarmGen : transparence, traçabilité, qualité
+4. Si tu ne sais pas quelque chose, propose de contacter le support
+5. Pour les questions techniques, réfère-toi aux documents officiels
+
+**Documents de référence :**
+"""
+        
+        # Ajouter les documents spécifiques
+        
+        cahier_desc, cahier_charge = load_documents_correctly()
+            
+        base_prompt += f"""
+**Document descriptif FarmGen :**
+{cahier_desc[:2000]}
+
+**Cahier des charges FarmGen :**
+{cahier_charge[:2000]}
+"""
+        
+        # Si une boutique est spécifiée, ajouter ses FAQs
+        if shop_name:
+            try:
+                shop = Shop.objects.get(title__icontains=shop_name)
+                faqs = FAQ.objects.filter(shop=shop)
+                if faqs.exists():
+                    base_prompt += f"\n**FAQ de la boutique '{shop.title}' :**\n"
+                    for faq in faqs:
+                        base_prompt += f"Q: {faq.question}\nR: {faq.answer}\n"
+            except Shop.DoesNotExist:
+                pass
+        
+        base_prompt += """
+**Procédure de recherche :**
+1. D'abord vérifier si la question concerne une boutique spécifique
+2. Si oui, consulter la FAQ de cette boutique
+3. Sinon, chercher la réponse dans les documents FarmGen
+4. Si pas trouvé, utiliser tes connaissances générales sur l'agriculture et les marketplaces
+
+**Format de réponse :**
+- Commencer par une salutation appropriée
+- Structurer la réponse clairement
+- Terminer par une question ouverte pour continuer la conversation
+- Pour les chiffres et dates, être précis
+"""
+        
+        return base_prompt
+    
+    def get_or_create_thread(self, thread_id):
+        """Gère les threads de conversation"""
+        # Pour Gemini, on maintient l'historique dans notre base
+        # ou on utilise le système de conversation de Gemini
+        return thread_id
+    
+    def generate_response(self, message, thread_id=None, shop_name=None):
+        """Génère une réponse avec Gemini"""
+        
+        # Construire le prompt système
+        system_prompt = self.build_system_prompt(shop_name)
+        
+        # Préparer l'historique si thread_id existe
+        history = []
+        if thread_id:
+            # Récupérer l'historique depuis votre base de données
+            # Exemple : history = ChatHistory.objects.filter(thread_id=thread_id).order_by('created_at')
+            pass
+        
+        # Construire le contenu de la conversation
+        contents = [
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=system_prompt)],
+            ),
+            types.Content(
+                role="model",
+                parts=[types.Part.from_text(text="Je suis FarmGen Assistant, prêt à vous aider !")],
+            ),
+        ]
+        
+        # Ajouter l'historique
+        for msg in history[-6:]:  # Garder les 6 derniers messages
+            contents.append(
+                types.Content(
+                    role="user" if msg.is_user else "model",
+                    parts=[types.Part.from_text(text=msg.content)],
+                )
+            )
+        
+        # Ajouter le nouveau message
+        contents.append(
+            types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=message)],
+            )
+        )
+        
+        # Configuration de génération
+        config = types.GenerateContentConfig(
+            temperature=0.7,
+            top_p=0.9,
+            top_k=40,
+            max_output_tokens=1024,
+        )
+        
+        try:
+            # Générer la réponse
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=config,
+            )
+            
+            return response.text
+            
+        except Exception as e:
+            return f"Désolé, une erreur est survenue : {str(e)}"
+
+# Initialiser le gestionnaire
+chat_manager = GeminiChatManager()
+
+@csrf_exempt
+@require_POST
+def chat_endpoint(request):
+    """Endpoint pour le chat"""
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '').strip()
+        thread_id = data.get('thread_id')
+        shop_name = data.get('shop_name')
+        
+        if not message:
+            return JsonResponse({'error': 'Message vide'}, status=400)
+        
+        # Détecter le nom de boutique dans le message
+        if not shop_name:
+            # Simple détection de noms de boutique courants
+            shop_keywords = ['boutique', 'shop', 'marché', 'producteur']
+            words = message.lower().split()
+            for word in words:
+                try:
+                    shop = Shop.objects.get(title__icontains=word)
+                    shop_name = shop.title
+                    break
+                except:
+                    continue
+        
+        # Générer la réponse
+        response = chat_manager.generate_response(
+            message=message,
+            thread_id=thread_id,
+            shop_name=shop_name
+        )
+        
+        # Sauvegarder dans l'historique si user connecté
+        if request.user.is_authenticated:
+            from .models import ChatHistory
+            ChatHistory.objects.create(
+                user=request.user,
+                thread_id=thread_id or f"thread_{request.user.id}",
+                message=message,
+                response=response,
+                shop_name=shop_name
+            )
+        
+        return JsonResponse({
+            'status': 'success',
+            'response': response,
+            'thread_id': thread_id,
+            'shop_detected': shop_name
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Données JSON invalides'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Vue pour récupérer l'historique
+@login_required
+@require_POST
+def get_chat_history(request):
+    """Récupère l'historique d'un thread"""
+    data = json.loads(request.body)
+    thread_id = data.get('thread_id')
+    
+    from .models import ChatHistory
+    history = ChatHistory.objects.filter(
+        user=request.user,
+        thread_id=thread_id
+    ).order_by('created_at').values('message', 'response', 'created_at')
+    
+    return JsonResponse({
+        'status': 'success',
+        'history': list(history)
     })

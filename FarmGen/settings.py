@@ -241,6 +241,7 @@ FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:8000')
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', FRONTEND_URL).split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [FRONTEND_URL]
 CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', FRONTEND_URL).split(',') if os.getenv('CSRF_TRUSTED_ORIGINS') else [FRONTEND_URL]
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # === New: Optional AWS S3 storage for media/static (enable with USE_S3=True) ===
 USE_S3 = os.getenv('USE_S3') == 'True'
 if USE_S3:

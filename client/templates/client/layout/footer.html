@@ -68,7 +68,7 @@
     .floating-buttons {
         position: fixed;
         
-        bottom: 5rem;
+        bottom: 2rem;
         right: 0px;
         z-index: 0;
         width:100%;
@@ -457,16 +457,16 @@
         }
     }
 </style>
-
+ 
     <!-- Boutons flottants -->
     <div class="floating-buttons">
         <button class="floating-btn faq" onclick="openModal('faqModal')">
             FAQ
-            <span class="notification">3</span>
+            <span class="notification" id="faqNotification">6</span>
         </button>
         <button class="floating-btn chatbot" onclick="openModal('chatbotModal')">
             <i class="fas fa-robot"></i>
-            <span class="notification">1</span>
+            <span class="notification" id="chatNotification">1</span>
         </button>
     </div>
 
@@ -483,7 +483,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="faq-list">
+                <div class="faq-list" id="faqList">
                     <div class="faq-item">
                         <div class="faq-question" onclick="toggleFAQ(this)">
                             Comment passer une commande sur FarmGen ?
@@ -575,26 +575,7 @@
             <div class="modal-body">
                 <div class="chat-container">
                     <div class="chat-messages" id="chatMessages">
-                        <div class="message bot">
-                            <div class="avatar">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div class="content">
-                                Bonjour ! 👋 Je suis l'assistant FarmGen. Comment puis-je vous aider aujourd'hui ?
-                            </div>
-                        </div>
-                        <div class="message bot">
-                            <div class="avatar">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div class="content">
-                                Voici quelques questions fréquentes :
-                                <br>• 🛒 Comment commander
-                                <br>• 🚚 Livraison
-                                <br>• 💰 Paiement
-                                <br>• 👨‍🌾 Devenir vendeur
-                            </div>
-                        </div>
+                        <!-- Messages seront ajoutés dynamiquement -->
                     </div>
                     <div class="typing-indicator" id="typingIndicator">
                         <div class="typing-dot"></div>
@@ -615,7 +596,7 @@
             </div>
         </div>
     </div>
-<!-- Footer -->
+    <!-- Footer -->
     <footer id="contact">
         <div class="container">
             <div class="row g-4">
@@ -670,23 +651,403 @@
     </script>
 
     <script>
-    // Gestion des modales
-    function openModal(modalId) {
-        document.getElementById(modalId).classList.add('active');
-        document.body.style.overflow = 'hidden';
+// Configuration globale
+window.FarmGenConfig = {
+    userId: window.userId || null,
+    apiUrls: {
+        chat: '/marketplace/api/chat/',
+        history: '/marketplace/api/chat/history/'
+    }
+};
+
+// Système de notifications
+const NotificationManager = {
+    init() {
+        this.updateFAQNotification();
+        this.updateChatNotification();
+    },
+    
+    updateFAQNotification() {
+        const faqNotification = document.getElementById('faqNotification');
+        if (faqNotification) {
+            const faqCount = this.getFAQCount();
+            if (faqCount > 0) {
+                faqNotification.textContent = faqCount;
+                faqNotification.style.display = 'flex';
+            } else {
+                faqNotification.style.display = 'none';
+            }
+        }
+    },
+    
+    updateChatNotification(count = null) {
+        const chatNotification = document.getElementById('chatNotification');
+        if (chatNotification) {
+            const currentCount = count !== null ? count : this.getChatMessageCount();
+            if (currentCount > 0) {
+                chatNotification.textContent = currentCount;
+                chatNotification.style.display = 'flex';
+            } else {
+                chatNotification.style.display = 'none';
+            }
+        }
+    },
+    
+    getFAQCount() {
+        const faqList = document.getElementById('faqList');
+        return faqList ? faqList.querySelectorAll('.faq-item').length : 0;
+    },
+    
+    getChatMessageCount() {
+        // Pour le chatbot, on compte les messages non lus
+        // Par défaut 1 pour indiquer qu'il y a un assistant disponible
+        return 1;
+    },
+    
+    resetChatNotification() {
+        // Réinitialiser la notification chat quand on ouvre la modal
+        this.updateChatNotification(0);
+    }
+};
+
+// Classe FarmGenChatbot
+class FarmGenChatbot {
+    constructor(options = {}) {
+        this.apiUrl = options.apiUrl || window.FarmGenConfig.apiUrls.chat;
+        this.historyUrl = options.historyUrl || window.FarmGenConfig.apiUrls.history;
+        this.userId = window.FarmGenConfig.userId;
+        this.threadId = options.threadId || (this.userId ? `thread_${this.userId}` : `thread_anon_${Date.now()}`);
+        this.maxHistory = options.maxHistory || 10;
+        this.conversationHistory = [];
+        this.typingIndicator = document.getElementById('typingIndicator');
+        this.chatMessages = document.getElementById('chatMessages');
+        this.chatInput = document.getElementById('chatInput');
+        this.sendBtn = document.getElementById('sendBtn');
+        this.isInitialized = false;
+    }
+    
+    async initialize() {
+        if (this.isInitialized) return;
         
-        if (modalId === 'chatbotModal') {
-            setTimeout(() => {
-                document.getElementById('chatInput').focus();
-            }, 300);
+        // Charger l'historique si utilisateur connecté
+        if (this.userId) {
+            await this.loadHistory();
+        } else {
+            const savedHistory = localStorage.getItem(`farmgen_chat_${this.threadId}`);
+            if (savedHistory) {
+                this.conversationHistory = JSON.parse(savedHistory).slice(-this.maxHistory);
+            }
+        }
+        
+        // Afficher les messages d'accueil si pas d'historique
+        if (this.conversationHistory.length === 0) {
+            this.displayWelcomeMessages();
+        } else {
+            this.displayHistory();
+        }
+        
+        this.isInitialized = true;
+    }
+    
+    displayWelcomeMessages() {
+        this.addBotMessage("Bonjour ! 👋 Je suis l'assistant FarmGen. Comment puis-je vous aider aujourd'hui ?");
+        this.addBotMessage("Voici quelques questions fréquentes :<br>• 🛒 Comment commander<br>• 🚚 Livraison<br>• 💰 Paiement<br>• 👨‍🌾 Devenir vendeur");
+    }
+    
+    displayHistory() {
+        this.conversationHistory.forEach(msg => {
+            if (msg.role === 'user') {
+                this.addUserMessage(msg.content);
+            } else if (msg.role === 'assistant') {
+                this.addBotMessage(msg.content);
+            }
+        });
+    }
+    
+    async loadHistory() {
+        try {
+            const response = await fetch(this.historyUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken(),
+                },
+                body: JSON.stringify({ thread_id: this.threadId })
+            });
+            
+            const data = await response.json();
+            if (data.status === 'success' && data.history) {
+                data.history.forEach(item => {
+                    this.conversationHistory.push({
+                        role: 'user',
+                        content: item.message,
+                        timestamp: item.created_at
+                    });
+                    this.conversationHistory.push({
+                        role: 'assistant',
+                        content: item.response,
+                        timestamp: item.created_at
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Erreur chargement historique:', error);
         }
     }
-
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
-        document.body.style.overflow = 'auto';
+    
+    async sendMessage(message) {
+        if (!message || !message.trim()) return;
+        
+        this.addUserMessage(message);
+        this.clearChatInput();
+        this.showTypingIndicator();
+        
+        const payload = {
+            message: message.trim(),
+            thread_id: this.threadId,
+            shop_name: this.detectShopName(message)
+        };
+        
+        try {
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCSRFToken(),
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            this.hideTypingIndicator();
+            
+            if (data.status === 'success') {
+                this.addBotMessage(data.response);
+                
+                // Ajouter à l'historique
+                this.conversationHistory.push({
+                    role: 'user',
+                    content: message.trim(),
+                    timestamp: new Date().toISOString()
+                });
+                this.conversationHistory.push({
+                    role: 'assistant',
+                    content: data.response,
+                    timestamp: new Date().toISOString()
+                });
+                
+                this.saveToLocalStorage();
+                
+                return {
+                    status: 'success',
+                    response: data.response
+                };
+            } else {
+                this.addBotMessage("Désolé, une erreur s'est produite.");
+                throw new Error(data.error || 'Erreur inconnue');
+            }
+            
+        } catch (error) {
+            this.hideTypingIndicator();
+            console.error('Erreur chat:', error);
+            this.addBotMessage("Désolé, je rencontre des difficultés techniques. Veuillez réessayer.");
+            return {
+                status: 'error',
+                message: 'Erreur de connexion au serveur'
+            };
+        }
     }
+    
+    addUserMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message user';
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = '<i class="fas fa-user"></i>';
+        
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.textContent = text;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        this.chatMessages.appendChild(messageDiv);
+        
+        this.scrollToBottom();
+    }
+    
+    addBotMessage(text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message bot';
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.innerHTML = '<i class="fas fa-robot"></i>';
+        
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.innerHTML = this.formatMessage(text);
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        this.chatMessages.appendChild(messageDiv);
+        
+        this.scrollToBottom();
+    }
+    
+    formatMessage(text) {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+    }
+    
+    clearChatInput() {
+        if (this.chatInput) {
+            this.chatInput.value = '';
+            this.updateSendButton();
+        }
+    }
+    
+    updateSendButton() {
+        if (this.sendBtn) {
+            this.sendBtn.disabled = !this.chatInput.value.trim();
+        }
+    }
+    
+    showTypingIndicator() {
+        if (this.typingIndicator) {
+            this.typingIndicator.classList.add('active');
+            this.scrollToBottom();
+        }
+    }
+    
+    hideTypingIndicator() {
+        if (this.typingIndicator) {
+            this.typingIndicator.classList.remove('active');
+        }
+    }
+    
+    scrollToBottom() {
+        if (this.chatMessages) {
+            this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+        }
+    }
+    
+    detectShopName(message) {
+        const shopKeywords = ['boutique', 'marché', 'producteur', 'ferme', 'agriculteur'];
+        const words = message.toLowerCase().split(' ');
+        
+        for (const word of words) {
+            if (shopKeywords.some(keyword => word.includes(keyword))) {
+                return word;
+            }
+        }
+        
+        return null;
+    }
+    
+    saveToLocalStorage() {
+        const recentHistory = this.conversationHistory.slice(-this.maxHistory * 2);
+        localStorage.setItem(`farmgen_chat_${this.threadId}`, JSON.stringify(recentHistory));
+    }
+    
+    getCSRFToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+    
+    clearHistory() {
+        this.conversationHistory = [];
+        this.chatMessages.innerHTML = '';
+        localStorage.removeItem(`farmgen_chat_${this.threadId}`);
+        this.displayWelcomeMessages();
+    }
+}
 
+// Variables globales
+let farmgenChatbot = null;
+
+// Gestion des modales
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    if (modalId === 'chatbotModal') {
+        if (!farmgenChatbot) {
+            farmgenChatbot = new FarmGenChatbot({
+                userId: window.FarmGenConfig.userId
+            });
+        }
+        farmgenChatbot.initialize();
+        
+        // Réinitialiser la notification chat
+        NotificationManager.resetChatNotification();
+        
+        setTimeout(() => {
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                chatInput.focus();
+            }
+        }, 300);
+    }
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+    document.body.style.overflow = 'auto';
+    
+    if (modalId === 'faqModal') {
+        // Fermer toutes les FAQ
+        document.querySelectorAll('.faq-question').forEach(q => {
+            q.classList.remove('active');
+            q.nextElementSibling.classList.remove('active');
+        });
+    }
+}
+
+// Gestion FAQ
+function toggleFAQ(element) {
+    const answer = element.nextElementSibling;
+    const isActive = element.classList.contains('active');
+    
+    // Fermer toutes les autres FAQ
+    document.querySelectorAll('.faq-question').forEach(q => {
+        q.classList.remove('active');
+        q.nextElementSibling.classList.remove('active');
+    });
+    
+    // Ouvrir/fermer la FAQ actuelle
+    if (!isActive) {
+        element.classList.add('active');
+        answer.classList.add('active');
+    }
+}
+
+// Gestion de l'input chat
+function handleChatInput(e) {
+    if (e.key === 'Enter') {
+        sendMessage();
+    }
+}
+
+// Fonction d'envoi de message
+function sendMessage() {
+    if (!farmgenChatbot) return;
+    
+    const chatInput = document.getElementById('chatInput');
+    if (!chatInput || !chatInput.value.trim()) return;
+    
+    farmgenChatbot.sendMessage(chatInput.value);
+}
+
+// Initialisation au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le gestionnaire de notifications
+    NotificationManager.init();
+    
     // Fermer les modales en cliquant à l'extérieur
     document.querySelectorAll('.modal-overlay').forEach(modal => {
         modal.addEventListener('click', function(e) {
@@ -695,213 +1056,36 @@
             }
         });
     });
-
-    // Gestion FAQ
-    function toggleFAQ(element) {
-        const answer = element.nextElementSibling;
-        const isActive = element.classList.contains('active');
-        
-        // Fermer toutes les autres FAQ
-        document.querySelectorAll('.faq-question').forEach(q => {
-            q.classList.remove('active');
-            q.nextElementSibling.classList.remove('active');
-        });
-        
-        // Ouvrir/fermer la FAQ actuelle
-        if (!isActive) {
-            element.classList.add('active');
-            answer.classList.add('active');
-        }
-    }
-
-    // Chatbot
-    const chatMessages = document.getElementById('chatMessages');
+    
+    // Gestion de l'input du chatbot
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
-    const typingIndicator = document.getElementById('typingIndicator');
-
-    function handleChatInput(e) {
-        if (e.key === 'Enter') {
-            sendMessage();
-        }
-    }
-
-    function getBotResponse(msg) {
-
-            // Salutations
-            if (msg.includes('bonjour') || msg.includes('salut') || msg.includes('hello')) {
-                return "Bonjour ! Comment puis-je vous aider?";
-            }
-
-            // Scénario / workflow
-            if (msg.includes('scénario') || msg.includes('workflow') || msg.includes('automatisation') || msg.includes('make')) {
-                return "Pour créer un workflow Make : définissez un déclencheur → ajoutez vos modules → faites le mapping → testez → activez. Que voulez-vous créer ?";
-            }
-
-            // Webhooks
-            if (msg.includes('webhook') || msg.includes('callback') || msg.includes('url')) {
-                return "Pour utiliser un webhook Make : créez un module Webhook → copiez l’URL → envoyez une requête test → mappez les champs. Souhaitez-vous un exemple ?";
-            }
-
-            // API
-            if (msg.includes('api') || msg.includes('http') || msg.includes('requête') || msg.includes('endpoint')) {
-                return "Avec le module HTTP de Make, vous pouvez envoyer des requêtes GET, POST, PUT, PATCH, DELETE. Voulez-vous un exemple ?";
-            }
-
-            // Erreurs Make
-            if (msg.includes('erreur') || msg.includes('failed') || msg.includes('bug') || msg.includes('error')) {
-                return "Les erreurs Make sont souvent dues à un mauvais mapping ou une réponse API incorrecte. Quel est le message exact ?";
-            }
-
-            // Intégrations (WhatsApp, Airtable, Notion…)
-            if (msg.includes('airtable') || msg.includes('notion') || msg.includes('gmail') || msg.includes('guide') || msg.includes('whatsapp')) {
-                return "Je peux vous aider à configurer cette intégration dans Make. Quelle action souhaitez-vous automatiser ?";
-            }
-
-            // Modules & mapping
-            if (msg.includes('module') || msg.includes('configurer') || msg.includes('map') || msg.includes('mapping')) {
-                return "Pour configurer un module : choisissez la connexion → mappez → testez. Quel module pose problème ?";
-            }
-
-            // Contact
-            if (msg.includes('contact') || msg.includes('email')) {
-                return "Pour une aide plus avancée, contactez le support Wheebook. Ici, je peux vous aider avec vos automatisations Make.";
-            }
-
-            // Fallback
-            const fallback = [
-                "Pouvez-vous préciser ? Je peux vous aider sur webhooks, scénarios, API et erreurs Make.",
-                "Je n’ai pas compris. Parlez-vous d’un webhook, d’un module ou d’une API ?",
-                "Décrivez ce que vous souhaitez automatiser et je vous donnerai la structure.",
-                "Je peux vous guider étape par étape. Que voulez-vous créer dans Make ?"
-            ];
-
-            return fallback[Math.floor(Math.random() * fallback.length)];
-        }
-
     
-    function sendMessage() {
-        const message = chatInput.value.trim();
-        if (!message) return;
-
-        addMessage(message, 'user');
-        chatInput.value = '';
-        sendBtn.disabled = true;
-
-        showTypingIndicator();
-
-        // Envoyer au webhook et afficher réponse
-        handleMessage(message).then(result => {
-            hideTypingIndicator();
-
-            if (result.status === "ok") {
-                addMessage(result.response, 'bot');
-            } else {
-                addMessage("Erreur : " + result.message, 'bot');
-            }
-
-            sendBtn.disabled = false;
-            chatInput.focus();
-
-        }).catch(err => {
-            hideTypingIndicator();
-            addMessage("Erreur serveur : " + err.message, 'bot');
-            sendBtn.disabled = false;
+    if (chatInput && sendBtn) {
+        chatInput.addEventListener('input', function() {
+            sendBtn.disabled = !this.value.trim();
         });
-
-    }
-
-
-    function addMessage(text, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}`;
         
-        const avatar = document.createElement('div');
-        avatar.className = 'avatar';
-        avatar.innerHTML = sender === 'bot' ? '<i class="fas fa-robot"></i>' : '<i class="fas fa-user"></i>';
-        
-        const content = document.createElement('div');
-        content.className = 'content';
-        content.textContent = text;
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(content);
-        chatMessages.appendChild(messageDiv);
-        
-        // Scroll vers le bas
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        sendBtn.disabled = !chatInput.value.trim();
     }
-
-    function showTypingIndicator() {
-        typingIndicator.classList.add('active');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    function hideTypingIndicator() {
-        typingIndicator.classList.remove('active');
-    }
-
-    async function handleMessage(input) {
-
-        // On récupère l'id utilisateur passé depuis le template Django
-        const userId = window.userId || null;
-
-        // Thread dynamique si user connecté
-        let thread_id_value = null;
-        if (userId) {
-            thread_id_value = `thread_${userId}`;
-            console.log("Utilisateur connecté → thread:", thread_id_value);
-        }
-
-        const message = input.trim();
-        const webhookURL = "https://hook.eu2.make.com/cnx8mya0diyitb1oq35aoxsta4uudgyt";
-
-        const payload = {
-            thread_id: thread_id_value,
-            message: message
-        };
-
-        try {
-            const res = await fetch(webhookURL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-make-apikey": "ASCII237"
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const json = await res.json();
-
-            return {
-                status: "ok",
-                response: json.response || "Aucune réponse reçue.",
-                raw: json
-            };
-
-        } catch (err) {
-            return {
-                status: "error",
-                message: err.message
-            };
-        }
-    }
-
-
-
-
-
-    // Désactiver le bouton d'envoi si le champ est vide
-    chatInput.addEventListener('input', function() {
-        sendBtn.disabled = !this.value.trim();
-    });
-
+    
     // Fermer avec la touche Échap
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             document.querySelectorAll('.modal-overlay').forEach(modal => {
-                closeModal(modal.id);
+                if (modal.classList.contains('active')) {
+                    closeModal(modal.id);
+                }
             });
         }
     });
+    
+    // Pré-initialiser le chatbot
+    farmgenChatbot = new FarmGenChatbot({
+        userId: window.FarmGenConfig.userId
+    });
+    
+    // Exposer globalement
+    window.farmgenChatbot = farmgenChatbot;
+});
 </script>

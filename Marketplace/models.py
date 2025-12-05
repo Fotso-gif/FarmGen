@@ -124,3 +124,22 @@ class Review(models.Model):
     
     def __str__(self):
         return f"Avis de {self.user.username} - Note: {self.rating}"
+    
+class FAQ(models.Model):
+    """FAQ par boutique"""
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='faqs')
+    question = models.TextField()
+    answer = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+class ChatHistory(models.Model):
+    """Historique des conversations"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    thread_id = models.CharField(max_length=100)
+    message = models.TextField()
+    response = models.TextField()
+    shop_name = models.CharField(max_length=200, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']

@@ -55,6 +55,9 @@ urlpatterns = [
     # API pour données dynamiques
     path('api/dashboard/stats/', views.dashboard_stats_api, name='dashboard_stats_api'),
     path('api/dashboard/charts/', views.dashboard_charts_api, name='dashboard_charts_api'),
+    #Chatbot
+    path('api/chat/', views.chat_endpoint, name='chat_endpoint'),
+    path('api/chat/history/', views.get_chat_history, name='chat_history'),
 ]
 #/api/payment-methods/create/',
 
