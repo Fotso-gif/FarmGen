@@ -1,5 +1,7 @@
 {% extends "client/layout/main.html" %}
-{% load static %} 
+{% load static %}
+{% load humanize %}
+
 {% block css %}
 <style>
   /* Variables CSS adaptées à FarmGen */
@@ -818,16 +820,191 @@
     transition-delay: 0.6s;
   }
 </style>
+<style>
+  /* Variables CSS adaptées à FarmGen */
+  :root {
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --darker-bg: #f5f5f5;
+  }
+
+  /* Hero Section Blog */
+  .blog-hero {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    padding: 10rem 2rem 6rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .blog-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("{% static 'images/blog-hero-bg.jpg' %}") center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 1;
+  }
+
+  .blog-hero-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ... (keep all your existing CSS styles) ... */
+
+  /* New styles for dynamic content */
+  .shop-badge {
+    background: var(--light-green);
+    color: var(--forest-green);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+    margin-bottom: 1rem;
+  }
+
+  .favorite-btn {
+    background: transparent;
+    border: 2px solid var(--primary-green);
+    color: var(--primary-green);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .favorite-btn:hover,
+  .favorite-btn.active {
+    background: var(--primary-green);
+    color: white;
+  }
+
+  .favorite-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+    font-size: 0.9rem;
+  }
+
+  .content-type-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 2;
+  }
+
+  .podcast-icon,
+  .affiche-icon {
+    margin-right: 0.3rem;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--border-color);
+    margin-bottom: 1.5rem;
+  }
+
+  .empty-state h3 {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state p {
+    color: var(--text-dark);
+    opacity: 0.7;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+
+  .loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    grid-column: 1 / -1;
+  }
+
+  .loading-spinner.active {
+    display: block;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Article card adjustments */
+  .article-content-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.5rem;
+  }
+
+  .type-article {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+  }
+
+  .type-affiche {
+    background: rgba(231, 76, 60, 0.1);
+    color: #e74c3c;
+  }
+
+  .type-podcast {
+    background: rgba(155, 89, 182, 0.1);
+    color: #9b59b6;
+  }
+</style>
 {% endblock %}
 
 {% block main %}
-<!-- Breadcrumb -->
-<!--<div class="breadcrumb">-->
-<!--  <a href="{% url 'home' %}">Accueil</a>-->
-<!--  <span>/</span>-->
-<!--  <span>Blog</span>-->
-<!--</div>-->
-
 <!-- Hero Section -->
 <section class="blog-hero">
   <div class="blog-hero-content">
@@ -835,7 +1012,9 @@
     <p class="fade-in">Découvrez nos conseils agricoles, actualités et innovations pour optimiser votre production et développer votre activité agricole au Cameroun.</p>
     <div class="cta-buttons fade-in">
       <a href="#articles" class="btn-light">Explorer les articles</a>
-      <a href="#newsletter" class="btn-outline-light">S'abonner</a>
+      {% if user.is_authenticated and user.is_seller %}
+      <a href="{% url 'seller_blog' %}" class="btn-outline-light">Publier un article</a>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -847,24 +1026,23 @@
     <div class="blog-filters">
       <div class="filters-container">
         <div class="filter-group">
-          <label>Catégorie:</label>
-          <select class="filter-select" id="category-filter">
-            <option value="all">Toutes les catégories</option>
-            <option value="techniques">Techniques Agricoles</option>
-            <option value="bio">Agriculture Biologique</option>
-            <option value="marché">Marché & Commercialisation</option>
-            <option value="innovation">Innovations</option>
-            <option value="saison">Conseils de Saison</option>
+          <label>Boutique:</label>
+          <select class="filter-select" id="shop-filter">
+            <option value="all">Toutes les boutiques</option>
+            {% for shop in shops %}
+            <option value="{{ shop.id }}" {% if current_shop_filter == shop.id|stringformat:"i" %}selected{% endif %}>
+              {{ shop.title }}
+            </option>
+            {% endfor %}
           </select>
         </div>
         <div class="filter-group">
-          <label>Type:</label>
+          <label>Type de contenu:</label>
           <select class="filter-select" id="type-filter">
             <option value="all">Tous les types</option>
-            <option value="article">Articles</option>
-            <option value="conseil">Conseils Pratiques</option>
-            <option value="témoignage">Témoignages</option>
-            <option value="actualité">Actualités</option>
+            <option value="article" {% if current_type_filter == "article" %}selected{% endif %}>Articles</option>
+            <option value="affiche" {% if current_type_filter == "affiche" %}selected{% endif %}>Affiches</option>
+            <option value="podcast" {% if current_type_filter == "podcast" %}selected{% endif %}>Podcasts</option>
           </select>
         </div>
         <div class="filter-group">
@@ -872,7 +1050,7 @@
           <select class="filter-select" id="sort-filter">
             <option value="recent">Plus récent</option>
             <option value="popular">Plus populaire</option>
-            <option value="ancien">Plus ancien</option>
+            <option value="favoris">Plus de favoris</option>
           </select>
         </div>
         <button class="clear-filters" id="clear-filters">Effacer les filtres</button>
@@ -880,182 +1058,196 @@
     </div>
 
     <!-- Featured Post -->
+    {% if articles %}
+    {% with featured_article=articles.0 %}
     <div class="featured-post">
       <div class="featured-post-card fade-in">
         <div class="featured-post-image">
-          <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Agriculture durable au Cameroun">
+          {% if featured_article.image %}
+          <img src="{{ featured_article.image.url }}" alt="{{ featured_article.titre }}">
+          {% else %}
+          <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="{{ featured_article.titre }}">
+          {% endif %}
           <div class="featured-post-badge">Article à la une</div>
+          <div class="content-type-badge">
+            {% if featured_article.type_contenu == 'article' %}
+            <i class="fas fa-file-alt podcast-icon"></i>Article
+            {% elif featured_article.type_contenu == 'affiche' %}
+            <i class="fas fa-image affiche-icon"></i>Affiche
+            {% else %}
+            <i class="fas fa-podcast podcast-icon"></i>Podcast
+            {% endif %}
+          </div>
         </div>
         <div class="featured-post-content">
+          {% if featured_article.shop %}
+          <div class="shop-badge">{{ featured_article.shop.title }}</div>
+          {% endif %}
+          
           <div class="post-meta">
             <div class="post-author">
+              {% if featured_article.shop.user.avatar %}
               <div class="author-avatar">
-                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Jean Mbarga">
+                <img src="{{ featured_article.shop.user.avatar.url }}" alt="{{ featured_article.shop.user.get_full_name }}">
               </div>
-              <span>Jean Mbarga</span>
+              {% else %}
+              <div class="author-avatar">
+                <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Auteur">
+              </div>
+              {% endif %}
+              <span>{{ featured_article.shop.user.get_full_name|default:"Auteur FarmGen" }}</span>
             </div>
             <div class="post-date">
               <i class="far fa-calendar"></i>
-              <span>15 Novembre 2023</span>
+              <span>{{ featured_article.date_publication|date:"d F Y" }}</span>
             </div>
           </div>
-          <h2><a href="#">L'agriculture durable au Cameroun : défis et opportunités</a></h2>
-          <p>Découvrez comment les agriculteurs camerounais adoptent des pratiques durables pour préserver l'environnement tout en augmentant leur productivité grâce aux nouvelles technologies.</p>
+          
+          <h2><a href="{% url 'article_detail' featured_article.id %}">{{ featured_article.titre }}</a></h2>
+          
+          <p>{{ featured_article.contenu|truncatewords:50|striptags }}</p>
+          
           <div class="post-tags">
-            <span class="post-tag" data-tag="durable">Durable</span>
-            <span class="post-tag" data-tag="innovation">Innovation</span>
-            <span class="post-tag" data-tag="cameroun">Cameroun</span>
+            <span class="article-content-type type-{{ featured_article.type_contenu }}">
+              {% if featured_article.type_contenu == 'article' %}
+              <i class="fas fa-file-alt"></i>Article
+              {% elif featured_article.type_contenu == 'affiche' %}
+              <i class="fas fa-image"></i>Affiche
+              {% else %}
+              <i class="fas fa-podcast"></i>Podcast
+              {% endif %}
+            </span>
+            {% if featured_article.shop %}
+            <span class="post-tag" data-tag="boutique-{{ featured_article.shop.id }}">{{ featured_article.shop.title }}</span>
+            {% endif %}
           </div>
-          <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+          
+          <a href="{% url 'article_detail' featured_article.id %}" class="read-more">
+            Lire l'article <i class="fas fa-arrow-right"></i>
+          </a>
         </div>
       </div>
     </div>
+    {% endwith %}
+    {% endif %}
 
     <!-- Posts Grid -->
     <div class="posts-content">
+      <!-- Loading Spinner -->
+      <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+        <p>Chargement des articles...</p>
+      </div>
+
+      <!-- Posts Container -->
       <div class="posts-grid" id="posts-container">
-        <!-- Post 1 -->
-        <div class="post-card fade-in" data-category="techniques" data-type="conseil" data-tags="irrigation,technique">
+        {% for article in articles|slice:"1:" %}
+        <div class="post-card fade-in" 
+             data-shop="{{ article.shop.id|default:'' }}" 
+             data-type="{{ article.type_contenu }}"
+             data-date="{{ article.date_publication|date:'Y-m-d' }}">
           <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1574326344267-5c1c5a4a2c7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Techniques d'irrigation">
+            {% if article.image %}
+            <img src="{{ article.image.url }}" alt="{{ article.titre }}">
+            {% else %}
+            <img src="https://images.unsplash.com/photo-1574326344267-5c1c5a4a2c7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="{{ article.titre }}">
+            {% endif %}
+            <div class="content-type-badge">
+              {% if article.type_contenu == 'article' %}
+              <i class="fas fa-file-alt"></i>Article
+              {% elif article.type_contenu == 'affiche' %}
+              <i class="fas fa-image"></i>Affiche
+              {% else %}
+              <i class="fas fa-podcast"></i>Podcast
+              {% endif %}
+            </div>
           </div>
+          
           <div class="post-card-content">
+            {% if article.shop %}
+            <div class="shop-badge">{{ article.shop.title }}</div>
+            {% endif %}
+            
             <div class="post-meta">
               <div class="post-date">
                 <i class="far fa-calendar"></i>
-                <span>8 Novembre 2023</span>
+                <span>{{ article.date_publication|date:"d F Y" }}</span>
               </div>
+              {% if article.shop %}
+              <div class="favorite-count">
+                <i class="fas fa-heart"></i>
+                <span>{{ article.shop.favorited_by.count }}</span>
+              </div>
+              {% endif %}
             </div>
-            <h3><a href="#">Optimiser l'irrigation : techniques modernes pour économiser l'eau</a></h3>
-            <p>Découvrez les méthodes d'irrigation efficaces qui permettent de réduire la consommation d'eau tout en améliorant le rendement des cultures.</p>
+            
+            <h3><a href="{% url 'article_detail' article.id %}">{{ article.titre }}</a></h3>
+            
+            <p>{{ article.contenu|truncatewords:30|striptags }}</p>
+            
             <div class="post-tags">
-              <span class="post-tag" data-tag="irrigation">Irrigation</span>
-              <span class="post-tag" data-tag="technique">Technique</span>
+              <span class="article-content-type type-{{ article.type_contenu }}">
+                {% if article.type_contenu == 'article' %}
+                <i class="fas fa-file-alt"></i>Article
+                {% elif article.type_contenu == 'affiche' %}
+                <i class="fas fa-image"></i>Affiche
+                {% else %}
+                <i class="fas fa-podcast"></i>Podcast
+                {% endif %}
+              </span>
             </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
+            
+            <a href="{% url 'article_detail' article.id %}" class="read-more">
+              Lire l'article <i class="fas fa-arrow-right"></i>
+            </a>
           </div>
         </div>
-
-        <!-- Post 2 -->
-        <div class="post-card fade-in delay-1" data-category="bio" data-type="article" data-tags="biologique,santé">
-          <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Agriculture biologique">
-          </div>
-          <div class="post-card-content">
-            <div class="post-meta">
-              <div class="post-date">
-                <i class="far fa-calendar"></i>
-                <span>2 Novembre 2023</span>
-              </div>
-            </div>
-            <h3><a href="#">Les bienfaits de l'agriculture biologique pour la santé et l'environnement</a></h3>
-            <p>Pourquoi passer au bio ? Analyse des avantages pour les consommateurs, les producteurs et l'écosystème local.</p>
-            <div class="post-tags">
-              <span class="post-tag" data-tag="biologique">Biologique</span>
-              <span class="post-tag" data-tag="santé">Santé</span>
-            </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
-          </div>
+        {% empty %}
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <i class="fas fa-newspaper"></i>
+          <h3>Aucun article disponible</h3>
+          <p>Il n'y a pas encore d'articles publiés sur le blog. Revenez bientôt !</p>
+          {% if user.is_authenticated and user.is_seller %}
+          <a href="{% url 'seller_blog' %}" class="btn-light">Publier le premier article</a>
+          {% endif %}
         </div>
-
-        <!-- Post 3 -->
-        <div class="post-card fade-in delay-2" data-category="marché" data-type="actualité" data-tags="marché,commerce">
-          <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Marchés agricoles">
-          </div>
-          <div class="post-card-content">
-            <div class="post-meta">
-              <div class="post-date">
-                <i class="far fa-calendar"></i>
-                <span>28 Octobre 2023</span>
-              </div>
-            </div>
-            <h3><a href="#">Tendances du marché : quels produits agricoles sont les plus demandés ?</a></h3>
-            <p>Analyse des tendances de consommation et conseils pour adapter votre production aux demandes du marché local.</p>
-            <div class="post-tags">
-              <span class="post-tag" data-tag="marché">Marché</span>
-              <span class="post-tag" data-tag="commerce">Commerce</span>
-            </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
-          </div>
-        </div>
-
-        <!-- Post 4 -->
-        <div class="post-card fade-in" data-category="innovation" data-type="article" data-tags="technologie,innovation">
-          <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ce?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Technologie agricole">
-          </div>
-          <div class="post-card-content">
-            <div class="post-meta">
-              <div class="post-date">
-                <i class="far fa-calendar"></i>
-                <span>20 Octobre 2023</span>
-              </div>
-            </div>
-            <h3><a href="#">La révolution digitale dans l'agriculture camerounaise</a></h3>
-            <p>Comment les applications mobiles et les plateformes digitales transforment l'agriculture traditionnelle en Afrique.</p>
-            <div class="post-tags">
-              <span class="post-tag" data-tag="technologie">Technologie</span>
-              <span class="post-tag" data-tag="innovation">Innovation</span>
-            </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
-          </div>
-        </div>
-
-        <!-- Post 5 -->
-        <div class="post-card fade-in delay-1" data-category="saison" data-type="conseil" data-tags="saison,calendrier">
-          <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Calendrier cultural">
-          </div>
-          <div class="post-card-content">
-            <div class="post-meta">
-              <div class="post-date">
-                <i class="far fa-calendar"></i>
-                <span>15 Octobre 2023</span>
-              </div>
-            </div>
-            <h3><a href="#">Calendrier cultural : que planter en saison sèche au Cameroun ?</a></h3>
-            <p>Guide complet des cultures adaptées à la saison sèche et conseils pour maximiser votre production.</p>
-            <div class="post-tags">
-              <span class="post-tag" data-tag="saison">Saison</span>
-              <span class="post-tag" data-tag="calendrier">Calendrier</span>
-            </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
-          </div>
-        </div>
-
-        <!-- Post 6 -->
-        <div class="post-card fade-in delay-2" data-category="techniques" data-type="témoignage" data-tag="compost,biologique">
-          <div class="post-card-image">
-            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Compostage naturel">
-          </div>
-          <div class="post-card-content">
-            <div class="post-meta">
-              <div class="post-date">
-                <i class="far fa-calendar"></i>
-                <span>10 Octobre 2023</span>
-              </div>
-            </div>
-            <h3><a href="#">Témoignage : comment j'ai doublé mon rendement avec le compost naturel</a></h3>
-            <p>Retour d'expérience d'un agriculteur qui a transformé sa production grâce aux techniques de compostage traditionnelles.</p>
-            <div class="post-tags">
-              <span class="post-tag" data-tag="compost">Compost</span>
-              <span class="post-tag" data-tag="biologique">Biologique</span>
-            </div>
-            <a href="#" class="read-more">Lire l'article <i class="fas fa-arrow-right"></i></a>
-          </div>
-        </div>
+        {% endfor %}
       </div>
 
       <!-- Pagination -->
+      {% if articles.has_other_pages %}
       <div class="pagination">
         <ul class="pagination-list">
-          <li class="pagination-item active"><a href="#">1</a></li>
-          <li class="pagination-item"><a href="#">2</a></li>
-          <li class="pagination-item"><a href="#">3</a></li>
-          <li class="pagination-item"><a href="#"><i class="fas fa-chevron-right"></i></a></li>
+          {% if articles.has_previous %}
+          <li class="pagination-item">
+            <a href="?page={{ articles.previous_page_number }}{% if current_shop_filter %}&shop={{ current_shop_filter }}{% endif %}{% if current_type_filter %}&type={{ current_type_filter }}{% endif %}">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+          
+          {% for num in articles.paginator.page_range %}
+            {% if articles.number == num %}
+            <li class="pagination-item active"><a href="#">{{ num }}</a></li>
+            {% elif num > articles.number|add:'-3' and num < articles.number|add:'3' %}
+            <li class="pagination-item">
+              <a href="?page={{ num }}{% if current_shop_filter %}&shop={{ current_shop_filter }}{% endif %}{% if current_type_filter %}&type={{ current_type_filter }}{% endif %}">
+                {{ num }}
+              </a>
+            </li>
+            {% endif %}
+          {% endfor %}
+          
+          {% if articles.has_next %}
+          <li class="pagination-item">
+            <a href="?page={{ articles.next_page_number }}{% if current_shop_filter %}&shop={{ current_shop_filter }}{% endif %}{% if current_type_filter %}&type={{ current_type_filter }}{% endif %}">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
         </ul>
       </div>
+      {% endif %}
     </div>
 
     <!-- Sidebar -->
@@ -1065,6 +1257,7 @@
         <h3>À propos</h3>
         <div class="about-widget">
           <p>FarmGen est la plateforme agricole qui connecte les producteurs locaux aux consommateurs, en promouvant une agriculture durable et innovante au Cameroun.</p>
+          <p>Total d'articles: <strong>{{ total_articles }}</strong></p>
           <div class="social-links">
             <a href="#"><i class="fab fa-facebook-f"></i></a>
             <a href="#"><i class="fab fa-twitter"></i></a>
@@ -1076,80 +1269,79 @@
 
       <!-- Categories Widget -->
       <div class="sidebar-widget fade-in delay-1">
-        <h3>Catégories</h3>
+        <h3>Types de contenu</h3>
         <ul class="categories-list">
-          <li><a href="#">Techniques Agricoles <span class="category-count">15</span></a></li>
-          <li><a href="#">Agriculture Biologique <span class="category-count">8</span></a></li>
-          <li><a href="#">Marché & Commercialisation <span class="category-count">12</span></a></li>
-          <li><a href="#">Innovations Technologiques <span class="category-count">6</span></a></li>
-          <li><a href="#">Conseils de Saison <span class="category-count">10</span></a></li>
+          <li>
+            <a href="?type=article">
+              Articles <span class="category-count">{{ count_articles }}</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="?type=affiche">
+              Affiches <span class="category-count">{{ count_affiches }}</span>
+            </a>
+          </li>
+
+          <li>
+            <a href="?type=podcast">
+              Podcasts <span class="category-count">{{ count_podcasts }}</span>
+            </a>
+          </li>
         </ul>
       </div>
 
-      <!-- Recent Posts Widget -->
+      <!-- Recent Articles Widget -->
       <div class="sidebar-widget fade-in delay-2">
         <h3>Articles récents</h3>
         <ul class="recent-posts-list">
+          {% for article in recent_articles %}
           <li class="recent-post">
             <div class="recent-post-image">
-              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Agriculture durable">
+              {% if article.image %}
+              <img src="{{ article.image.url }}" alt="{{ article.titre }}">
+              {% else %}
+              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="{{ article.titre }}">
+              {% endif %}
             </div>
             <div class="recent-post-content">
-              <h4><a href="#">L'agriculture durable au Cameroun</a></h4>
+              <h4><a href="{% url 'article_detail' article.id %}">{{ article.titre|truncatechars:40 }}</a></h4>
               <div class="recent-post-date">
                 <i class="far fa-calendar"></i>
-                <span>15 Nov 2023</span>
+                <span>{{ article.date_publication|date:"d M Y" }}</span>
               </div>
             </div>
           </li>
-          <li class="recent-post">
-            <div class="recent-post-image">
-              <img src="https://images.unsplash.com/photo-1574326344267-5c1c5a4a2c7a?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Techniques d'irrigation">
-            </div>
-            <div class="recent-post-content">
-              <h4><a href="#">Optimiser l'irrigation</a></h4>
-              <div class="recent-post-date">
-                <i class="far fa-calendar"></i>
-                <span>8 Nov 2023</span>
-              </div>
-            </div>
-          </li>
-          <li class="recent-post">
-            <div class="recent-post-image">
-              <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="Agriculture biologique">
-            </div>
-            <div class="recent-post-content">
-              <h4><a href="#">Les bienfaits du bio</a></h4>
-              <div class="recent-post-date">
-                <i class="far fa-calendar"></i>
-                <span>2 Nov 2023</span>
-              </div>
-            </div>
-          </li>
+          {% empty %}
+          <li>Aucun article récent</li>
+          {% endfor %}
         </ul>
       </div>
 
-      <!-- Tags Widget -->
+      <!-- Popular Shops Widget -->
       <div class="sidebar-widget fade-in delay-3">
-        <h3>Tags populaires</h3>
-        <div class="tags-cloud" id="tags-cloud">
-          <span class="tag" data-tag="technique">Technique</span>
-          <span class="tag" data-tag="biologique">Biologique</span>
-          <span class="tag" data-tag="innovation">Innovation</span>
-          <span class="tag" data-tag="marché">Marché</span>
-          <span class="tag" data-tag="irrigation">Irrigation</span>
-          <span class="tag" data-tag="saison">Saison</span>
-          <span class="tag" data-tag="cameroun">Cameroun</span>
-          <span class="tag" data-tag="durable">Durable</span>
-        </div>
+        <h3>Boutiques populaires</h3>
+        <ul class="categories-list">
+          {% for shop in popular_shops %}
+          <li>
+            <a href="?shop={{ shop.id }}">
+              {{ shop.title|truncatechars:20 }}
+              <span class="category-count">{{ shop.favorite_count }} ♥</span>
+            </a>
+          </li>
+          {% empty %}
+          <li>Aucune boutique populaire</li>
+          {% endfor %}
+        </ul>
       </div>
 
       <!-- Newsletter Widget -->
       <div class="sidebar-widget fade-in" id="newsletter">
         <h3>Newsletter</h3>
         <p style="color:#000;">Abonnez-vous pour recevoir nos derniers conseils agricoles et actualités.</p>
-        <form class="newsletter-form">
-          <input type="email" placeholder="Votre adresse email" required>
+        <form class="newsletter-form" id="newsletter-form">
+          {% csrf_token %}
+          <input type="email" name="email" placeholder="Votre adresse email" required>
           <button type="submit">S'abonner</button>
         </form>
       </div>
@@ -1163,8 +1355,12 @@
     <h2 class="fade-in">Prêt à développer votre activité agricole ?</h2>
     <p class="fade-in">Rejoignez FarmGen aujourd'hui et accédez à tous nos outils pour vendre vos produits et développer votre réseau de clients.</p>
     <div class="cta-buttons fade-in">
-      <a href="#" class="btn-light">Créer ma boutique</a>
-      <a href="#" class="btn-outline-light">Découvrir le marché</a>
+      {% if user.is_authenticated and user.is_seller %}
+      <a href="{% url 'seller_blog' %}" class="btn-light">Publier un article</a>
+      {% else %}
+      <a href="{% url 'dashboard' %}" class="btn-light">Devenir vendeur</a>
+      {% endif %}
+      <a href="{% url 'marketplace' %}" class="btn-outline-light">Découvrir le marché</a>
     </div>
   </div>
 </section>
@@ -1185,115 +1381,123 @@
       });
     }, observerOptions);
 
-    // Observe all fade-in elements
     document.querySelectorAll(".fade-in").forEach((el) => {
       observer.observe(el);
     });
 
     // Filter functionality
-    const categoryFilter = document.getElementById('category-filter');
+    const shopFilter = document.getElementById('shop-filter');
     const typeFilter = document.getElementById('type-filter');
     const sortFilter = document.getElementById('sort-filter');
     const clearFiltersBtn = document.getElementById('clear-filters');
+    const loadingSpinner = document.getElementById('loading-spinner');
     const postCards = document.querySelectorAll('.post-card');
-    const tags = document.querySelectorAll('.tag[data-tag]');
 
-    // Filter posts function
-    function filterPosts() {
-      const selectedCategory = categoryFilter.value;
-      const selectedType = typeFilter.value;
-      const selectedSort = sortFilter.value;
-
-      postCards.forEach(card => {
-        const cardCategory = card.getAttribute('data-category');
-        const cardType = card.getAttribute('data-type');
-        
-        const categoryMatch = selectedCategory === 'all' || cardCategory === selectedCategory;
-        const typeMatch = selectedType === 'all' || cardType === selectedType;
-
-        if (categoryMatch && typeMatch) {
-          card.style.display = 'block';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-
-      // Sort posts
-      const visiblePosts = Array.from(postCards).filter(card => card.style.display !== 'none');
+    // Build URL with filters
+    function buildFilterUrl() {
+      const params = new URLSearchParams();
       
-      if (selectedSort === 'recent') {
-        // Already in recent order
-      } else if (selectedSort === 'ancien') {
-        visiblePosts.reverse();
+      if (shopFilter.value !== 'all') {
+        params.append('shop', shopFilter.value);
       }
-      // For popularity, you would need actual data
+      
+      if (typeFilter.value !== 'all') {
+        params.append('type', typeFilter.value);
+      }
+      
+      if (sortFilter.value !== 'recent') {
+        params.append('sort', sortFilter.value);
+      }
+      
+      const queryString = params.toString();
+      return queryString ? `?${queryString}` : '';
+    }
 
-      // Reorder in DOM
-      const postsContainer = document.getElementById('posts-container');
-      visiblePosts.forEach(post => {
-        postsContainer.appendChild(post);
+    // Apply filters
+    function applyFilters() {
+      const url = buildFilterUrl();
+      loadingSpinner.classList.add('active');
+      
+      // AJAX request for filtered content
+      fetch(`{% url 'blog' %}${url}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        // Parse the response and update content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update posts container
+        const newPostsContainer = doc.getElementById('posts-container');
+        if (newPostsContainer) {
+          document.getElementById('posts-container').innerHTML = newPostsContainer.innerHTML;
+        }
+        
+        // Update pagination
+        const newPagination = doc.querySelector('.pagination');
+        const currentPagination = document.querySelector('.pagination');
+        if (newPagination && currentPagination) {
+          currentPagination.innerHTML = newPagination.innerHTML;
+        }
+        
+        // Re-initialize animations
+        document.querySelectorAll(".fade-in").forEach((el) => {
+          observer.observe(el);
+        });
+        
+        // Update URL without page reload
+        window.history.pushState({}, '', `{% url 'blog' %}${url}`);
+        
+        loadingSpinner.classList.remove('active');
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        loadingSpinner.classList.remove('active');
       });
     }
 
-    // Tag filtering
-    tags.forEach(tag => {
-      tag.addEventListener('click', function() {
-        const tagValue = this.getAttribute('data-tag');
-        
-        // Toggle active state
-        this.classList.toggle('active');
-        
-        // Filter posts by tag
-        postCards.forEach(card => {
-          const cardTags = card.getAttribute('data-tags');
-          if (this.classList.contains('active')) {
-            if (cardTags && cardTags.includes(tagValue)) {
-              card.style.display = 'block';
-            } else {
-              card.style.display = 'none';
-            }
-          } else {
-            // If no tags are active, show all
-            const activeTags = document.querySelectorAll('.tag.active');
-            if (activeTags.length === 0) {
-              card.style.display = 'block';
-            }
-          }
-        });
-      });
-    });
-
     // Event listeners for filters
-    categoryFilter.addEventListener('change', filterPosts);
-    typeFilter.addEventListener('change', filterPosts);
-    sortFilter.addEventListener('change', filterPosts);
+    shopFilter.addEventListener('change', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+    sortFilter.addEventListener('change', applyFilters);
 
     // Clear filters
     clearFiltersBtn.addEventListener('click', function() {
-      categoryFilter.value = 'all';
+      shopFilter.value = 'all';
       typeFilter.value = 'all';
       sortFilter.value = 'recent';
-      
-      // Clear active tags
-      tags.forEach(tag => tag.classList.remove('active'));
-      
-      // Show all posts
-      postCards.forEach(card => {
-        card.style.display = 'block';
-      });
+      applyFilters();
     });
 
     // Newsletter form handling
-    const newsletterForm = document.querySelector('.newsletter-form');
+    const newsletterForm = document.getElementById('newsletter-form');
     if (newsletterForm) {
       newsletterForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const email = this.querySelector('input[type="email"]').value;
+        const formData = new FormData(this);
         
-        // Simulate form submission
-        this.innerHTML = '<p style="color: var(--primary-green); text-align: center; margin: 0; font-weight: 600;">Merci pour votre inscription !</p>';
-        
-        console.log('Newsletter subscription:', email);
+        fetch('#', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-CSRFToken': '{{ csrf_token }}'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            this.innerHTML = '<p style="color: var(--primary-green); text-align: center; margin: 0; font-weight: 600;">Merci pour votre inscription !</p>';
+          } else {
+            alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Erreur de connexion');
+        });
       });
     }
 
@@ -1309,6 +1513,11 @@
           });
         }
       });
+    });
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function() {
+      applyFilters();
     });
   });
 </script>

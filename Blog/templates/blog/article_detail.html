@@ -1,0 +1,1464 @@
+{% extends "client/layout/main.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ article.titre }} - Blog FarmGen{% endblock %}
+
+{% block css %}
+<style>
+  /* Variables CSS adaptées à FarmGen */
+  :root {
+    --primary-green: #2ecc71;
+    --dark-green: #27ae60;
+    --forest-green: #1e5631;
+    --light-green: #a4de02;
+    --earth-brown: #8B4513;
+    --white: #ffffff;
+    --light-gray: #f8f9fa;
+    --text-dark: #2c3e50;
+    --card-bg: #ffffff;
+    --border-color: #e0e0e0;
+    --darker-bg: #f5f5f5;
+  }
+
+  /* Article Detail Hero */
+  .article-detail-hero {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    padding: 8rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .article-detail-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("{% static 'images/blog-hero-bg.jpg' %}") center/cover no-repeat;
+    opacity: 0.15;
+    z-index: 1;
+  }
+
+  .article-detail-hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+    color: white;
+  }
+
+  .article-breadcrumb {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+  }
+
+  .article-breadcrumb a {
+    color: var(--white);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .article-breadcrumb a:hover {
+    color: var(--light-green);
+  }
+
+  .article-breadcrumb span {
+    color: var(--light-gray);
+  }
+
+  .article-type-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .article-detail-hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .article-meta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .article-author {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .author-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .author-info h4 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .author-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  .article-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .article-date i {
+    font-size: 1.2rem;
+  }
+
+  /* Article Content Section */
+  .article-content-section {
+    padding: 4rem 2rem;
+    background: var(--light-gray);
+  }
+
+  .article-content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 4rem;
+  }
+
+  /* Article Main Content */
+  .article-main {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .article-featured-image {
+    width: 100%;
+    height: 500px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .article-featured-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .article-featured-image:hover img {
+    transform: scale(1.02);
+  }
+
+  .article-image-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--primary-green);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .article-body {
+    padding: 3rem;
+  }
+
+  .article-intro {
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: var(--text-dark);
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 2px solid var(--border-color);
+    font-weight: 500;
+  }
+
+  .article-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-dark);
+  }
+
+  .article-content p {
+    margin-bottom: 1.5rem;
+  }
+
+  .article-content h2 {
+    font-size: 1.8rem;
+    margin: 2.5rem 0 1rem;
+    color: var(--forest-green);
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--primary-green);
+  }
+
+  .article-content h3 {
+    font-size: 1.5rem;
+    margin: 2rem 0 1rem;
+    color: var(--text-dark);
+  }
+
+  .article-content ul, .article-content ol {
+    margin: 1.5rem 0;
+    padding-left: 2rem;
+  }
+
+  .article-content li {
+    margin-bottom: 0.8rem;
+  }
+
+  .article-content blockquote {
+    border-left: 4px solid var(--primary-green);
+    padding-left: 2rem;
+    margin: 2rem 0;
+    font-style: italic;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    background: rgba(46, 204, 113, 0.05);
+    padding: 1.5rem 2rem;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .article-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 2rem 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Article Actions */
+  .article-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem 3rem;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin: 2rem 0;
+    background: var(--light-gray);
+    border-radius: 8px;
+  }
+
+  .article-shop-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .shop-logo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--primary-green);
+  }
+
+  .shop-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shop-details h3 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1.2rem;
+  }
+
+  .shop-details h3 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .shop-details h3 a:hover {
+    color: var(--primary-green);
+  }
+
+  .shop-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+  }
+
+  .favorite-btn {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .favorite-btn:hover {
+    background: var(--dark-green);
+    transform: translateY(-2px);
+  }
+
+  .favorite-btn.favorited {
+    background: #e74c3c;
+  }
+
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  .article-tag {
+    background: rgba(46, 204, 113, 0.1);
+    color: var(--primary-green);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+
+  .article-tag:hover {
+    background: var(--primary-green);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Share Section */
+  .share-section {
+    margin: 3rem 0;
+    padding: 2rem;
+    background: var(--light-gray);
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .share-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--text-dark);
+  }
+
+  .share-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .share-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 25px;
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+
+  .share-btn.facebook {
+    background: #3b5998;
+  }
+
+  .share-btn.twitter {
+    background: #1da1f2;
+  }
+
+  .share-btn.linkedin {
+    background: #0077b5;
+  }
+
+  .share-btn.whatsapp {
+    background: #25d366;
+  }
+
+  .share-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Comments Section */
+  .comments-section {
+    margin-top: 4rem;
+    padding: 2rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .comments-section h3 {
+    margin: 0 0 2rem 0;
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--primary-green);
+  }
+
+  .comment-form {
+    margin-bottom: 3rem;
+  }
+
+  .comment-form textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--light-gray);
+    color: var(--text-dark);
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 120px;
+    margin-bottom: 1rem;
+  }
+
+  .comment-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-green);
+  }
+
+  .comment-form button {
+    background: var(--primary-green);
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .comment-form button:hover {
+    background: var(--dark-green);
+    transform: translateY(-2px);
+  }
+
+  .comments-list {
+    list-style: none;
+  }
+
+  .comment-item {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-green);
+  }
+
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .comment-author {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .comment-author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+  }
+
+  .comment-author-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .comment-author-info h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-dark);
+  }
+
+  .comment-date {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  .comment-content {
+    color: var(--text-dark);
+    line-height: 1.6;
+  }
+
+  /* Similar Articles */
+  .similar-articles-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 2px solid var(--border-color);
+  }
+
+  .similar-articles-section h3 {
+    margin: 0 0 2rem 0;
+    color: var(--text-dark);
+    font-size: 1.5rem;
+  }
+
+  .similar-articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .similar-article-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+  }
+
+  .similar-article-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-green);
+  }
+
+  .similar-article-image {
+    height: 180px;
+    overflow: hidden;
+  }
+
+  .similar-article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .similar-article-card:hover .similar-article-image img {
+    transform: scale(1.05);
+  }
+
+  .similar-article-content {
+    padding: 1.5rem;
+  }
+
+  .similar-article-content h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
+
+  .similar-article-content h4 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .similar-article-content h4 a:hover {
+    color: var(--primary-green);
+  }
+
+  .similar-article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  /* Sidebar */
+  .article-sidebar {
+    position: sticky;
+    top: 100px;
+    height: fit-content;
+  }
+
+  .sidebar-widget {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  }
+
+  .sidebar-widget h3 {
+    font-size: 1.2rem;
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 0.8rem;
+    border-bottom: 2px solid var(--primary-green);
+    color: var(--text-dark);
+  }
+
+  /* Shop Widget */
+  .shop-widget {
+    text-align: center;
+  }
+
+  .shop-widget-logo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 1.5rem;
+    border: 4px solid var(--primary-green);
+  }
+
+  .shop-widget-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .shop-widget h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+    color: var(--text-dark);
+  }
+
+  .shop-widget p {
+    color: var(--text-dark);
+    opacity: 0.8;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .shop-stats-widget {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .shop-stat {
+    text-align: center;
+  }
+
+  .shop-stat-value {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-green);
+  }
+
+  .shop-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+  }
+
+  .visit-shop-btn {
+    display: inline-block;
+    background: var(--primary-green);
+    color: white;
+    text-decoration: none;
+    padding: 0.8rem 2rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+  }
+
+  .visit-shop-btn:hover {
+    background: var(--dark-green);
+    transform: translateY(-2px);
+  }
+
+  /* Recent Articles Widget */
+  .recent-articles-list {
+    list-style: none;
+  }
+
+  .recent-article-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .recent-article-item:last-child {
+    border-bottom: none;
+  }
+
+  .recent-article-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .recent-article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .recent-article-content h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .recent-article-content h4 a {
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .recent-article-content h4 a:hover {
+    color: var(--primary-green);
+  }
+
+  .recent-article-date {
+    font-size: 0.8rem;
+    color: var(--text-dark);
+    opacity: 0.7;
+  }
+
+  /* Categories Widget */
+  .categories-list {
+    list-style: none;
+  }
+
+  .category-item {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .category-item:last-child {
+    border-bottom: none;
+  }
+
+  .category-item a {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: color 0.3s ease;
+  }
+
+  .category-item a:hover {
+    color: var(--primary-green);
+  }
+
+  .category-count {
+    background: var(--light-gray);
+    color: var(--text-dark);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+  }
+
+  /* Podcast Player (if applicable) */
+  .podcast-player {
+    background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-top: 2rem;
+  }
+
+  .podcast-player h3 {
+    color: white;
+    border-bottom-color: rgba(255, 255, 255, 0.3);
+  }
+
+  .audio-player {
+    width: 100%;
+    margin: 1rem 0;
+  }
+
+  .audio-player::-webkit-media-controls-panel {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .audio-player::-webkit-media-controls-play-button {
+    background-color: white;
+    border-radius: 50%;
+  }
+
+  .podcast-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .podcast-duration {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 992px) {
+    .article-content-container {
+      grid-template-columns: 1fr;
+      gap: 3rem;
+    }
+    
+    .article-sidebar {
+      position: static;
+    }
+    
+    .article-featured-image {
+      height: 400px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .article-detail-hero {
+      padding: 6rem 1.5rem 3rem;
+    }
+    
+    .article-detail-hero h1 {
+      font-size: 2.2rem;
+    }
+    
+    .article-body {
+      padding: 2rem;
+    }
+    
+    .article-actions {
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    
+    .article-meta {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .similar-articles-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Animations */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+  }
+
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Article Hero Section -->
+<section class="article-detail-hero">
+  <div class="article-detail-hero-content">
+    <!-- Breadcrumb -->
+    <div class="article-breadcrumb">
+      <a href="{% url 'home' %}">Accueil</a>
+      <span>›</span>
+      <a href="{% url 'blog' %}">Blog</a>
+      <span>›</span>
+      <span>{{ article.titre|truncatechars:30 }}</span>
+    </div>
+
+    <!-- Article Type Badge -->
+    <div class="article-type-badge">
+      {% if article.type_contenu == 'article' %}
+      <i class="fas fa-file-alt"></i> Article
+      {% elif article.type_contenu == 'affiche' %}
+      <i class="fas fa-image"></i> Affiche
+      {% else %}
+      <i class="fas fa-podcast"></i> Podcast
+      {% endif %}
+    </div>
+
+    <!-- Article Title -->
+    <h1>{{ article.titre }}</h1>
+
+    <!-- Article Meta -->
+    <div class="article-meta">
+      <!-- Author -->
+      <div class="article-author">
+        <div class="author-avatar">
+          {% if article.shop.user.avatar %}
+          <img src="{{ article.shop.user.avatar.url }}" alt="{{ article.shop.user.get_full_name }}">
+          {% else %}
+          <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Auteur">
+          {% endif %}
+        </div>
+        <div class="author-info">
+          <h4>{{ article.shop.user.get_full_name|default:"Auteur FarmGen" }}</h4>
+          <p>{{ article.shop.title }}</p>
+        </div>
+      </div>
+
+      <!-- Date -->
+      <div class="article-date">
+        <i class="far fa-calendar"></i>
+        <span>{{ article.date_publication|date:"d F Y" }}</span>
+      </div>
+
+      <!-- Reading Time -->
+      <div class="article-date">
+        <i class="far fa-clock"></i>
+        <span>
+          {% with word_count=article.contenu|wordcount %}
+            {% with reading_time=word_count|divisibleby:"200" %}
+              {% if reading_time < 1 %}1 min{% else %}{{ reading_time }} mins{% endif %}
+            {% endwith %}
+          {% endwith %}
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Article Content Section -->
+<section class="article-content-section">
+  <div class="article-content-container">
+    <!-- Main Article Content -->
+    <div class="article-main fade-in">
+      <!-- Featured Image -->
+      {% if article.image %}
+      <div class="article-featured-image">
+        <img src="{{ article.image.url }}" alt="{{ article.titre }}">
+        <div class="article-image-badge">{{ article_type_display }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Article Body -->
+      <div class="article-body">
+        <!-- Introduction -->
+        <div class="article-intro">
+          {{ article.contenu|truncatewords:50|striptags }}
+        </div>
+
+        <!-- Main Content -->
+        <div class="article-content">
+          {{ article.contenu|safe }}
+        </div>
+
+        <!-- Article Actions -->
+        <div class="article-actions">
+          <!-- Shop Info -->
+          <div class="article-shop-info">
+            <div class="shop-logo">
+              {% if shop.image %}
+              <img src="{{ shop.image.url }}" alt="{{ shop.title }}">
+              {% else %}
+              <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="{{ shop.title }}">
+              {% endif %}
+            </div>
+            <div class="shop-details">
+              <h3><a href="{% url 'shop' shop.id %}">{{ shop.title }}</a></h3>
+              <div class="shop-stats">
+                <span><i class="fas fa-heart"></i> {{ favorite_count }} favoris</span>
+                <span><i class="fas fa-newspaper"></i> {{ shop.articles.count }} articles</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Favorite Button -->
+          {% if request.user.is_authenticated %}
+          <button class="favorite-btn {% if is_favorited %}favorited{% endif %}" 
+                  id="favorite-btn"
+                  data-shop-id="{{ shop.id }}">
+            <i class="fas fa-heart"></i>
+            <span id="favorite-text">
+              {% if is_favorited %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}
+            </span>
+          </button>
+          {% else %}
+          <a href="{% url 'login' %}?next={{ request.path }}" class="favorite-btn">
+            <i class="fas fa-heart"></i>
+            <span>Connectez-vous pour favoriser</span>
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Tags -->
+        {% if article.type_contenu or shop %}
+        <div class="article-tags">
+          <a href="{% url 'blog' %}?type={{ article.type_contenu }}" class="article-tag">
+            {{ article_type_display }}
+          </a>
+          <a href="{% url 'blog' %}?shop={{ shop.id }}" class="article-tag">
+            Boutique: {{ shop.title }}
+          </a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Share Section -->
+      <div class="share-section">
+        <h3>Partager cet article</h3>
+        <div class="share-buttons">
+          <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" 
+             target="_blank" 
+             class="share-btn facebook">
+            <i class="fab fa-facebook-f"></i> Facebook
+          </a>
+          <a href="https://twitter.com/intent/tweet?text={{ article.titre }}&url={{ request.build_absolute_uri }}" 
+             target="_blank" 
+             class="share-btn twitter">
+            <i class="fab fa-twitter"></i> Twitter
+          </a>
+          <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}&title={{ article.titre }}" 
+             target="_blank" 
+             class="share-btn linkedin">
+            <i class="fab fa-linkedin-in"></i> LinkedIn
+          </a>
+          <a href="https://wa.me/?text={{ article.titre }}%20{{ request.build_absolute_uri }}" 
+             target="_blank" 
+             class="share-btn whatsapp">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <!-- Comments Section (optional) -->
+      <div class="comments-section">
+        <h3>Commentaires ({{ article.comments.count }})</h3>
+        
+        {% if request.user.is_authenticated %}
+        <form class="comment-form" id="comment-form">
+          {% csrf_token %}
+          <textarea placeholder="Partagez votre avis..." required></textarea>
+          <button type="submit">Publier le commentaire</button>
+        </form>
+        {% else %}
+        <p style="text-align: center; margin-bottom: 2rem;">
+          <a href="{% url 'login' %}?next={{ request.path }}" style="color: var(--primary-green); text-decoration: none; font-weight: 600;">
+            Connectez-vous pour commenter
+          </a>
+        </p>
+        {% endif %}
+
+        <!-- Comments List -->
+        <div class="comments-list" id="comments-list">
+          <!-- Comments would be loaded here via JavaScript -->
+          <p style="text-align: center; color: var(--text-dark); opacity: 0.7;">
+            Soyez le premier à commenter !
+          </p>
+        </div>
+      </div>
+
+      <!-- Similar Articles -->
+      {% if similar_articles %}
+      <div class="similar-articles-section fade-in">
+        <h3>Articles similaires</h3>
+        <div class="similar-articles-grid">
+          {% for similar_article in similar_articles %}
+          <div class="similar-article-card">
+            <div class="similar-article-image">
+              {% if similar_article.image %}
+              <img src="{{ similar_article.image.url }}" alt="{{ similar_article.titre }}">
+              {% else %}
+              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="{{ similar_article.titre }}">
+              {% endif %}
+            </div>
+            <div class="similar-article-content">
+              <h4><a href="{% url 'article_detail' similar_article.id %}">{{ similar_article.titre }}</a></h4>
+              <div class="similar-article-meta">
+                <span>{{ similar_article.shop.title }}</span>
+                <span>{{ similar_article.date_publication|date:"d M Y" }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="article-sidebar">
+      <!-- Shop Widget -->
+      <div class="sidebar-widget shop-widget fade-in">
+        <div class="shop-widget-logo">
+          {% if shop.image %}
+          <img src="{{ shop.image.url }}" alt="{{ shop.title }}">
+          {% else %}
+          <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="{{ shop.title }}">
+          {% endif %}
+        </div>
+        <h4>{{ shop.title }}</h4>
+        <p>{{ shop.description|truncatewords:20 }}</p>
+        
+        <div class="shop-stats-widget">
+          <div class="shop-stat">
+            <span class="shop-stat-value">{{ shop.articles.count }}</span>
+            <span class="shop-stat-label">Articles</span>
+          </div>
+          <div class="shop-stat">
+            <span class="shop-stat-value">{{ favorite_count }}</span>
+            <span class="shop-stat-label">Favoris</span>
+          </div>
+        </div>
+        
+        <a href="{% url 'shop' shop.id %}" class="visit-shop-btn">Visiter la boutique</a>
+      </div>
+
+      <!-- Recent Articles Widget -->
+      <div class="sidebar-widget fade-in">
+        <h3>Articles récents</h3>
+        <ul class="recent-articles-list">
+          {% for recent_article in shop.articles.all|slice:":5" %}
+          <li class="recent-article-item">
+            <div class="recent-article-image">
+              {% if recent_article.image %}
+              <img src="{{ recent_article.image.url }}" alt="{{ recent_article.titre }}">
+              {% else %}
+              <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="{{ recent_article.titre }}">
+              {% endif %}
+            </div>
+            <div class="recent-article-content">
+              <h4><a href="{% url 'article_detail' recent_article.id %}">{{ recent_article.titre|truncatechars:40 }}</a></h4>
+              <div class="recent-article-date">{{ recent_article.date_publication|date:"d M Y" }}</div>
+            </div>
+          </li>
+          {% empty %}
+          <li style="text-align: center; color: var(--text-dark); opacity: 0.7; padding: 1rem 0;">
+            Aucun autre article
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <!-- Categories Widget -->
+      <div class="sidebar-widget fade-in">
+        <h3>Catégories</h3>
+        <ul class="categories-list">
+          <li class="category-item">
+            <a href="{% url 'blog' %}?type=article">
+              Articles <span class="category-count">{{ count_articles }}</span>
+            </a>
+          </li>
+          <li class="category-item">
+            <a href="{% url 'blog' %}?type=affiche">
+              Affiches <span class="category-count">{{ count_affiches }}</span>
+            </a>
+          </li>
+          <li class="category-item">
+            <a href="{% url 'blog' %}?type=podcast">
+              Podcasts <span class="category-count">{{ count_podcast }}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Podcast Player (if article is a podcast) -->
+      {% if article.type_contenu == 'podcast' and article.audio_file %}
+      <div class="sidebar-widget podcast-player fade-in">
+        <h3>Écouter le podcast</h3>
+        <audio controls class="audio-player">
+          <source src="{{ article.audio_file.url }}" type="audio/mpeg">
+          Votre navigateur ne supporte pas l'élément audio.
+        </audio>
+        <div class="podcast-info">
+          <div class="podcast-duration">
+            <i class="far fa-clock"></i>
+            <span>45 min</span>
+          </div>
+          <div class="podcast-duration">
+            <i class="fas fa-headphones"></i>
+            <span>{{ article.audio_listens }} écoutes</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Back to Blog CTA -->
+<section class="blog-cta" style="padding: 4rem 2rem;">
+  <div class="blog-cta-container" style="max-width: 800px;">
+    <h2 class="fade-in">Découvrez plus d'articles</h2>
+    <p class="fade-in">Explorez notre blog pour plus de conseils agricoles, actualités et innovations.</p>
+    <div class="cta-buttons fade-in">
+      <a href="{% url 'blog' %}" class="btn-light">Retour au blog</a>
+      {% if user.is_authenticated and user.is_seller %}
+      <a href="{% url 'seller_blog' %}" class="btn-outline-light">Publier un article</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animation on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px"
+    });
+
+    document.querySelectorAll(".fade-in").forEach((el) => {
+      observer.observe(el);
+    });
+
+    // Favorite functionality
+    const favoriteBtn = document.getElementById('favorite-btn');
+    if (favoriteBtn) {
+      favoriteBtn.addEventListener('click', function() {
+        const shopId = this.dataset.shopId;
+        const isFavorited = this.classList.contains('favorited');
+        
+        fetch('#', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+            shop_id: shopId,
+            action: isFavorited ? 'remove' : 'add'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Toggle button state
+            this.classList.toggle('favorited');
+            
+            // Update button text
+            const favoriteText = document.getElementById('favorite-text');
+            if (favoriteText) {
+              favoriteText.textContent = isFavorited ? 'Ajouter aux favoris' : 'Retirer des favoris';
+            }
+            
+            // Update favorite count
+            const favoriteCount = document.querySelector('.shop-stats span:first-child');
+            if (favoriteCount) {
+              const currentCount = parseInt(favoriteCount.textContent);
+              favoriteCount.textContent = isFavorited ? 
+                `${currentCount - 1} favoris` : 
+                `${currentCount + 1} favoris`;
+            }
+            
+            // Update sidebar count if exists
+            const sidebarCount = document.querySelector('.shop-stat-value:last-child');
+            if (sidebarCount) {
+              const currentCount = parseInt(sidebarCount.textContent);
+              sidebarCount.textContent = isFavorited ? currentCount - 1 : currentCount + 1;
+            }
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Une erreur est survenue');
+        });
+      });
+    }
+
+    // Share button enhancements
+    document.querySelectorAll('.share-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        // You can add analytics tracking here
+        console.log('Sharing via:', this.classList[1]);
+      });
+    });
+
+    // Comment form handling
+    const commentForm = document.getElementById('comment-form');
+    if (commentForm) {
+      commentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const commentText = this.querySelector('textarea').value;
+        
+        // In a real implementation, you would send this to your backend
+        // For now, we'll just add it to the page
+        if (commentText.trim()) {
+          const commentsList = document.getElementById('comments-list');
+          const now = new Date();
+          
+          const commentHtml = `
+            <div class="comment-item">
+              <div class="comment-header">
+                <div class="comment-author">
+                  <div class="comment-author-avatar">
+                    <img src="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}https://randomuser.me/api/portraits/men/65.jpg{% endif %}" alt="{{ request.user.get_full_name }}">
+                  </div>
+                  <div class="comment-author-info">
+                    <h4>{{ request.user.get_full_name }}</h4>
+                  </div>
+                </div>
+                <div class="comment-date">À l'instant</div>
+              </div>
+              <div class="comment-content">${commentText}</div>
+            </div>
+          `;
+          
+          // Remove the "no comments" message if it exists
+          const noCommentsMsg = commentsList.querySelector('p');
+          if (noCommentsMsg) {
+            noCommentsMsg.remove();
+          }
+          
+          // Add the new comment
+          commentsList.insertAdjacentHTML('afterbegin', commentHtml);
+          
+          // Clear the textarea
+          this.querySelector('textarea').value = '';
+          
+          // Show success message
+          const successMsg = document.createElement('p');
+          successMsg.textContent = 'Commentaire publié avec succès !';
+          successMsg.style.cssText = 'color: var(--primary-green); text-align: center; margin: 1rem 0; font-weight: 600;';
+          this.appendChild(successMsg);
+          
+          // Remove message after 3 seconds
+          setTimeout(() => successMsg.remove(), 3000);
+        }
+      });
+    }
+
+    // Copy URL to clipboard
+    const copyUrlBtn = document.createElement('button');
+    copyUrlBtn.innerHTML = '<i class="far fa-copy"></i> Copier le lien';
+    copyUrlBtn.style.cssText = `
+      background: var(--light-gray);
+      color: var(--text-dark);
+      border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    `;
+    
+    copyUrlBtn.addEventListener('mouseenter', () => {
+      copyUrlBtn.style.background = 'var(--primary-green)';
+      copyUrlBtn.style.color = 'white';
+      copyUrlBtn.style.borderColor = 'var(--primary-green)';
+    });
+    
+    copyUrlBtn.addEventListener('mouseleave', () => {
+      copyUrlBtn.style.background = 'var(--light-gray)';
+      copyUrlBtn.style.color = 'var(--text-dark)';
+      copyUrlBtn.style.borderColor = 'var(--border-color)';
+    });
+    
+    copyUrlBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => {
+          const originalText = copyUrlBtn.innerHTML;
+          copyUrlBtn.innerHTML = '<i class="fas fa-check"></i> Lien copié !';
+          copyUrlBtn.style.background = 'var(--dark-green)';
+          copyUrlBtn.style.color = 'white';
+          copyUrlBtn.style.borderColor = 'var(--dark-green)';
+          
+          setTimeout(() => {
+            copyUrlBtn.innerHTML = originalText;
+            copyUrlBtn.style.background = 'var(--light-gray)';
+            copyUrlBtn.style.color = 'var(--text-dark)';
+            copyUrlBtn.style.borderColor = 'var(--border-color)';
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Erreur lors de la copie:', err);
+        });
+    });
+    
+    // Add copy button to share section
+    const shareSection = document.querySelector('.share-section');
+    if (shareSection) {
+      shareSection.appendChild(copyUrlBtn);
+    }
+
+    // Reading progress indicator
+    const progressBar = document.createElement('div');
+    progressBar.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: var(--primary-green);
+      z-index: 1000;
+      transition: width 0.1s ease;
+    `;
+    document.body.appendChild(progressBar);
+
+    window.addEventListener('scroll', () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      progressBar.style.width = scrolled + '%';
+    });
+
+    // Lazy load images
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.removeAttribute('data-src');
+          observer.unobserve(img);
+        }
+      });
+    });
+
+    images.forEach(img => imageObserver.observe(img));
+  });
+</script>
+{% endblock %}

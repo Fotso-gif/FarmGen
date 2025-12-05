@@ -2609,72 +2609,53 @@ class GeminiChatManager:
         self.client = genai.Client(
             api_key=os.environ.get("GEMINI_API_KEY")
         )
-        self.model = "gemini-3-pro-preview"
 
-        # Pour des sessions plus longues, utilisez "gemini-1.5-pro" si disponible
-    
-    
+        # Modèles réellement supportés par google-genai
+        supported_models = [
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-flash-8b-latest",
+        ]
+
+        # Ta liste de préférences
+        desired_models = [
+            "gemini-2.0-flash-exp", 
+            "gemini-1.5-flash-002", 
+            "gemini-1.5-flash-001",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro-latest"
+        ]
+
+        # Sélection automatique : on garde le premier modèle qui existe vraiment
+        self.model = next(
+            (m for m in desired_models if m in supported_models),
+            "gemini-1.5-flash-latest"
+        )
+
+        print(f"Modèle sélectionné : {self.model}")
     
     def build_system_prompt(self, shop_name=None, user_context=None):
         """Construit le prompt système avec les documents de FarmGen"""
         
-        # Base du prompt
-        base_prompt = """Tu es FarmGen Assistant, l'assistant intelligent de la plateforme FarmGen. 
-FarmGen est une marketplace agricole au Cameroun qui connecte directement les producteurs aux consommateurs.
-
-**Ta personnalité :**
-- Tu es chaleureux, professionnel et serviable
-- Tu parles comme un expert du secteur agricole camerounais
-- Tu encourages toujours l'agriculture locale et durable
-- Tu es précis dans tes réponses sur les produits et processus
-
-**Règles de réponse :**
-1. Toujours répondre en français (sauf demande explicite dans une autre langue)
-2. Être concis mais complet
-3. Mettre en avant les valeurs de FarmGen : transparence, traçabilité, qualité
-4. Si tu ne sais pas quelque chose, propose de contacter le support
-5. Pour les questions techniques, réfère-toi aux documents officiels
-
-**Documents de référence :**
-"""
-        
-        # Ajouter les documents spécifiques
-        
+        # Charger les documents
         cahier_desc, cahier_charge = load_documents_correctly()
-            
-        base_prompt += f"""
-**Document descriptif FarmGen :**
-{cahier_desc[:2000]}
-
-**Cahier des charges FarmGen :**
-{cahier_charge[:2000]}
-"""
         
-        # Si une boutique est spécifiée, ajouter ses FAQs
-        if shop_name:
-            try:
-                shop = Shop.objects.get(title__icontains=shop_name)
-                faqs = FAQ.objects.filter(shop=shop)
-                if faqs.exists():
-                    base_prompt += f"\n**FAQ de la boutique '{shop.title}' :**\n"
-                    for faq in faqs:
-                        base_prompt += f"Q: {faq.question}\nR: {faq.answer}\n"
-            except Shop.DoesNotExist:
-                pass
-        
-        base_prompt += """
-**Procédure de recherche :**
-1. D'abord vérifier si la question concerne une boutique spécifique
-2. Si oui, consulter la FAQ de cette boutique
-3. Sinon, chercher la réponse dans les documents FarmGen
-4. Si pas trouvé, utiliser tes connaissances générales sur l'agriculture et les marketplaces
+        base_prompt = f"""Tu es FarmGen Assistant, l'assistant intelligent de la plateforme FarmGen. 
+    FarmGen est une marketplace agricole au Cameroun qui connecte directement les producteurs aux consommateurs.
 
-**Format de réponse :**
-- Commencer par une salutation appropriée
-- Structurer la réponse clairement
-- Terminer par une question ouverte pour continuer la conversation
-- Pour les chiffres et dates, être précis
-"""
+    **Document descriptif FarmGen:**
+    {cahier_desc[:2000] if len(cahier_desc) > 2000 else cahier_desc}
+
+    **Cahier des charges FarmGen:**
+    {cahier_charge[:2000] if len(cahier_charge) > 2000 else cahier_charge}
+
+    **Instructions:**
+    1. Réponds toujours en français
+    2. Sois précis et utile
+    3. Réfère-toi aux documents ci-dessus
+    4. Si tu ne sais pas, dis-le
+    """
         
         return base_prompt
     
