@@ -1,0 +1,268 @@
+{% extends "client/layout/main.html" %}
+{% load static %}
+
+{% block title %}Partager un témoignage - FarmGen{% endblock %}
+
+{% block css %}
+<style>
+    .testimonial-create-hero {
+        background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+        padding: 6rem 2rem 3rem;
+        text-align: center;
+        color: white;
+    }
+    
+    .testimonial-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+    }
+    
+    .form-card {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-dark);
+    }
+    
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 0.8rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1rem;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--primary-green);
+    }
+    
+    .rating-stars {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .star-btn {
+        background: none;
+        border: none;
+        font-size: 2rem;
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+    
+    .star-btn:hover,
+    .star-btn.active {
+        color: #fbbf24;
+    }
+    
+    .submit-btn {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        border-radius: 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 2rem auto 0;
+    }
+    
+    .submit-btn:hover {
+        background: var(--dark-green);
+        transform: translateY(-2px);
+    }
+    
+    .terms-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .error {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-top: 0.3rem;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Hero Section -->
+<section class="testimonial-create-hero">
+    <h1>Partagez votre expérience</h1>
+    <p>Votre témoignage nous aide à grandir et à mieux servir la communauté agricole</p>
+</section>
+
+<!-- Formulaire -->
+<section class="testimonial-form-container">
+    <div class="form-card">
+        <form method="POST" enctype="multipart/form-data" id="testimonial-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_title">Titre de votre témoignage *</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                <div class="error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label>Votre note *</label>
+                <div class="rating-stars">
+                    {% for i in "12345" %}
+                    <button type="button" class="star-btn" data-value="{{ forloop.counter }}">
+                        <i class="far fa-star"></i>
+                    </button>
+                    {% endfor %}
+                </div>
+                <input type="hidden" name="rating" id="id_rating" value="5" required>
+                {% if form.rating.errors %}
+                <div class="error">{{ form.rating.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_content">Votre témoignage *</label>
+                {{ form.content }}
+                <small style="display: block; margin-top: 0.3rem; color: #666;">
+                    Minimum 50 caractères, maximum 1000 caractères
+                </small>
+                {% if form.content.errors %}
+                <div class="error">{{ form.content.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_author_name">Votre nom *</label>
+                {{ form.author_name }}
+                {% if form.author_name.errors %}
+                <div class="error">{{ form.author_name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_author_role">Votre rôle/profession (optionnel)</label>
+                {{ form.author_role }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_author_company">Votre entreprise/organisation (optionnel)</label>
+                {{ form.author_company }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_author_location">Votre localisation (optionnel)</label>
+                {{ form.author_location }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_category">Catégorie</label>
+                {{ form.category }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_author_photo">Votre photo (optionnel)</label>
+                {{ form.author_photo }}
+                <small style="display: block; margin-top: 0.3rem; color: #666;">
+                    Format recommandé: carré, minimum 400x400px
+                </small>
+            </div>
+            
+            <div class="terms-checkbox">
+                {{ form.agree_terms }}
+                <label for="id_agree_terms">
+                    J'accepte les conditions d'utilisation et la politique de confidentialité *
+                </label>
+            </div>
+            {% if form.agree_terms.errors %}
+            <div class="error">{{ form.agree_terms.errors }}</div>
+            {% endif %}
+            
+            <button type="submit" class="submit-btn" id="submit-btn">
+                <i class="fas fa-paper-plane"></i> Publier mon témoignage
+            </button>
+        </form>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des étoiles de notation
+    const starButtons = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('id_rating');
+    
+    starButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const value = this.getAttribute('data-value');
+            ratingInput.value = value;
+            
+            // Mettre à jour l'affichage des étoiles
+            starButtons.forEach((btn, index) => {
+                if (index < value) {
+                    btn.classList.add('active');
+                    btn.innerHTML = '<i class="fas fa-star"></i>';
+                } else {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<i class="far fa-star"></i>';
+                }
+            });
+        });
+    });
+    
+    // Initialiser les étoiles avec la valeur par défaut
+    const initialValue = ratingInput.value || 5;
+    starButtons.forEach((btn, index) => {
+        if (index < initialValue) {
+            btn.classList.add('active');
+            btn.innerHTML = '<i class="fas fa-star"></i>';
+        }
+    });
+    
+    // Validation du formulaire
+    const form = document.getElementById('testimonial-form');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    form.addEventListener('submit', function(e) {
+        const content = document.getElementById('id_content').value.trim();
+        
+        if (content.length < 50) {
+            e.preventDefault();
+            alert('Le témoignage doit contenir au moins 50 caractères.');
+            return;
+        }
+        
+        if (content.length > 1000) {
+            e.preventDefault();
+            alert('Le témoignage ne peut pas dépasser 1000 caractères.');
+            return;
+        }
+        
+        // Désactiver le bouton pendant l'envoi
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi en cours...';
+    });
+});
+</script>
+{% endblock %}

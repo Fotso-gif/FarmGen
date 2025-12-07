@@ -331,6 +331,150 @@ body{
             margin-right: 5px;
             color: var(--primary-green);
         }
+
+        /* Carousel Styles - Compatible avec le design existant */
+.blog-carousel-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+.carousel-indicators {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.carousel-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-indicator.active {
+    background-color: var(--primary-green);
+    transform: scale(1.2);
+}
+
+.carousel-prev,
+.carousel-next {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.carousel-wrapper {
+    overflow: hidden;
+    position: relative;
+}
+
+.carousel-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 2rem;
+    padding: 0.5rem 0;
+}
+
+.carousel-item {
+    flex: 0 0 calc(33.333% - 1.33rem); /* 3 colonnes sur desktop */
+    min-width: calc(33.333% - 1.33rem);
+    transition: all 0.3s ease;
+}
+
+.carousel-item:hover {
+    transform: translateY(-5px);
+}
+
+.carousel-dots-mobile {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.carousel-dot-mobile {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #dee2e6;
+    border: none;
+    cursor: pointer;
+}
+
+.carousel-dot-mobile.active {
+    background-color: var(--primary-green);
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .carousel-item {
+        flex: 0 0 calc(50% - 1rem); /* 2 colonnes sur tablette */
+        min-width: calc(50% - 1rem);
+    }
+}
+
+@media (max-width: 768px) {
+    .carousel-item {
+        flex: 0 0 100%; /* 1 colonne sur mobile */
+        min-width: 100%;
+    }
+    
+    .carousel-nav {
+        padding: 0;
+    }
+    
+    .carousel-indicators {
+        display: none; /* Cacher les indicateurs sur mobile */
+    }
+}
+
+/* Animation pour le chargement */
+.loading-state {
+    width: 100%;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Filtres */
+.blog-filters {
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+    animation-delay: 0.3s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-btn.active {
+    background-color: var(--primary-green);
+    color: white;
+    border-color: var(--primary-green);
+}
         
         
         /* Responsive */
@@ -512,72 +656,427 @@ body{
         </div>
     </section>
 
-    <!-- Blog Section -->
-    <section class="section" id="blog">
-        <div class="container">
-            <span class="section-subtitle">Conseils et actualités</span>
-            <h2 class="section-title">Blog agricole FarmGen</h2>
-            <p class="section-description">Découvrez nos articles, podcasts et affiches sur l'agriculture, les techniques modernes et les tendances du marché.</p>
-            
-            <div class="row g-4">
-                <!-- Blog Post 1 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="blog-card">
-                        <div class="blog-image">
-                            <img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Agriculture durable">
-                        </div>
-                        <div class="blog-info">
-                            <div class="blog-category">Agriculture durable</div>
-                            <h3 class="blog-title">5 techniques d'agriculture durable pour petits producteurs</h3>
-                            <p class="blog-excerpt">Découvrez des méthodes simples et efficaces pour améliorer votre rendement tout en préservant l'environnement.</p>
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar"></i> 15 Mai 2023</span>
-                                <span class="ms-3"><i class="far fa-clock"></i> 5 min</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Blog Post 2 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="blog-card">
-                        <div class="blog-image">
-                            <img src="https://images.unsplash.com/photo-1595341888016-a392ef81b7de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1179&q=80" alt="Marché agricole">
-                        </div>
-                        <div class="blog-info">
-                            <div class="blog-category">Marché</div>
-                            <h3 class="blog-title">Les tendances du marché agricole au Cameroun en 2023</h3>
-                            <p class="blog-excerpt">Analyse des tendances actuelles et perspectives pour les producteurs et consommateurs camerounais.</p>
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar"></i> 2 Mai 2023</span>
-                                <span class="ms-3"><i class="far fa-clock"></i> 7 min</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Blog Post 3 -->
-                <div class="col-md-6 col-lg-4">
-                    <div class="blog-card">
-                        <div class="blog-image">
-                            <img src="https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80" alt="Technologie agricole">
-                        </div>
-                        <div class="blog-info">
-                            <div class="blog-category">Technologie</div>
-                            <h3 class="blog-title">Comment la technologie transforme l'agriculture africaine</h3>
-                            <p class="blog-excerpt">Exploration des innovations technologiques qui révolutionnent le secteur agricole en Afrique.</p>
-                            <div class="blog-meta">
-                                <span><i class="far fa-calendar"></i> 20 Avril 2023</span>
-                                <span class="ms-3"><i class="far fa-clock"></i> 6 min</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="text-center mt-5">
-                <a href="#" class="btn btn-primary">Voir tous les articles</a>
+    <!-- Blog Section avec carousel -->
+<section class="section" id="blog">
+    <div class="container">
+        <span class="section-subtitle">Conseils et actualités</span>
+        <h2 class="section-title">Blog agricole FarmGen</h2>
+        <p class="section-description">Découvrez nos articles, podcasts et affiches sur l'agriculture, les techniques modernes et les tendances du marché.</p>
+        
+        <!-- Filtres (optionnel) -->
+        <div class="blog-filters mb-4" id="blog-filters" style="display: none;">
+            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <button class="btn btn-sm btn-outline-primary filter-btn active" data-filter="all">Tous</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="article">Articles</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="affiche">Affiches</button>
+                <button class="btn btn-sm btn-outline-primary filter-btn" data-filter="podcast">Podcasts</button>
             </div>
         </div>
-    </section>
-    {% endblock %}
+        
+        <!-- Carousel Container -->
+        <div class="blog-carousel-container">
+            <!-- Navigation -->
+            <div class="carousel-nav mb-4">
+                <button class="carousel-prev btn btn-outline-primary" id="carousel-prev">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="carousel-indicators" id="carousel-indicators"></div>
+                <button class="carousel-next btn btn-outline-primary" id="carousel-next">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            
+            <!-- Carousel Track -->
+            <div class="carousel-wrapper">
+                <div class="carousel-track" id="carousel-track">
+                    <!-- Les articles seront chargés ici par AJAX -->
+                    <div class="loading-state text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <p class="mt-3">Chargement des articles...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pagination dots (mobile) -->
+            <div class="carousel-dots-mobile d-md-none mt-3" id="carousel-dots-mobile"></div>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{% url 'blog' %}" class="btn btn-primary">Voir tous les articles</a>
+        </div>
+    </div>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const carouselTrack = document.getElementById('carousel-track');
+    const prevBtn = document.getElementById('carousel-prev');
+    const nextBtn = document.getElementById('carousel-next');
+    const indicatorsContainer = document.getElementById('carousel-indicators');
+    const dotsMobileContainer = document.getElementById('carousel-dots-mobile');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const filtersContainer = document.getElementById('blog-filters');
+    
+    let articles = [];
+    let currentFilter = 'all';
+    let currentPosition = 0;
+    let itemsPerView = 3; // Par défaut 3 sur desktop
+    let totalItems = 0;
+    let maxPosition = 0;
+    
+    // Détecter le nombre d'éléments par vue selon la largeur d'écran
+    function updateItemsPerView() {
+        const width = window.innerWidth;
+        if (width >= 992) {
+            itemsPerView = 3; // Desktop
+        } else if (width >= 768) {
+            itemsPerView = 2; // Tablet
+        } else {
+            itemsPerView = 1; // Mobile
+        }
+        updateCarousel();
+    }
+    
+    // Charger les articles depuis l'API
+    function loadArticles(filter = 'all') {
+        // Afficher l'état de chargement
+        carouselTrack.innerHTML = `
+            <div class="loading-state">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p class="mt-3">Chargement des articles...</p>
+            </div>
+        `;
+        
+        // Construire l'URL avec les paramètres
+        let url = '/blog/api/carousel/?limit=12';
+        if (filter !== 'all') {
+            url += `&category=${filter}`;
+        }
+        
+        // Récupérer les données
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    articles = data.articles;
+                    totalItems = articles.length;
+                    maxPosition = Math.max(0, Math.ceil(totalItems / itemsPerView) - 1);
+                    
+                    // Afficher les filtres si on a des articles
+                    if (totalItems > 0 && filtersContainer) {
+                        filtersContainer.style.display = 'block';
+                    }
+                    
+                    renderArticles();
+                    createIndicators();
+                    updateCarousel();
+                } else {
+                    showError('Erreur lors du chargement des articles');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                showError('Impossible de charger les articles. Veuillez réessayer.');
+            });
+    }
+    
+    // Afficher les articles dans le carousel
+    function renderArticles() {
+        if (articles.length === 0) {
+            carouselTrack.innerHTML = `
+                <div class="text-center py-5 w-100">
+                    <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+                    <h4>Aucun article disponible</h4>
+                    <p class="text-muted">Aucun article trouvé pour cette catégorie.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        articles.forEach((article, index) => {
+            // Formater la date en français
+            const date = new Date(article.date_published);
+            const formattedDate = date.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            html += `
+                <div class="col-md-6 col-lg-4 carousel-item" style="display:block !important;" data-index="${index}">
+                    <div class="blog-card">
+                        <div class="blog-image">
+                            <img src="${article.image_url}" 
+                                 alt="${article.title}" 
+                                 loading="lazy"
+                                 onerror="this.src='https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'">
+                            <div class="blog-type-badge">
+                                <i class="${article.type_icon}"></i>
+                                ${article.category}
+                            </div>
+                        </div>
+                        <div class="blog-info">
+                            <div class="blog-category">${article.category}</div>
+                            <h3 class="blog-title">
+                                <a href="/blog/article/${article.id}/" class="text-decoration-none text-dark">
+                                    ${article.title}
+                                </a>
+                            </h3>
+                            <p class="blog-excerpt">${article.excerpt}</p>
+                            <div class="blog-meta">
+                                <span><i class="far fa-calendar"></i> ${formattedDate}</span>
+                                <span class="ms-3"><i class="far fa-clock"></i> ${article.reading_time}</span>
+                                ${article.shop_title !== 'FarmGen' ? `
+                                    <span class="ms-3"><i class="fas fa-store"></i> ${article.shop_title}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        carouselTrack.innerHTML = html;
+        carouselTrack.style.display = 'flex';
+    }
+    
+    // Créer les indicateurs de navigation
+    function createIndicators() {
+        const totalSlides = Math.ceil(totalItems / itemsPerView);
+        
+        // Indicateurs desktop
+        indicatorsContainer.innerHTML = '';
+        for (let i = 0; i < totalSlides; i++) {
+            const indicator = document.createElement('button');
+            indicator.className = `carousel-indicator ${i === 0 ? 'active' : ''}`;
+            indicator.setAttribute('aria-label', `Slide ${i + 1}`);
+            indicator.addEventListener('click', () => goToSlide(i));
+            indicatorsContainer.appendChild(indicator);
+        }
+        
+        // Points mobile
+        dotsMobileContainer.innerHTML = '';
+        for (let i = 0; i < totalItems; i++) {
+            const dot = document.createElement('button');
+            dot.className = `carousel-dot-mobile ${i < itemsPerView ? 'active' : ''}`;
+            dot.addEventListener('click', () => goToItem(i));
+            dotsMobileContainer.appendChild(dot);
+        }
+    }
+    
+    // Mettre à jour la position du carousel
+    function updateCarousel() {
+        // Calculer la nouvelle position maximale
+        maxPosition = Math.max(0, Math.ceil(totalItems / itemsPerView) - 1);
+        
+        // Limiter la position courante
+        if (currentPosition > maxPosition) {
+            currentPosition = maxPosition;
+        }
+        
+        // Calculer le décalage
+        const offset = -(currentPosition * 100);
+        carouselTrack.style.transform = `translateX(${offset}%)`;
+        
+        // Mettre à jour les indicateurs
+        updateIndicators();
+        
+        // Mettre à jour les boutons de navigation
+        updateNavButtons();
+    }
+    
+    // Mettre à jour les indicateurs actifs
+    function updateIndicators() {
+        const indicators = document.querySelectorAll('.carousel-indicator');
+        const dots = document.querySelectorAll('.carousel-dot-mobile');
+        
+        // Indicateurs desktop
+        indicators.forEach((indicator, index) => {
+            indicator.classList.toggle('active', index === currentPosition);
+        });
+        
+        // Points mobile
+        const startIndex = currentPosition * itemsPerView;
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index >= startIndex && index < startIndex + itemsPerView);
+        });
+    }
+    
+    // Mettre à jour l'état des boutons de navigation
+    function updateNavButtons() {
+        prevBtn.disabled = currentPosition === 0;
+        nextBtn.disabled = currentPosition === maxPosition;
+        
+        // Ajouter des classes pour le style désactivé
+        if (prevBtn.disabled) {
+            prevBtn.classList.add('disabled');
+        } else {
+            prevBtn.classList.remove('disabled');
+        }
+        
+        if (nextBtn.disabled) {
+            nextBtn.classList.add('disabled');
+        } else {
+            nextBtn.classList.remove('disabled');
+        }
+    }
+    
+    // Aller à un slide spécifique
+    function goToSlide(slideIndex) {
+        currentPosition = Math.max(0, Math.min(slideIndex, maxPosition));
+        updateCarousel();
+    }
+    
+    // Aller à un élément spécifique (mobile)
+    function goToItem(itemIndex) {
+        currentPosition = Math.floor(itemIndex / itemsPerView);
+        updateCarousel();
+    }
+    
+    // Slide suivant
+    function nextSlide() {
+        if (currentPosition < maxPosition) {
+            currentPosition++;
+            updateCarousel();
+        }
+    }
+    
+    // Slide précédent
+    function prevSlide() {
+        if (currentPosition > 0) {
+            currentPosition--;
+            updateCarousel();
+        }
+    }
+    
+    // Filtrer les articles
+    function filterArticles(filter) {
+        currentFilter = filter;
+        currentPosition = 0; // Réinitialiser la position
+        
+        // Mettre à jour les boutons de filtre
+        filterButtons.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        
+        // Recharger les articles avec le filtre
+        loadArticles(filter);
+    }
+    
+    // Afficher une erreur
+    function showError(message) {
+        carouselTrack.innerHTML = `
+            <div class="text-center py-5 w-100">
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h4>Erreur de chargement</h4>
+                <p class="text-muted">${message}</p>
+                <button class="btn btn-primary mt-3" onclick="loadArticles('${currentFilter}')">
+                    <i class="fas fa-redo"></i> Réessayer
+                </button>
+            </div>
+        `;
+    }
+    
+    // Initialisation
+    function init() {
+        // Charger les articles initiaux
+        loadArticles();
+        
+        // Événements de navigation
+        prevBtn.addEventListener('click', prevSlide);
+        nextBtn.addEventListener('click', nextSlide);
+        
+        // Événements des filtres
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterArticles(btn.dataset.filter);
+            });
+        });
+        
+        // Redimensionnement de la fenêtre
+        window.addEventListener('resize', () => {
+            updateItemsPerView();
+        });
+        
+        // Navigation au clavier
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'ArrowRight') {
+                nextSlide();
+            }
+        });
+        
+        // Swipe sur mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        carouselTrack.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        carouselTrack.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe gauche = suivant
+                    nextSlide();
+                } else {
+                    // Swipe droite = précédent
+                    prevSlide();
+                }
+            }
+        }
+        
+        // Auto-rotation (optionnel)
+        let autoRotateInterval;
+        
+        function startAutoRotate() {
+            if (autoRotateInterval) clearInterval(autoRotateInterval);
+            autoRotateInterval = setInterval(() => {
+                if (currentPosition === maxPosition) {
+                    goToSlide(0);
+                } else {
+                    nextSlide();
+                }
+            }, 5000); // Change toutes les 5 secondes
+        }
+        
+        function stopAutoRotate() {
+            if (autoRotateInterval) {
+                clearInterval(autoRotateInterval);
+                autoRotateInterval = null;
+            }
+        }
+        
+        // Démarrer l'auto-rotation
+        startAutoRotate();
+        
+        // Arrêter l'auto-rotation au hover
+        carouselTrack.addEventListener('mouseenter', stopAutoRotate);
+        carouselTrack.addEventListener('mouseleave', startAutoRotate);
+        carouselTrack.addEventListener('touchstart', stopAutoRotate);
+        carouselTrack.addEventListener('touchend', () => {
+            setTimeout(startAutoRotate, 3000);
+        });
+        
+        // Initialiser le nombre d'éléments par vue
+        updateItemsPerView();
+    }
+    
+    // Démarrer l'initialisation
+    init();
+});
+</script>
+{% endblock %}

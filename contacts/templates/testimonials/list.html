@@ -1,0 +1,202 @@
+{% extends "client/layout/main.html" %}
+{% load static %}
+
+{% block title %}Témoignages - FarmGen{% endblock %}
+
+{% block css %}
+<style>
+    /* Styles pour la page de liste des témoignages */
+    .testimonials-hero {
+        background: linear-gradient(135deg, var(--forest-green) 0%, var(--dark-green) 100%);
+        padding: 8rem 2rem 4rem;
+        text-align: center;
+        color: white;
+    }
+    
+    .testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+        padding: 4rem 2rem;
+    }
+    
+    .testimonial-card-list {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: transform 0.3s ease;
+    }
+    
+    .testimonial-card-list:hover {
+        transform: translateY(-5px);
+    }
+    
+    .testimonial-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .testimonial-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        overflow: hidden;
+        margin-right: 1rem;
+    }
+    
+    .testimonial-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .testimonial-rating {
+        color: #fbbf24;
+        margin-bottom: 0.5rem;
+    }
+    
+    .testimonial-actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-testimonial {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block main %}
+<!-- Hero Section -->
+<section class="testimonials-hero">
+    <h1>Témoignages de nos clients</h1>
+    <p>Découvrez ce que disent nos clients et partenaires</p>
+</section>
+
+<!-- Filtres -->
+<div style="padding: 2rem; text-align: center;">
+    <div class="btn-group" role="group">
+        <a href="{% url 'testimonials' %}" class="btn {% if not current_category %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            Tous
+        </a>
+        {% for cat_id, cat_name in categories %}
+        <a href="{% url 'testimonials' %}?category={{ cat_id }}" 
+           class="btn {% if current_category == cat_id %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {{ cat_name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Liste des témoignages -->
+<section class="testimonials-grid">
+    {% for testimonial in testimonials %}
+    <div class="testimonial-card-list">
+        <div class="testimonial-header">
+            {% if testimonial.author_photo %}
+            <div class="testimonial-avatar">
+                <img src="{{ testimonial.author_photo.url }}" alt="{{ testimonial.author_name }}">
+            </div>
+            {% else %}
+            <div class="testimonial-avatar" style="background: var(--primary-green); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;">
+                {{ testimonial.author_name|first|upper }}
+            </div>
+            {% endif %}
+            <div>
+                <h4 style="margin: 0;">{{ testimonial.author_name }}</h4>
+                {% if testimonial.author_role %}
+                <p style="margin: 0; color: #666; font-size: 0.9rem;">{{ testimonial.author_role }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="testimonial-rating">
+            {% for i in "12345" %}
+                {% if forloop.counter <= testimonial.rating %}
+                <i class="fas fa-star"></i>
+                {% else %}
+                <i class="far fa-star"></i>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <p style="color: #333; line-height: 1.6;">"{{ testimonial.content|truncatechars:200 }}"</p>
+        
+        <div class="testimonial-actions">
+            <a href="{% url 'testimonial_detail' testimonial.id %}" class="btn-testimonial">
+                Lire plus
+            </a>
+            {% if testimonial.is_featured %}
+            <span style="background: var(--primary-green); color: white; padding: 0.2rem 0.5rem; border-radius: 10px; font-size: 0.8rem;">
+                <i class="fas fa-star"></i> Mis en avant
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+        <i class="fas fa-comments" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+        <h3>Aucun témoignage pour le moment</h3>
+        <p>Soyez le premier à partager votre expérience !</p>
+        <a href="{% url 'create_testimonial' %}" class="btn-testimonial" style="padding: 0.8rem 2rem;">
+            Partager mon témoignage
+        </a>
+    </div>
+    {% endfor %}
+</section>
+
+<!-- Pagination -->
+{% if testimonials.has_other_pages %}
+<div style="text-align: center; padding: 2rem;">
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            {% if testimonials.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ testimonials.previous_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}">
+                    Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in testimonials.paginator.page_range %}
+                {% if testimonials.number == num %}
+                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                {% elif num > testimonials.number|add:'-3' and num < testimonials.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ num }}{% if current_category %}&category={{ current_category }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if testimonials.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ testimonials.next_page_number }}{% if current_category %}&category={{ current_category }}{% endif %}">
+                    Suivant
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endif %}
+
+<!-- CTA Section -->
+<section style="text-align: center; padding: 4rem 2rem; background: var(--light-gray);">
+    <h2>Partagez votre expérience avec nous</h2>
+    <p style="max-width: 600px; margin: 0 auto 2rem;">Votre témoignage nous aide à améliorer nos services et inspire d'autres agriculteurs.</p>
+    <a href="{% url 'create_testimonial' %}" class="btn-testimonial" style="padding: 1rem 3rem; font-size: 1.1rem;">
+        <i class="fas fa-pen"></i> Écrire un témoignage
+    </a>
+</section>
+{% endblock %}

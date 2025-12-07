@@ -13,6 +13,7 @@ urlpatterns = [
     path('article/<int:article_id>/delete/', views.delete_article, name='delete_article'),
     path('article/<int:article_id>/preview/', views.article_preview, name='article_preview'),
     path('preview/', views.article_preview, name='article_preview_generic'),
+     path('api/carousel/', views.BlogCarouselAPIView.as_view(), name='blog_carousel_api'),
 ]
 
 # if settings.DEBUG:

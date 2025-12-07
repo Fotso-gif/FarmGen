@@ -18,6 +18,7 @@ from django.conf import settings
 
 from Marketplace.models import Shop
 from account.models import User  # Si nécessaire
+from django.views import View
 
 def liste_articles(request):
     articles = Article.objects.all().order_by('-date_publication')
@@ -679,6 +680,87 @@ def handle_article_exceptions(view_func):
             return redirect('seller_blog')
     
     return wrapper
+
+#
+class BlogCarouselAPIView(View):
+    """API pour charger les articles pour le carousel"""
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            # Paramètres
+            limit = int(request.GET.get('limit', 6))
+            category = request.GET.get('category', '')
+            featured = request.GET.get('featured', 'false').lower() == 'true'
+            
+            # Base queryset - articles publiés récents
+            articles = Article.objects.all().order_by('-date_publication')
+            
+            # Filtrer par type si spécifié
+            if category and category != 'all':
+                articles = articles.filter(Q(type_contenu=category))
+            
+            # Filtrer les articles mis en avant si demandé
+            if featured:
+                articles = articles.filter(is_featured=True)  # Si vous avez un champ is_featured
+            
+            # Limiter le nombre d'articles
+            articles = articles[:limit]
+            
+            # Préparer les données
+            articles_data = []
+            for article in articles:
+                # Calculer le temps de lecture (environ 200 mots par minute)
+                word_count = len(article.contenu.split()) if article.contenu else 0
+                reading_time = max(1, round(word_count / 200))
+                
+                # Déterminer la catégorie
+                category_display = dict(Article.TYPE_CHOICES).get(article.type_contenu, 'Article')
+                
+                article_data = {
+                    'id': article.id,
+                    'title': article.titre,
+                    'excerpt': article.contenu[:150] + '...' if article.contenu and len(article.contenu) > 150 else (article.contenu or ''),
+                    'category': category_display,
+                    'image_url': article.image.url if article.image else self.get_default_image(article.type_contenu),
+                    'date_published': article.date_publication.strftime('%d %B %Y'),
+                    'reading_time': f'{reading_time} min',
+                    'author': article.shop.user.get_full_name() if article.shop and article.shop.user else 'FarmGen',
+                    'shop_title': article.shop.title if article.shop else 'FarmGen',
+                    'type': article.type_contenu,
+                    'type_icon': self.get_type_icon(article.type_contenu),
+                }
+                articles_data.append(article_data)
+            
+            return JsonResponse({
+                'success': True,
+                'articles': articles_data,
+                'count': len(articles_data),
+                'has_more': Article.objects.count() > limit
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            }, status=500)
+    
+    def get_default_image(self, article_type):
+        """Retourne une image par défaut selon le type d'article"""
+        default_images = {
+            'article': 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80',
+            'affiche': 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80',
+            'podcast': 'https://images.unsplash.com/photo-1595341888016-a392ef81b7de?ixlib=rb-4.0.3&auto=format&fit=crop&w=1179&q=80',
+        }
+        return default_images.get(article_type, 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')
+    
+    def get_type_icon(self, article_type):
+        """Retourne l'icône correspondant au type d'article"""
+        icons = {
+            'article': 'fas fa-file-alt',
+            'affiche': 'fas fa-image',
+            'podcast': 'fas fa-podcast',
+        }
+        return icons.get(article_type, 'fas fa-newspaper')
 
 
 # Exporter les fonctions décorées

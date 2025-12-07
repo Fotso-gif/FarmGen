@@ -711,23 +711,12 @@
     <h2 class="testimonials-title">Ils nous font confiance</h2>
     <div class="carousel-container">
         <div class="carousel-track" id="carouselTrack">
-            <div class="testimonial-card">
-                <div class="client-logo">A</div>
-                <h3 class="client-name">Amina Ndongo</h3>
-                <p class="client-role">Productrice de maïs, Bertoua</p>
-                <p class="testimonial-text">"Grâce à FarmGen, j'ai amélioré ma production et trouvé de nouveaux débouchés pour mes produits. Une équipe très à l'écoute !"</p>
-            </div>
-            <div class="testimonial-card">
-                <div class="client-logo">S</div>
-                <h3 class="client-name">Samuel Nkoa</h3>
-                <p class="client-role">Éleveur, Bafoussam</p>
-                <p class="testimonial-text">"Des conseils pratiques et un accompagnement de qualité. FarmGen, c'est plus qu'un service, c'est une communauté."</p>
-            </div>
-            <div class="testimonial-card">
-                <div class="client-logo">J</div>
-                <h3 class="client-name">Jean Tchinda</h3>
-                <p class="client-role">Technicien agricole, Douala</p>
-                <p class="testimonial-text">"J'ai pu automatiser une partie de ma ferme grâce à leurs formations et conseils !"</p>
+            <!-- Les témoignages seront chargés ici via JavaScript -->
+            <div id="testimonials-loading" style="text-align: center; padding: 3rem;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+                <p>Chargement des témoignages...</p>
             </div>
         </div>
         <div class="carousel-nav">
@@ -738,13 +727,219 @@
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
-        <div class="carousel-dots">
-            <div class="dot active"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+        <div class="carousel-dots" id="carouselDots">
+            <!-- Les points seront générés dynamiquement -->
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger les témoignages depuis l'API
+    function loadTestimonials() {
+        fetch('{% url "api_testimonials" %}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayTestimonials(data.testimonials);
+                    setupCarousel();
+                } else {
+                    displayFallbackTestimonials();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                displayFallbackTestimonials();
+            });
+    }
+    
+    // Afficher les témoignages chargés depuis l'API
+    function displayTestimonials(testimonials) {
+        const carouselTrack = document.getElementById('carouselTrack');
+        const loadingDiv = document.getElementById('testimonials-loading');
+        
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+        
+        if (testimonials.length === 0) {
+            displayFallbackTestimonials();
+            return;
+        }
+        
+        let html = '';
+        
+        testimonials.forEach((testimonial, index) => {
+            // Déterminer l'icône de vérification
+            const verifiedIcon = testimonial.is_verified ? 
+                '<i class="fas fa-check-circle" style="color: var(--primary-green); margin-left: 5px;"></i>' : '';
+            
+            // Étoiles de notation
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= testimonial.rating) {
+                    stars += '<i class="fas fa-star" style="color: #fbbf24;"></i>';
+                } else {
+                    stars += '<i class="far fa-star" style="color: #d1d5db;"></i>';
+                }
+            }
+            
+            html += `
+                <div class="testimonial-card" data-index="${index}">
+                    <div class="client-logo">
+                        ${testimonial.logo_html}
+                    </div>
+                    <h3 class="client-name">
+                        ${testimonial.author_name}
+                        ${verifiedIcon}
+                    </h3>
+                    <div class="client-rating" style="margin-bottom: 10px;">
+                        ${stars}
+                    </div>
+                    ${testimonial.author_role ? `
+                        <p class="client-role">${testimonial.author_role}</p>
+                    ` : ''}
+                    <p class="testimonial-text">"${testimonial.content}"</p>
+                </div>
+            `;
+        });
+        
+        carouselTrack.innerHTML = html;
+    }
+    
+    // Afficher les témoignages par défaut si l'API échoue
+    function displayFallbackTestimonials() {
+        const carouselTrack = document.getElementById('carouselTrack');
+        const loadingDiv = document.getElementById('testimonials-loading');
+        
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+        
+        // Utiliser les témoignages par défaut
+        carouselTrack.innerHTML = `
+            <div class="testimonial-card">
+                <div class="client-logo">A</div>
+                <h3 class="client-name">Amina Ndongo</h3>
+                <p class="client-role">Productrice de maïs, Bertoua</p>
+                <div class="client-rating" style="margin-bottom: 10px;">
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                </div>
+                <p class="testimonial-text">"Grâce à FarmGen, j'ai amélioré ma production et trouvé de nouveaux débouchés pour mes produits. Une équipe très à l'écoute !"</p>
+            </div>
+            <div class="testimonial-card">
+                <div class="client-logo">S</div>
+                <h3 class="client-name">Samuel Nkoa</h3>
+                <p class="client-role">Éleveur, Bafoussam</p>
+                <div class="client-rating" style="margin-bottom: 10px;">
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="far fa-star" style="color: #d1d5db;"></i>
+                </div>
+                <p class="testimonial-text">"Des conseils pratiques et un accompagnement de qualité. FarmGen, c'est plus qu'un service, c'est une communauté."</p>
+            </div>
+            <div class="testimonial-card">
+                <div class="client-logo">J</div>
+                <h3 class="client-name">Jean Tchinda</h3>
+                <p class="client-role">Technicien agricole, Douala</p>
+                <div class="client-rating" style="margin-bottom: 10px;">
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                    <i class="fas fa-star" style="color: #fbbf24;"></i>
+                </div>
+                <p class="testimonial-text">"J'ai pu automatiser une partie de ma ferme grâce à leurs formations et conseils !"</p>
+            </div>
+        `;
+        
+        setupCarousel();
+    }
+    
+    // Configuration du carousel
+    function setupCarousel() {
+        const track = document.getElementById('carouselTrack');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const dotsContainer = document.getElementById('carouselDots');
+        
+        let currentIndex = 0;
+        const cards = track.querySelectorAll('.testimonial-card');
+        const totalCards = cards.length;
+        const cardWidth = cards[0].offsetWidth + 30; // including gap
+        
+        // Créer les points de navigation
+        dotsContainer.innerHTML = '';
+        for (let i = 0; i < totalCards; i++) {
+            const dot = document.createElement('div');
+            dot.className = `dot ${i === 0 ? 'active' : ''}`;
+            dot.addEventListener('click', () => {
+                currentIndex = i;
+                updateCarousel();
+            });
+            dotsContainer.appendChild(dot);
+        }
+        
+        const dots = document.querySelectorAll('.dot');
+        
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentIndex * cardWidth}px)`;
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
+            });
+        }
+        
+        prevBtn.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            if (currentIndex < totalCards - 1) {
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+        
+        // Auto-scroll
+        let autoScroll = setInterval(() => {
+            if (currentIndex < totalCards - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0;
+            }
+            updateCarousel();
+        }, 5000);
+        
+        // Pause auto-scroll on hover
+        track.addEventListener('mouseenter', () => {
+            clearInterval(autoScroll);
+        });
+        
+        track.addEventListener('mouseleave', () => {
+            autoScroll = setInterval(() => {
+                if (currentIndex < totalCards - 1) {
+                    currentIndex++;
+                } else {
+                    currentIndex = 0;
+                }
+                updateCarousel();
+            }, 5000);
+        });
+    }
+    
+    // Charger les témoignages au démarrage
+    loadTestimonials();
+});
+</script>
 {% endblock %}
 
 {% block scripts %}

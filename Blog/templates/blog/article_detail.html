@@ -837,6 +837,112 @@
     opacity: 0.9;
   }
 
+  /* CTA*/
+  /* Alternative Design - Version avec icônes */
+.blog-cta.alternative {
+    background: linear-gradient(135deg, #1e5631 0%, #27ae60 100%);
+}
+
+.blog-cta.alternative .blog-cta-container {
+    position: relative;
+    padding: 3rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.blog-cta.alternative h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 2.2rem;
+}
+
+.blog-cta.alternative h2::before {
+    content: "📚";
+    font-size: 2.5rem;
+}
+
+.blog-cta.alternative p {
+    position: relative;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.blog-cta.alternative p::before {
+    content: "💡";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.blog-cta.alternative .btn-light {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: var(--forest-green);
+    position: relative;
+    overflow: hidden;
+}
+
+.blog-cta.alternative .btn-light::after {
+    content: "→";
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.blog-cta.alternative .btn-light:hover::after {
+    transform: translateX(5px);
+}
+
+.blog-cta.alternative .btn-outline-light {
+    position: relative;
+    overflow: hidden;
+}
+
+.blog-cta.alternative .btn-outline-light::before {
+    content: "✍️";
+    margin-right: 0.5rem;
+}
+
+/* Version avec fond d'image */
+.blog-cta.with-bg-image {
+    background: linear-gradient(rgba(30, 86, 49, 0.9), rgba(39, 174, 96, 0.9)), 
+                url("{% static 'images/cta-background.jpg' %}") center/cover no-repeat;
+}
+
+.blog-cta.with-bg-image .blog-cta-container {
+    padding: 4rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(5px);
+}
+
+/* Animation supplémentaire au hover 
+.blog-cta .btn.btn-light,
+.blog-cta .btn.btn-outline-light {
+    position: relative;
+    z-index: 1;
+}
+
+.blog-cta .btn.btn-light::before,
+.blog-cta .btn.btn-outline-light::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+    z-index: -1;
+}
+
+.blog-cta .btn.btn-light:hover::before,
+.blog-cta .btn.btn-outline-light:hover::before {
+    left: 100%;
+}
+*/
   /* Responsive Design */
   @media (max-width: 992px) {
     .article-content-container {
@@ -928,8 +1034,8 @@
       <!-- Author -->
       <div class="article-author">
         <div class="author-avatar">
-          {% if article.shop.user.avatar %}
-          <img src="{{ article.shop.user.avatar.url }}" alt="{{ article.shop.user.get_full_name }}">
+          {% if article.shop.user.profile_picture %}
+          <img src="{{ article.shop.user.profile_picture.url }}" alt="{{ article.shop.user.get_full_name }}">
           {% else %}
           <img src="https://randomuser.me/api/portraits/men/65.jpg" alt="Auteur">
           {% endif %}
@@ -991,8 +1097,8 @@
           <!-- Shop Info -->
           <div class="article-shop-info">
             <div class="shop-logo">
-              {% if shop.image %}
-              <img src="{{ shop.image.url }}" alt="{{ shop.title }}">
+              {% if shop.couverture %}
+              <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}">
               {% else %}
               <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80" alt="{{ shop.title }}">
               {% endif %}
@@ -1065,10 +1171,47 @@
       </div>
 
       <!-- Comments Section (optional) -->
-      <div class="comments-section">
-        <h3>Commentaires ({{ article.comments.count }})</h3>
-        
-        {% if request.user.is_authenticated %}
+      {% comment %} <div class="comments-section"> {% endcomment %}
+        {% comment %} <h3>Commentaires ({{ article.comments.count }})</h3> {% endcomment %}
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h3>Commentaires (<span id="comments-count">0</span>)</h3>
+            
+            {% if request.user.is_authenticated %}
+            <form class="comment-form" id="comment-form" data-article-id="{{ article.id }}">
+                {% csrf_token %}
+                <textarea id="comment-content" placeholder="Partagez votre avis..." required></textarea>
+                <button type="submit" id="submit-comment">Publier le commentaire</button>
+            </form>
+            {% else %}
+            <p style="text-align: center; margin-bottom: 2rem;">
+                <a href="{% url 'login' %}?next={{ request.path }}" style="color: var(--primary-green); text-decoration: none; font-weight: 600;">
+                    Connectez-vous pour commenter
+                </a>
+            </p>
+            {% endif %}
+
+            <!-- Comments List -->
+            <div class="comments-list" id="comments-list">
+                <!-- Les commentaires seront chargés ici via JavaScript -->
+                <div id="comments-loading" style="text-align: center; padding: 2rem;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Chargement...</span>
+                    </div>
+                    <p>Chargement des commentaires...</p>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="comments-pagination" id="comments-pagination" style="display: none;">
+                <button id="prev-page" class="btn btn-outline-primary btn-sm">Précédent</button>
+                <span id="page-info" style="margin: 0 1rem;"></span>
+                <button id="next-page" class="btn btn-outline-primary btn-sm">Suivant</button>
+            </div>
+        </div>
+
+
+        {% comment %} {% if request.user.is_authenticated %}
         <form class="comment-form" id="comment-form">
           {% csrf_token %}
           <textarea placeholder="Partagez votre avis..." required></textarea>
@@ -1089,7 +1232,7 @@
             Soyez le premier à commenter !
           </p>
         </div>
-      </div>
+      </div> {% endcomment %}
 
       <!-- Similar Articles -->
       {% if similar_articles %}
@@ -1124,8 +1267,8 @@
       <!-- Shop Widget -->
       <div class="sidebar-widget shop-widget fade-in">
         <div class="shop-widget-logo">
-          {% if shop.image %}
-          <img src="{{ shop.image.url }}" alt="{{ shop.title }}">
+          {% if shop.couverture %}
+          <img src="{{ shop.couverture.url }}" alt="{{ shop.title }}">
           {% else %}
           <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" alt="{{ shop.title }}">
           {% endif %}
@@ -1220,14 +1363,14 @@
 </section>
 
 <!-- Back to Blog CTA -->
-<section class="blog-cta" style="padding: 4rem 2rem;">
+<section class="blog-cta with-bg-image" style="padding: 4rem 2rem;">
   <div class="blog-cta-container" style="max-width: 800px;">
     <h2 class="fade-in">Découvrez plus d'articles</h2>
     <p class="fade-in">Explorez notre blog pour plus de conseils agricoles, actualités et innovations.</p>
     <div class="cta-buttons fade-in">
-      <a href="{% url 'blog' %}" class="btn-light">Retour au blog</a>
+      <a href="{% url 'blog' %}" class=" btn btn-light" style="color:rgba(30, 86, 49, 0.9); background:#fff;">Retour au blog</a>
       {% if user.is_authenticated and user.is_seller %}
-      <a href="{% url 'seller_blog' %}" class="btn-outline-light">Publier un article</a>
+      <a href="{% url 'seller_blog' %}" class="btn btn-outline-light">Publier un article</a>
       {% endif %}
     </div>
   </div>
@@ -1331,7 +1474,7 @@
               <div class="comment-header">
                 <div class="comment-author">
                   <div class="comment-author-avatar">
-                    <img src="{% if request.user.avatar %}{{ request.user.avatar.url }}{% else %}https://randomuser.me/api/portraits/men/65.jpg{% endif %}" alt="{{ request.user.get_full_name }}">
+                    <img src="{% if request.user.profile_picture %}{{ request.user.profile_picture.url }}{% else %}https://randomuser.me/api/portraits/men/65.jpg{% endif %}" alt="{{ request.user.get_full_name }}">
                   </div>
                   <div class="comment-author-info">
                     <h4>{{ request.user.get_full_name }}</h4>
@@ -1460,5 +1603,373 @@
 
     images.forEach(img => imageObserver.observe(img));
   });
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      const articleId = '{{ article.id }}';
+      let currentPage = 1;
+      let totalPages = 1;
+      
+      // Charger les commentaires
+      function loadComments(page = 1) {
+          const loadingDiv = document.getElementById('comments-loading');
+          const commentsList = document.getElementById('comments-list');
+          const paginationDiv = document.getElementById('comments-pagination');
+          
+          loadingDiv.style.display = 'block';
+          paginationDiv.style.display = 'none';
+          
+          fetch(`{% url 'get_comments' %}?article_id=${articleId}&page=${page}&limit=10`)
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      displayComments(data.comments);
+                      updatePagination(data);
+                      updateCommentsCount(data.total_comments);
+                  } else {
+                      commentsList.innerHTML = '<p class="text-center text-muted">Erreur lors du chargement des commentaires.</p>';
+                  }
+                  loadingDiv.style.display = 'none';
+              })
+              .catch(error => {
+                  console.error('Error:', error);
+                  commentsList.innerHTML = '<p class="text-center text-muted">Erreur de connexion.</p>';
+                  loadingDiv.style.display = 'none';
+              });
+      }
+      
+      // Afficher les commentaires
+      function displayComments(comments) {
+          const commentsList = document.getElementById('comments-list');
+          
+          if (comments.length === 0) {
+              commentsList.innerHTML = '<p class="text-center text-muted">Soyez le premier à commenter !</p>';
+              return;
+          }
+          
+          let html = '';
+          
+          comments.forEach(comment => {
+              html += `
+                  <div class="comment-item" data-comment-id="${comment.id}">
+                      <div class="comment-header">
+                          <div class="comment-author">
+                              <div class="comment-author-avatar">
+                                  ${comment.user.avatar_url ? 
+                                      `<img src="${comment.user.avatar_url}" alt="${comment.user.full_name}">` :
+                                      `<img src="https://randomuser.me/api/portraits/men/65.jpg" alt="${comment.user.full_name}">`
+                                  }
+                              </div>
+                              <div class="comment-author-info">
+                                  <h4>${comment.user.full_name}</h4>
+                                  <small class="text-muted">${comment.created_at}</small>
+                              </div>
+                          </div>
+                          <div class="comment-actions">
+                              <button class="like-btn ${comment.user_has_liked ? 'liked' : ''}" 
+                                      data-comment-id="${comment.id}"
+                                      onclick="likeComment('${comment.id}')">
+                                  <i class="fas fa-thumbs-up"></i>
+                                  <span class="like-count">${comment.likes_count}</span>
+                              </button>
+                              <button class="reply-btn" onclick="showReplyForm('${comment.id}')">
+                                  <i class="fas fa-reply"></i> Répondre
+                              </button>
+                              <button class="report-btn" onclick="reportComment('${comment.id}')">
+                                  <i class="fas fa-flag"></i> Signaler
+                              </button>
+                          </div>
+                      </div>
+                      <div class="comment-content">
+                          ${comment.content}
+                      </div>
+                      
+                      <!-- Zone de réponse (cachée par défaut) -->
+                      <div class="reply-form" id="reply-form-${comment.id}" style="display: none; margin-top: 1rem;">
+                          <textarea class="reply-textarea" placeholder="Votre réponse..." rows="2"></textarea>
+                          <button class="btn btn-sm btn-primary" onclick="submitReply('${comment.id}')">Envoyer</button>
+                          <button class="btn btn-sm btn-secondary" onclick="hideReplyForm('${comment.id}')">Annuler</button>
+                      </div>
+                      
+                      <!-- Réponses -->
+                      ${comment.replies && comment.replies.length > 0 ? `
+                          <div class="replies-container" style="margin-left: 3rem; margin-top: 1rem;">
+                              ${comment.replies.map(reply => `
+                                  <div class="reply-item" style="margin-bottom: 1rem;">
+                                      <div class="d-flex align-items-center">
+                                          <div class="reply-avatar" style="width: 30px; height: 30px; border-radius: 50%; overflow: hidden; margin-right: 10px;">
+                                              ${reply.user.avatar_url ? 
+                                                  `<img src="${reply.user.avatar_url}" alt="${reply.user.full_name}" style="width: 100%; height: 100%; object-fit: cover;">` :
+                                                  `<img src="https://randomuser.me/api/portraits/men/65.jpg" alt="${reply.user.full_name}" style="width: 100%; height: 100%; object-fit: cover;">`
+                                              }
+                                          </div>
+                                          <div>
+                                              <strong>${reply.user.full_name}</strong>
+                                              <small class="text-muted">${reply.created_at}</small>
+                                              <p style="margin: 0.5rem 0;">${reply.content}</p>
+                                          </div>
+                                      </div>
+                                  </div>
+                              `).join('')}
+                          </div>
+                      ` : ''}
+                  </div>
+              `;
+          });
+          
+          commentsList.innerHTML = html;
+      }
+      
+      // Mettre à jour la pagination
+      function updatePagination(data) {
+          const paginationDiv = document.getElementById('comments-pagination');
+          const pageInfo = document.getElementById('page-info');
+          const prevBtn = document.getElementById('prev-page');
+          const nextBtn = document.getElementById('next-page');
+          
+          currentPage = data.current_page;
+          totalPages = data.total_pages;
+          
+          if (data.total_comments > 10) {
+              paginationDiv.style.display = 'flex';
+              pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
+              
+              prevBtn.disabled = !data.has_previous;
+              nextBtn.disabled = !data.has_next;
+          } else {
+              paginationDiv.style.display = 'none';
+          }
+      }
+      
+      // Mettre à jour le compteur de commentaires
+      function updateCommentsCount(count) {
+          const countElement = document.getElementById('comments-count');
+          countElement.textContent = count;
+      }
+      
+      // Gestion du formulaire de commentaire
+      const commentForm = document.getElementById('comment-form');
+      if (commentForm) {
+          commentForm.addEventListener('submit', function(e) {
+              e.preventDefault();
+              
+              const content = document.getElementById('comment-content').value.trim();
+              if (!content) return;
+              
+              const submitBtn = document.getElementById('submit-comment');
+              const originalText = submitBtn.textContent;
+              submitBtn.disabled = true;
+              submitBtn.textContent = 'Publication...';
+              
+              fetch('{% url "create_comment" %}', {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': '{{ csrf_token }}'
+                  },
+                  body: JSON.stringify({
+                      article_id: articleId,
+                      content: content
+                  })
+              })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      // Réinitialiser le formulaire
+                      document.getElementById('comment-content').value = '';
+                      
+                      // Recharger les commentaires
+                      loadComments(1);
+                      
+                      // Afficher un message de succès
+                      showNotification('Commentaire publié avec succès!', 'success');
+                  } else {
+                      showNotification(data.error || 'Erreur lors de la publication', 'error');
+                  }
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = originalText;
+              })
+              .catch(error => {
+                  console.error('Error:', error);
+                  showNotification('Erreur de connexion', 'error');
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = originalText;
+              });
+          });
+      }
+      
+      // Gestion de la pagination
+      document.getElementById('prev-page')?.addEventListener('click', function() {
+          if (currentPage > 1) {
+              loadComments(currentPage - 1);
+          }
+      });
+      
+      document.getElementById('next-page')?.addEventListener('click', function() {
+          if (currentPage < totalPages) {
+              loadComments(currentPage + 1);
+          }
+      });
+      
+      // Charger les commentaires initiaux
+      loadComments();
+  });
+
+  // Fonctions globales pour les actions sur les commentaires
+  function likeComment(commentId) {
+      if (!'{{ request.user.is_authenticated }}') {
+          window.location.href = '{% url "login" %}?next={{ request.path }}';
+          return;
+      }
+      
+      fetch('{% url "like_comment" %}', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ comment_id: commentId })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Mettre à jour l'affichage du like
+              const likeBtn = document.querySelector(`[data-comment-id="${commentId}"] .like-btn`);
+              const likeCount = likeBtn.querySelector('.like-count');
+              
+              likeBtn.classList.toggle('liked');
+              likeCount.textContent = data.likes_count;
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  function showReplyForm(commentId) {
+      const form = document.getElementById(`reply-form-${commentId}`);
+      form.style.display = 'block';
+  }
+
+  function hideReplyForm(commentId) {
+      const form = document.getElementById(`reply-form-${commentId}`);
+      form.style.display = 'none';
+  }
+
+  function submitReply(commentId) {
+      const textarea = document.querySelector(`#reply-form-${commentId} .reply-textarea`);
+      const content = textarea.value.trim();
+      
+      if (!content) return;
+      
+      if (!'{{ request.user.is_authenticated }}') {
+          window.location.href = '{% url "login" %}?next={{ request.path }}';
+          return;
+      }
+      
+      fetch('{% url "create_comment" %}', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+              article_id: '{{ article.id }}',
+              content: content,
+              parent_id: commentId
+          })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              textarea.value = '';
+              hideReplyForm(commentId);
+              // Recharger les commentaires pour voir la nouvelle réponse
+              loadComments(currentPage);
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  function reportComment(commentId) {
+      const reason = prompt("Pourquoi signalez-vous ce commentaire ?\n\n1. Spam ou publicité\n2. Contenu offensant\n3. Contenu inapproprié\n4. Information fausse\n5. Autre\n\nEntrez le numéro (1-5):");
+      
+      if (!reason) return;
+      
+      const reasonMap = {
+          '1': 'spam',
+          '2': 'offensive',
+          '3': 'inappropriate',
+          '4': 'fake',
+          '5': 'other'
+      };
+      
+      if (!reasonMap[reason]) {
+          alert('Numéro invalide');
+          return;
+      }
+      
+      const description = prompt("Détaillez la raison de votre signalement (optionnel):");
+      
+      fetch('{% url "report_comment" %}', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({
+              comment_id: commentId,
+              reason: reasonMap[reason],
+              description: description || ''
+          })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              alert('Merci pour votre signalement !');
+          } else {
+              alert('Erreur lors du signalement');
+          }
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  // Fonction utilitaire pour afficher des notifications
+  function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
+      notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 1rem 2rem;
+          background: ${type === 'success' ? 'var(--primary-green)' : '#e74c3c'};
+          color: white;
+          border-radius: 8px;
+          z-index: 10000;
+          animation: slideIn 0.3s ease;
+      `;
+      
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+          notification.style.animation = 'slideOut 0.3s ease';
+          setTimeout(() => notification.remove(), 300);
+      }, 3000);
+  }
+
+  // Ajouter des styles pour l'animation
+  const style = document.createElement('style');
+  style.textContent = `
+      @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+      }
+      .liked { color: var(--primary-green); }
+  `;
+  document.head.appendChild(style);
 </script>
 {% endblock %}

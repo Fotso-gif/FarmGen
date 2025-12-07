@@ -1472,35 +1472,67 @@
       applyFilters();
     });
 
-    // Newsletter form handling
-    const newsletterForm = document.getElementById('newsletter-form');
-    if (newsletterForm) {
-      newsletterForm.addEventListener('submit', function(e) {
+    // Newsletter form handling - Version améliorée
+const newsletterForm = document.getElementById('newsletter-form');
+if (newsletterForm) {
+    newsletterForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
         
-        fetch('#', {
-          method: 'POST',
-          body: formData,
-          headers: {
-            'X-CSRFToken': '{{ csrf_token }}'
-          }
+        // Ajouter un indicateur de chargement
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Inscription...';
+        submitBtn.disabled = true;
+        
+        // Ajouter la source
+        formData.append('source', 'blog');
+        
+        fetch('{% url "subscribe_newsletter" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
         .then(response => response.json())
         .then(data => {
-          if (data.success) {
-            this.innerHTML = '<p style="color: var(--primary-green); text-align: center; margin: 0; font-weight: 600;">Merci pour votre inscription !</p>';
-          } else {
-            alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
-          }
+            if (data.success) {
+                if (data.requires_confirmation) {
+                    this.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <i class="fas fa-envelope" style="font-size: 3rem; color: var(--primary-green); margin-bottom: 1rem;"></i>
+                            <h3 style="color: var(--primary-green);">Presque terminé !</h3>
+                            <p>${data.message}</p>
+                            <p style="font-size: 0.9rem; color: var(--text-dark); opacity: 0.7;">
+                                Vérifiez votre boîte de réception et vos spams.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    this.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--primary-green); margin-bottom: 1rem;"></i>
+                            <h3 style="color: var(--primary-green);">Inscription réussie !</h3>
+                            <p>${data.message}</p>
+                        </div>
+                    `;
+                }
+            } else {
+                alert('Erreur: ' + (data.error || 'Une erreur est survenue'));
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         })
         .catch(error => {
-          console.error('Error:', error);
-          alert('Erreur de connexion');
+            console.error('Error:', error);
+            alert('Erreur de connexion. Veuillez réessayer.');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
         });
-      });
-    }
-
+    });
+}
     // Smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
