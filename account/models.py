@@ -8,7 +8,7 @@ import uuid
 
 class User(AbstractUser):
     ACCOUNT_TYPES = (
-        ('a sdmin', 'Admin'),
+        ('admin', 'Admin'),
         ('seller', 'Agriculteur/Vendeur'),
         ('client', 'Client/Utilisateur'),
     )

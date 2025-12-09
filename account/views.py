@@ -1329,8 +1329,9 @@ def profile(request):
     """Page de profil utilisateur"""
     user = request.user
     shop = user.shop.first()
-    orders_count = OrderModel.objects.filter(shop_id=shop.id).count()
+    orders_count = 0
     if(user.account_type == "seller"):
+        orders_count = OrderModel.objects.filter(shop_id=shop.id).count()
         products_count = Product.objects.filter(category__shop=shop).count()
         revenue_today = OrderModel.objects.filter(
             shop_id=shop.id,
@@ -1338,6 +1339,7 @@ def profile(request):
             created_at__date=timezone.now().date()
         ).aggregate(total=Sum('final_amount'))['total'] or 0
     else:
+        orders_count = OrderModel.objects.filter(user=request.user).count()
         products_count = 0
         revenue_today = 0
     

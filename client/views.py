@@ -4,6 +4,7 @@ import uuid
 import json
 from datetime import timedelta
 import logging
+from django.db import models
 from .models import NewsletterSubscriber
 from .forms import NewsletterSubscriptionForm
 from Marketplace.models import Shop, SearchHistory
@@ -12,7 +13,7 @@ from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from Blog.models import Article
 from Marketplace.models import Shop,  Favorite  # Si dans une autre app
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.contrib.auth.decorators import login_required
 
 from django.views.decorators.http import require_POST

@@ -397,7 +397,7 @@ def update_shop(request):
 
 
 
-@login_required
+
 def order_listing(request):
     # Filtres de période
     period = request.GET.get('period', 'monthly')  # daily, weekly, monthly, yearly, custom
@@ -437,9 +437,9 @@ def order_listing(request):
     # Base queryset selon le rôle utilisateur
     if request.user.is_superuser:
         orders = Order.objects.all()
-    elif hasattr(request.user, 'shop'):
+    elif request.user.account_type == "seller":
         # Vendeur: commandes de sa boutique seulement
-        shop = request.user.shop
+        shop = request.user.shop.first()
         orders = Order.objects.filter(shop_id=shop.id)
     else:
         # Client: ses commandes seulement
@@ -2612,25 +2612,27 @@ class GeminiChatManager:
 
         # Modèles réellement supportés par google-genai
         supported_models = [
+            "gemini-3-pro-preview"
+            "gemini-flash-latest"
             "gemini-1.5-flash-latest",
-            "gemini-1.5-pro-latest",
             "gemini-1.5-flash-8b-latest",
         ]
 
         # Ta liste de préférences
         desired_models = [
+            "gemini-3-pro-preview"
+            "gemini-flash-latest"
             "gemini-2.0-flash-exp", 
             "gemini-1.5-flash-002", 
             "gemini-1.5-flash-001",
             "gemini-1.5-flash",
-            "gemini-1.5-flash-latest",
-            "gemini-1.5-pro-latest"
+            "gemini-1.5-flash-latest"
         ]
 
         # Sélection automatique : on garde le premier modèle qui existe vraiment
         self.model = next(
             (m for m in desired_models if m in supported_models),
-            "gemini-1.5-flash-latest"
+            "gemini-flash-latest"
         )
 
         print(f"Modèle sélectionné : {self.model}")
@@ -2651,8 +2653,8 @@ class GeminiChatManager:
     {cahier_charge[:2000] if len(cahier_charge) > 2000 else cahier_charge}
 
     **Instructions:**
-    1. Réponds toujours en français
-    2. Sois précis et utile
+    1. Réponds toujours en français (sauf sous demande explicite de l'auteur)
+    2. Sois précis utile et concis 
     3. Réfère-toi aux documents ci-dessus
     4. Si tu ne sais pas, dis-le
     """
