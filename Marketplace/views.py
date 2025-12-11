@@ -2,13 +2,14 @@ import io
 import os
 import qrcode
 import base64
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import json
 import csv
 from django.utils.encoding import smart_str
 #from weasyprint import HTML
 from django.template.loader import render_to_string
-
+# Convertir les dates en format ISO pour JSON
+from django.core.serializers.json import DjangoJSONEncoder
 # Import pour ExtractHour
 from collections import defaultdict
 from django.db.models.functions import ExtractHour
@@ -518,7 +519,7 @@ def order_listing(request):
     )[:10]
     
     # Pour les vendeurs/admins: statistiques par client
-    if request.user.is_seller or hasattr(request.user, 'shop'):
+    if request.user.account_type == "seller" or hasattr(request.user, 'shop'):
         customer_stats = orders.values(
             'customer_email', 'customer_first_name', 'customer_last_name'
         ).annotate(
@@ -634,90 +635,115 @@ def order_listing(request):
 def download_invoice(request, order_id):
     """Télécharger une facture PDF"""
     try:
-        # Vérifier les permissions
-        if request.user.is_superuser:
-            order = Order.objects.get(id=order_id)
-        elif hasattr(request.user, 'shop'):
-            # Vendeur: vérifier que la commande appartient à sa boutique
-            shop = request.user.shop
-            order = Order.objects.get(id=order_id, shop_id=shop.id)
-        else:
-            # Client: vérifier que c'est sa commande
-            order = Order.objects.get(id=order_id, user=request.user)
+        # Convertir order_id en UUID
+        try:
+            order_uuid = str(order_id)
+            order = Order.objects.get(id=order_uuid)
+        except (ValueError, Order.DoesNotExist):
+            return HttpResponse('Commande non trouvée', status=404)
         
-        # Récupérer les informations de la boutique
+        # Vérifier les permissions
+        if not request.user.is_superuser:
+            if request.user.account_type == "seller":
+                shop = Shop.objects.filter(user=request.user).first()
+                if not shop or order.shop_id != shop.id:
+                    return HttpResponse('Non autorisé', status=403)
+            else:
+                if order.user != request.user:
+                    return HttpResponse('Non autorisé', status=403)
+        
+        # Récupérer la boutique avec toutes les informations
+        shop = None
         try:
             shop = Shop.objects.get(id=order.shop_id)
         except Shop.DoesNotExist:
-            shop = None
+            pass
         
-        # Calculer les totaux des articles
-        items_total = sum(
-            float(item.get('price', 0)) * int(item.get('quantity', 0))
-            for item in order.cart_items
-        )
+        # Récupérer l'URL de l'image de profil de l'utilisateur (vendeur)
+        profile_image_url = None
+        if shop and shop.user.profile_picture:
+            try:
+                profile_image_url = request.build_absolute_uri(shop.user.profile_picture.url)
+            except:
+                pass
         
-        # Calculer la TVA (18% par défaut)
-        vat_rate = 0.18
-        vat_amount = items_total * Decimal(vat_rate)
+        # Récupérer l'URL de la couverture de la boutique
+        shop_cover_url = None
+        if shop and shop.couverture:
+            try:
+                shop_cover_url = request.build_absolute_uri(shop.couverture.url)
+            except:
+                pass
         
-        # Générer QR code pour la facture
-        qr_data = f"""
-Facture N°: {str(order.id)[:8].upper()}
-Client: {order.full_name}
-Date: {order.created_at.strftime('%d/%m/%Y')}
-Montant HT: {items_total:.2f} FCFA
-TVA ({vat_rate*100}%): {vat_amount:.2f} FCFA
-Montant TTC: {order.final_amount:.2f} FCFA
-        """.strip()
+        # Calculer les totaux
+        cart_items = order.cart_items or []
+        items_total_decimal = Decimal('0')
         
+        for item in cart_items:
+            try:
+                price = Decimal(str(item.get('price', 0)))
+                quantity = Decimal(str(item.get('quantity', 0)))
+                items_total_decimal += price * quantity
+            except:
+                continue
+        
+        vat_rate = Decimal('0.1')
+        vat_amount_decimal = items_total_decimal * vat_rate
+        final_amount_decimal = Decimal(str(order.final_amount)) if order.final_amount else items_total_decimal + vat_amount_decimal
+        
+        # QR Code
+        order_number = str(order.id)[:8].upper()
+        qr_data = f"FACTURE-{order_number}|{order.full_name}|{float(final_amount_decimal):.2f}|{order.created_at.strftime('%d%m%Y')}"
         qr_img = qrcode.make(qr_data)
         qr_buffer = io.BytesIO()
         qr_img.save(qr_buffer, format='PNG')
         qr_base64 = base64.b64encode(qr_buffer.getvalue()).decode()
         
-        # Contexte pour le template PDF
+        # Contexte pour le template
         context = {
             'order': order,
             'shop': shop,
-            'items_total': items_total,
-            'vat_rate': vat_rate * 100,
-            'vat_amount': vat_amount,
+            'cart_items': cart_items,
+            'items_total': float(items_total_decimal),
+            'vat_rate': 10.0,
+            'vat_amount': float(vat_amount_decimal),
+            'final_amount': float(final_amount_decimal),
             'qr_code': qr_base64,
             'today': timezone.now().strftime("%d/%m/%Y"),
-            'generated_at': timezone.now().strftime("%d/%m/%Y %H:%M"),
+            'generated_at': timezone.now().strftime("%d/%m/%Y à %H:%M"),
+            'order_number': order_number,
+            'profile_image_url': profile_image_url,
+            'shop_cover_url': shop_cover_url,
         }
         
-        # Rendre le template HTML
+        # Générer PDF
         html_string = render_to_string('marketplace/invoice_template.html', context)
-        
-        # Créer le PDF
         pdf_file = io.BytesIO()
+        
+        # Configurer xhtml2pdf pour supporter les images
         pisa_status = pisa.CreatePDF(
-            html_string,
+            html_string, 
             dest=pdf_file,
-            encoding='UTF-8'
+            encoding='UTF-8',
+            link_callback=None
         )
         
         if pisa_status.err:
             return HttpResponse('Erreur lors de la génération du PDF', status=500)
         
-        # Retourner le PDF
         pdf_file.seek(0)
+        filename = f"facture_{order_number}.pdf"
         response = HttpResponse(pdf_file.read(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="facture_{order.id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         return response
         
-    except Order.DoesNotExist:
-        return HttpResponse('Commande non trouvée', status=404)
-    except PermissionError:
-        return HttpResponse('Non autorisé', status=403)
     except Exception as e:
-        print(f"Erreur génération PDF: {e}")
-        return HttpResponse('Erreur interne', status=500)
-
-
+        print(f"Erreur génération PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return HttpResponse(f'Erreur: {str(e)}', status=500)
+        
 @login_required
 def update_order_status(request, order_id):
     """API pour mettre à jour le statut d'une commande"""
@@ -731,7 +757,12 @@ def update_order_status(request, order_id):
         
         data = json.loads(request.body)
         new_status = data.get('status')
-        
+        print("=== DEBUG ===")
+        print("DATA RECUE :", data)
+        print("STATUT RECU :", new_status)
+        print("CHOIX AUTORISES :", dict(Order.STATUS_CHOICES))
+        print("==============")
+
         if new_status not in dict(Order.STATUS_CHOICES):
             return JsonResponse({'error': 'Statut invalide'}, status=400)
         
@@ -739,7 +770,7 @@ def update_order_status(request, order_id):
         if request.user.is_superuser:
             order = Order.objects.get(id=order_id)
         else:
-            shop = request.user.shop
+            shop = request.user.shop.first()
             order = Order.objects.get(id=order_id, shop_id=shop.id)
         
         # Mettre à jour le statut
@@ -1028,116 +1059,340 @@ def order_history(request):
 
 
 @login_required
-def order_detail(request, order_id):
-    """Affiche les détails d'une commande spécifique."""
+def order_details(request, order_id):
+    """Afficher les détails complets d'une commande pour AJAX"""
     try:
-        order = Order.objects.get(id=order_id)
+        # Convertir order_id en UUID
+        try:
+            order_uuid = str(order_id)
+        except ValueError:
+            return JsonResponse({'error': 'Format de commande invalide'}, status=400)
         
-        # Vérification des permissions
-        if not request.user.is_superuser:
-            if hasattr(request.user, 'shop'):
-                shop = request.user.shop.first()
-                if order.shop_id != shop.id:
-                    return JsonResponse({'error': 'Non autorisé'}, status=403)
-            else:
-                if (order.customer_email != request.user.email and 
-                    order.customer_phone != request.user.phone):
-                    return JsonResponse({'error': 'Non autorisé'}, status=403)
-        
-        # Calculer le total des articles
-        total_items = sum(item.get('quantity', 0) for item in (order.cart_items or []))
-        
-        # Récupérer les informations de la boutique
-        shop_info = None
+        # Vérifier les permissions
         if request.user.is_superuser:
-            shop_info = Shop.objects.filter(id=order.shop_id).first()
+            order = Order.objects.get(id=order_uuid)
+        elif hasattr(request.user, 'account_type') and request.user.account_type == "seller":
+            shop = Shop.objects.filter(user=request.user).first()
+            if not shop:
+                return JsonResponse({'error': 'Aucune boutique trouvée'}, status=403)
+            order = Order.objects.get(id=order_uuid, shop_id=shop.id)
+        else:
+            order = Order.objects.get(id=order_uuid, user=request.user)
         
+        # Formatage des dates
+        created_at = order.created_at.strftime('%d/%m/%Y %H:%M')
+        updated_at = order.updated_at.strftime('%d/%m/%Y %H:%M') if order.updated_at else 'N/A'
+        
+        # Formatage date vérification
+        payment_verified_at = None
+        if order.payment_verified_at:
+            payment_verified_at = order.payment_verified_at.strftime('%d/%m/%Y %H:%M')
+        
+        # Nom de la boutique
+        shop_name = None
+        try:
+            shop = Shop.objects.get(id=order.shop_id)
+            shop_name = shop.title
+        except Shop.DoesNotExist:
+            pass
+        
+        # Traitement des articles
+        cart_items = order.cart_items or []
+        processed_items = []
+        for item in cart_items:
+            processed_items.append({
+                'name': item.get('name', 'Article sans nom'),
+                'price': float(item.get('price', 0)),
+                'quantity': int(item.get('quantity', 0))
+            })
+        
+        # URL preuve de paiement
+        payment_proof = None
+        if order.payment_proof and hasattr(order.payment_proof, 'url'):
+            payment_proof = request.build_absolute_uri(order.payment_proof.url)
+        
+        # Construction de la réponse
         data = {
-            'id': str(order.id),
-            'order_number': str(order.id)[:8].upper(),
-            'created_at': order.created_at.strftime('%d/%m/%Y à %H:%M'),
-            'updated_at': order.updated_at.strftime('%d/%m/%Y à %H:%M'),
+            'order_number': f"CMD-{str(order.id)[:8].upper()}",
+            'created_at': created_at,
+            'updated_at': updated_at,
             'status': order.status,
             'status_display': order.get_status_display(),
-            'total_amount': order.total_amount,
-            'tax_amount': order.tax_amount,
-            'final_amount': order.final_amount,
             'customer_name': f"{order.customer_first_name} {order.customer_last_name}",
             'customer_email': order.customer_email,
             'customer_phone': order.customer_phone,
+            'shop': shop_name,
+            'total_amount': f"{float(order.total_amount):,.0f} FCFA" if order.total_amount else "0 FCFA",
+            'tax_amount': f"{float(order.tax_amount):,.0f} FCFA" if order.tax_amount else "0 FCFA",
+            'final_amount': f"{float(order.final_amount):,.0f} FCFA" if order.final_amount else "0 FCFA",
+            'cart_items': processed_items,
+            'total_items': sum(item.get('quantity', 0) for item in cart_items),
             'payment_method': order.payment_method,
             'payment_method_display': order.get_payment_method_display(),
-            'payment_phone': order.payment_phone,
-            'payment_proof': order.payment_proof.url if order.payment_proof else None,
-            'payment_verified': order.payment_verified,
-            'payment_verified_at': order.payment_verified_at.strftime('%d/%m/%Y %H:%M') if order.payment_verified_at else None,
-            'cart_items': order.cart_items,
-            'total_items': total_items,
-            'shop': shop_info.title if shop_info else None,
+            'payment_phone': order.payment_phone or 'Non spécifié',
+            'payment_verified': bool(order.payment_verified),
+            'payment_verified_at': payment_verified_at,
             'qr_code_data': order.qr_code_data,
             'ussd_code': order.ussd_code,
             'whatsapp_link': order.whatsapp_link,
+            'payment_proof': payment_proof,
         }
         
         return JsonResponse(data)
         
     except Order.DoesNotExist:
         return JsonResponse({'error': 'Commande non trouvée'}, status=404)
-
-
+    except Exception as e:
+        print(f"Erreur dans order_details: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+            
 @login_required
-def update_order_status(request, order_id):
-    """Met à jour le statut d'une commande."""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
-    
+def order_detail(request, order_id):
+    """Affiche les détails d'une commande spécifique."""
     try:
-        order = Order.objects.get(id=order_id)
-        new_status = request.POST.get('status')
+        # Convertir l'order_id en UUID
+        try:
+            order_uuid = order_id
+            order = Order.objects.get(id=order_uuid)
+        except (ValueError, Order.DoesNotExist):
+            return JsonResponse({
+                'success': False,
+                'error': 'Commande non trouvée'
+            }, status=404)
         
         # Vérification des permissions
-        if not request.user.is_superuser and not hasattr(request.user, 'shop'):
-            return JsonResponse({'error': 'Non autorisé'}, status=403)
+        if not request.user.is_superuser:
+            if request.user.account_type == "seller":
+                shop = Shop.objects.filter(user=request.user).first()
+                if not shop or order.shop_id != shop.id:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Non autorisé'
+                    }, status=403)
+            else:
+                # Client: vérifier si c'est sa commande
+                if (order.user != request.user and 
+                    order.customer_email != request.user.email):
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Non autorisé'
+                    }, status=403)
         
-        # Vérifier que le statut est valide
-        valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
-        if new_status not in valid_statuses:
-            return JsonResponse({'error': 'Statut invalide'}, status=400)
+        # Récupérer les informations de la boutique
+        shop_info = None
+        try:
+            shop = Shop.objects.get(id=order.shop_id)
+            shop_info = {
+                'id': shop.id,
+                'title': shop.title,
+                'description': shop.description or '',
+                'localisation': shop.localisation or '',
+                'type_shop': shop.type_shop or '',
+                'note': float(shop.note) if shop.note else None,
+                'logo_url': shop.couverture.url if shop.couverture and hasattr(shop.couverture, 'url') else None,
+                'phone': shop.user.phone if hasattr(shop.user, 'phone') and shop.user.phone else None,
+                'email': shop.user.email if hasattr(shop.user, 'email') else None
+            }
+        except Shop.DoesNotExist:
+            shop_info = None
         
-        # Si le statut est "livré", vérifier que le paiement est vérifié
-        if new_status == Order.STATUS_PAID and not order.payment_verified:
-            return JsonResponse({
-                'error': 'Le paiement doit être vérifié avant de marquer comme livré'
-            }, status=400)
+        # Récupérer l'historique des vérifications
+        verification_history = []
+        try:
+            from .models import PaymentVerification
+            verifications = PaymentVerification.objects.filter(order=order).order_by('-verified_at')
+            for verification in verifications:
+                verified_by_name = "Système"
+                if verification.verified_by:
+                    if verification.verified_by.first_name and verification.verified_by.last_name:
+                        verified_by_name = f"{verification.verified_by.first_name} {verification.verified_by.last_name}"
+                    else:
+                        verified_by_name = verification.verified_by.username
+                
+                verification_history.append({
+                    'verified_by': verified_by_name,
+                    'verified_at': verification.verified_at,
+                    'is_approved': verification.is_approved,
+                    'notes': verification.notes or ''
+                })
+        except Exception:
+            pass
         
-        # Mettre à jour le statut
-        old_status = order.status
-        order.status = new_status
+        # Calculer les totaux
+        cart_items = order.cart_items or []
+        items_total_ht = Decimal('0')
+        processed_cart_items = []
         
-        # Si marqué comme vérifié, mettre à jour payment_verified
-        if new_status == Order.STATUS_PAYMENT_VERIFIED:
-            order.payment_verified = True
-            order.payment_verified_at = timezone.now()
+        for item in cart_items:
+            try:
+                price = Decimal(str(item.get('price', 0)))
+                quantity = int(item.get('quantity', 1))
+                name = item.get('name', 'Article sans nom')
+                
+                items_total_ht += price * quantity
+                processed_cart_items.append({
+                    'name': name,
+                    'price': float(price),
+                    'quantity': quantity
+                })
+            except Exception:
+                continue
         
-        order.save()
+        # Calculer la TVA
+        vat_rate = Decimal('0.10')
+        calculated_vat = items_total_ht * vat_rate
+        items_total_ttc = items_total_ht + calculated_vat
         
-        # Journaliser l'action
-        ActivityLog.objects.create(
-            user=request.user,
-            action=f"Statut commande {order.id} modifié: {old_status} → {new_status}",
-            content_type=ContentType.objects.get_for_model(Order),
-            object_id=order.id
-        )
+        # Nombre total d'articles
+        total_items = sum(item.get('quantity', 0) for item in processed_cart_items)
+        unique_items = len(processed_cart_items)
+        
+        # Prépare les données de la commande
+        order_data = {
+            'id': str(order.id),
+            'order_number': str(order.id)[:8].upper(),
+            'created_at': order.created_at.isoformat(),
+            'updated_at': order.updated_at.isoformat() if order.updated_at else None,
+            'status': order.status,
+            'status_display': order.get_status_display(),
+            
+            # Totaux financiers
+            'total_amount': float(order.total_amount) if order.total_amount else float(items_total_ht),
+            'tax_amount': float(order.tax_amount) if order.tax_amount else float(calculated_vat),
+            'final_amount': float(order.final_amount) if order.final_amount else float(items_total_ttc),
+            'items_total_ht': float(items_total_ht),
+            'calculated_vat': float(calculated_vat),
+            'items_total_ttc': float(items_total_ttc),
+            'vat_rate': 10,
+            
+            # Informations client
+            'customer': {
+                'first_name': order.customer_first_name or '',
+                'last_name': order.customer_last_name or '',
+                'full_name': f"{order.customer_first_name or ''} {order.customer_last_name or ''}".strip(),
+                'email': order.customer_email or '',
+                'phone': order.customer_phone or 'Non spécifié',
+                'user_id': order.user.id if order.user else None,
+                'username': order.user.username if order.user else None
+            },
+            
+            # Informations de paiement
+            'payment_method': order.payment_method,
+            'payment_method_display': order.get_payment_method_display(),
+            'payment_phone': order.payment_phone or 'Non spécifié',
+            'payment_verified': bool(order.payment_verified),
+            'payment_verified_at': order.payment_verified_at.isoformat() if order.payment_verified_at else None,
+            
+            # Preuve de paiement
+            'has_payment_proof': bool(order.payment_proof),
+            'payment_proof_url': order.payment_proof.url if order.payment_proof and hasattr(order.payment_proof, 'url') else None,
+            
+            # Données du panier
+            'cart_items': processed_cart_items,
+            'total_items': total_items,
+            'unique_items': unique_items,
+            
+            # Informations boutique
+            'shop': shop_info,
+            'shop_id': order.shop_id,
+            
+            # Métadonnées
+            'metadata': order.metadata or {},
+            
+            # Codes de paiement
+            'qr_code_data': order.qr_code_data,
+            'ussd_code': order.ussd_code,
+            'whatsapp_link': order.whatsapp_link,
+            
+            # Historique
+            'verification_history': verification_history,
+            
+            # Statuts calculés
+            'is_paid': order.status in ['paid', 'payment_verified'],
+            'is_pending': order.status in ['pending', 'waiting_payment'],
+            'is_failed': order.status in ['failed', 'refunded', 'cancelled']
+        }
+        
+        # Déterminer les permissions
+        can_verify_payment = request.user.is_superuser or request.user.account_type == "seller"
+        can_update_status = request.user.is_superuser or request.user.account_type == "seller"
+        
+        response_data = {
+            'success': True,
+            'order': order_data,
+            'permissions': {
+                'can_verify_payment': can_verify_payment,
+                'can_update_status': can_update_status,
+                'can_view_payment_proof': True,
+                'can_download_invoice': True
+            }
+        }
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        print(f"Erreur dans order_detail: {e}")
+        import traceback
+        traceback.print_exc()
         
         return JsonResponse({
-            'success': True,
-            'message': f'Statut mis à jour: {order.get_status_display()}',
-            'new_status': order.status,
-            'status_display': order.get_status_display()
-        })
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+# @login_required
+# def update_order_status(request, order_id):
+#     """Met à jour le statut d'une commande."""
+#     if request.method != 'POST':
+#         return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+    
+#     try:
+#         order = Order.objects.get(id=order_id)
+#         new_status = request.POST.get('status')
         
-    except Order.DoesNotExist:
-        return JsonResponse({'error': 'Commande non trouvée'}, status=404)
+#         # Vérification des permissions
+#         if not request.user.is_superuser and not hasattr(request.user, 'shop'):
+#             return JsonResponse({'error': 'Non autorisé'}, status=403)
+        
+#         # Vérifier que le statut est valide
+#         valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
+#         if new_status not in valid_statuses:
+#             return JsonResponse({'error': 'Statut invalide'}, status=400)
+        
+#         # Si le statut est "livré", vérifier que le paiement est vérifié
+#         if new_status == Order.STATUS_PAID and not order.payment_verified:
+#             return JsonResponse({
+#                 'error': 'Le paiement doit être vérifié avant de marquer comme livré'
+#             }, status=400)
+        
+#         # Mettre à jour le statut
+#         old_status = order.status
+#         order.status = new_status
+        
+#         # Si marqué comme vérifié, mettre à jour payment_verified
+#         if new_status == Order.STATUS_PAYMENT_VERIFIED:
+#             order.payment_verified = True
+#             order.payment_verified_at = timezone.now()
+        
+#         order.save()
+        
+#         # Journaliser l'action
+#         ActivityLog.objects.create(
+#             user=request.user,
+#             action=f"Statut commande {order.id} modifié: {old_status} → {new_status}",
+#             content_type=ContentType.objects.get_for_model(Order),
+#             object_id=order.id
+#         )
+        
+#         return JsonResponse({
+#             'success': True,
+#             'message': f'Statut mis à jour: {order.get_status_display()}',
+#             'new_status': order.status,
+#             'status_display': order.get_status_display()
+#         })
+        
+#     except Order.DoesNotExist:
+#         return JsonResponse({'error': 'Commande non trouvée'}, status=404)
 
 
 @login_required
@@ -1152,7 +1407,7 @@ def delete_order(request, order_id):
         # Vérification des permissions (admin ou propriétaire de la boutique)
         if not request.user.is_superuser:
             if hasattr(request.user, 'shop'):
-                if order.shop_id != request.user.shop.id:
+                if order.shop_id != request.user.shop.first().id:
                     return JsonResponse({'error': 'Non autorisé'}, status=403)
             else:
                 return JsonResponse({'error': 'Non autorisé'}, status=403)
@@ -1593,205 +1848,6 @@ def track_product_view(request, product_id):
     
 
 
-@login_required
-def order_details(request, order_id):
-    """Afficher les détails complets d'une commande"""
-    try:
-        # Vérifier les permissions selon le rôle
-        if request.user.is_superuser:
-            # Admin: peut voir toutes les commandes
-            order = get_object_or_404(Order, id=order_id)
-        elif hasattr(request.user, 'shop'):
-            # Vendeur: seulement les commandes de sa boutique
-            shop = request.user.shop
-            order = get_object_or_404(Order, id=order_id, shop_id=shop.id)
-        else:
-            # Client: seulement ses propres commandes
-            order = get_object_or_404(Order, id=order_id, user=request.user)
-        
-        # Récupérer les informations de la boutique depuis votre modèle Shop
-        shop_info = None
-        try:
-            shop = Shop.objects.get(id=order.shop_id)
-            shop_info = {
-                'id': shop.id,
-                'title': shop.title,
-                'description': shop.description,
-                'localisation': shop.localisation,
-                'type_shop': shop.type_shop,
-                'note': float(shop.note) if shop.note else None,
-                'logo_url': shop.couverture.url if shop.couverture else None,
-                'phone': shop.user.phone if hasattr(shop.user, 'phone') else None,
-                'email': shop.user.email
-            }
-        except Shop.DoesNotExist:
-            shop_info = None
-        
-        # Récupérer l'historique des vérifications de paiement
-        verifications = PaymentVerification.objects.filter(order=order).order_by('-verified_at')
-        verification_history = []
-        for verification in verifications:
-            verified_by_name = "Système"
-            if verification.verified_by:
-                if verification.verified_by.first_name and verification.verified_by.last_name:
-                    verified_by_name = f"{verification.verified_by.first_name} {verification.verified_by.last_name}"
-                else:
-                    verified_by_name = verification.verified_by.username
-            
-            verification_history.append({
-                'verified_by': verified_by_name,
-                'verified_at': verification.verified_at,
-                'is_approved': verification.is_approved,
-                'notes': verification.notes
-            })
-        
-        # Calculer les totaux détaillés
-        cart_items = order.cart_items or []
-        items_total_ht = Decimal('0')
-        for item in cart_items:
-            try:
-                price = Decimal(str(item.get('price', 0)))
-                quantity = int(item.get('quantity', 0))
-                items_total_ht += price * quantity
-            except (ValueError, TypeError):
-                continue
-        
-        # Calculer la TVA (18% par défaut)
-        vat_rate = Decimal('0.18')
-        calculated_vat = items_total_ht * vat_rate
-        items_total_ttc = items_total_ht + calculated_vat
-        
-        # Calculer le nombre total d'articles et d'articles uniques
-        total_items = sum(int(item.get('quantity', 0)) for item in cart_items)
-        unique_items = len(cart_items)
-        
-        # Formater les données de la commande
-        order_data = {
-            'id': str(order.id),
-            'order_number': str(order.id)[:8].upper(),
-            'created_at': order.created_at,
-            'updated_at': order.updated_at,
-            'status': order.status,
-            'status_display': order.get_status_display(),
-            
-            # Totaux financiers
-            'total_amount': order.total_amount,
-            'tax_amount': order.tax_amount,
-            'final_amount': order.final_amount,
-            'items_total_ht': float(items_total_ht),
-            'calculated_vat': float(calculated_vat),
-            'items_total_ttc': float(items_total_ttc),
-            
-            # Informations client
-            'customer': {
-                'first_name': order.customer_first_name,
-                'last_name': order.customer_last_name,
-                'full_name': order.full_name,
-                'email': order.customer_email,
-                'phone': order.customer_phone,
-                'user_id': order.user.id if order.user else None,
-                'username': order.user.username if order.user else None
-            },
-            
-            # Informations de paiement
-            'payment_method': order.payment_method,
-            'payment_method_display': order.get_payment_method_display(),
-            'payment_phone': order.payment_phone,
-            'payment_verified': order.payment_verified,
-            'payment_verified_at': order.payment_verified_at,
-            
-            # Preuve de paiement
-            'has_payment_proof': bool(order.payment_proof),
-            'payment_proof_url': order.payment_proof.url if order.payment_proof else None,
-            
-            # Données du panier
-            'cart_items': cart_items,
-            'total_items': total_items,
-            'unique_items': unique_items,
-            
-            # Informations boutique
-            'shop': shop_info,
-            'shop_id': order.shop_id,
-            
-            # Métadonnées
-            'metadata': order.metadata or {},
-            
-            # Codes de paiement
-            'qr_code_data': order.qr_code_data,
-            'ussd_code': order.ussd_code,
-            'whatsapp_link': order.whatsapp_link,
-            
-            # Historique
-            'verification_history': verification_history,
-            
-            # Statut calculé
-            'is_paid': order.status in ['paid', 'payment_verified'],
-            'is_pending': order.status in ['pending', 'waiting_payment'],
-            'is_failed': order.status in ['failed', 'refunded'],
-            
-            # Délais
-            'days_since_creation': (timezone.now() - order.created_at).days,
-            'is_overdue': (timezone.now() - order.created_at).days > 7 and order.status in ['pending', 'waiting_payment']
-        }
-        
-        # Si requête AJAX, retourner JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            # Convertir les dates en format ISO pour JSON
-            from django.core.serializers.json import DjangoJSONEncoder
-            import json
-            
-            class CustomJSONEncoder(DjangoJSONEncoder):
-                def default(self, obj):
-                    if isinstance(obj, Decimal):
-                        return float(obj)
-                    if hasattr(obj, 'isoformat'):
-                        return obj.isoformat()
-                    return super().default(obj)
-            
-            response_data = {
-                'success': True,
-                'order': order_data,
-                'permissions': {
-                    'can_verify_payment': request.user.is_superuser or hasattr(request.user, 'shop'),
-                    'can_update_status': request.user.is_superuser or hasattr(request.user, 'shop'),
-                    'can_view_payment_proof': True,
-                    'can_download_invoice': True
-                }
-            }
-            
-            return JsonResponse(response_data, encoder=CustomJSONEncoder)
-        
-        # Sinon, rendre le template HTML
-        context = {
-            'order': order_data,
-            'page_title': f'Commande #{order_data["order_number"]}',
-            'is_admin': request.user.is_superuser,
-            'is_seller': hasattr(request.user, 'shop'),
-            'user': request.user,
-            'status_choices': Order.STATUS_CHOICES,
-            'payment_method_choices': Order.PAYMENT_METHODS,
-        }
-        
-        return render(request, 'marketplace/order_details.html', context)
-        
-    except Order.DoesNotExist:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'error': 'Commande non trouvée'
-            }, status=404)
-        return render(request, '404.html', status=404)
-    
-    except Exception as e:
-        print(f"Erreur dans order_details: {e}")
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            }, status=500)
-        return render(request, '500.html', {'error': str(e)}, status=500)
-    
-
 
 @login_required
 def payment_proof(request, order_id):
@@ -1801,9 +1857,9 @@ def payment_proof(request, order_id):
         if request.user.is_superuser:
             # Admin: peut voir toutes les preuves
             order = get_object_or_404(Order, id=order_id)
-        elif hasattr(request.user, 'shop'):
+        elif request.user.account == "seller":
             # Vendeur: seulement les commandes de sa boutique
-            shop = request.user.shop
+            shop = request.user.shop.first()
             order = get_object_or_404(Order, id=order_id, shop_id=shop.id)
         else:
             # Client: seulement ses propres preuves
@@ -1970,13 +2026,13 @@ def payment_proof(request, order_id):
                 'proof': proof_info,
                 'order_number': str(order.id)[:8].upper(),
                 'is_admin': request.user.is_superuser,
-                'is_seller': hasattr(request.user, 'shop'),
+                'is_seller': request.user.account == "seller",
                 'is_image': is_image,
                 'is_pdf': is_pdf,
                 'file_extension': file_extension,
                 'supported_formats': supported_formats,
                 'can_download': True,
-                'can_verify': (request.user.is_superuser or hasattr(request.user, 'shop')) and not order.payment_verified,
+                'can_verify': (request.user.is_superuser or request.user.account == "seller") and not order.payment_verified,
                 'page_title': f'Preuve de paiement - Commande #{str(order.id)[:8].upper()}'
             }
             
@@ -2451,7 +2507,7 @@ def dashboard_stats_api(request):
     if not hasattr(request.user, 'shop'):
         return JsonResponse({'error': 'Non autorisé'}, status=403)
     
-    shop = request.user.shop
+    shop = request.user.shop.first()
     
     # Récupérer les données en temps réel
     data = {
@@ -2482,7 +2538,7 @@ def dashboard_charts_api(request):
     if not hasattr(request.user, 'shop'):
         return JsonResponse({'error': 'Non autorisé'}, status=403)
     
-    shop = request.user.shop
+    shop = request.user.shop.first()
     period = request.GET.get('period', '30days')
     
     # Logique pour récupérer les données selon la période

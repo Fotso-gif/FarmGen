@@ -34,10 +34,10 @@ urlpatterns = [
     path('api/orders/<uuid:order_id>/update-status/', views.update_order_status, name='update_order_status'),
     path('orders/<uuid:order_id>/invoice/download/', views.download_invoice, name='download_invoice'),
     path('orders/export/<str:format_type>/', views.export_orders, name='export_orders'),
-    path('orders/<uuid:order_id>/details/', views.order_details, name='order_details'),
-    #
+    
     # Détails d'une commande (AJAX)
     path('orders/<uuid:order_id>/detail/', views.order_detail, name='order_detail'),
+    path('orders/<uuid:order_id>/details/', views.order_details, name='order_details'),
     # Supprimer une commande
     path('orders/<uuid:order_id>/delete/', views.delete_order, name='delete_order'),
     

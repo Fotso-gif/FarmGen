@@ -27,8 +27,10 @@
     }
 
     .section-header {
+        display:flex;
+        justify-content:space-between;
         margin-bottom: 30px;
-        text-align: center;
+        
     }
 
     .section-title {
@@ -50,7 +52,7 @@
     /* Statistiques */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 2rem;
         margin-bottom: 30px;
     }
@@ -89,13 +91,13 @@
     .stat-card.cancelled { border-left-color: var(--danger); }
 
     .stat-icon {
-        font-size: 2.5rem;
+        font-size: 2rem;
         margin-bottom: 15px;
         opacity: 0.8;
     }
 
     .stat-number {
-        font-size: 2.8rem;
+        font-size: 1.8rem;
         font-weight: 800;
         margin: 10px 0;
         background: linear-gradient(45deg, var(--dark), var(--primary));
@@ -106,7 +108,7 @@
 
     .stat-label {
         color: #6c757d;
-        font-size: 0.95rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: 600;
@@ -1026,12 +1028,18 @@
                 <i class="fas fa-history"></i> 
                 {% if user.is_superuser %}
                     Historique des Commandes - Toutes les boutiques
-                {% elif user.user_type == 'seller' %}
-                    Historique des Commandes - {{ user.shop.title }}
+                {% elif user.account_type == 'seller' %}
+                    Historique des Commandes - {{ user.shop.first.title }}
                 {% else %}
                     Mes Commandes
                 {% endif %}
             </h3>
+           <button class="action-btn details"
+           style="max-height:3rem;"
+                    onclick='window.location.href="{% url "listing" %}"'>
+                <i class="fas fa-eye"></i> Détails
+            </button>
+
         </div>
 
         <!-- Statistiques -->
@@ -1335,7 +1343,7 @@
                                 <i class="fas fa-eye"></i> Détails
                             </button>
                             
-                            {% if user.user_type == 'seller' or user.is_superuser %}
+                            {% if useraccountr_type == 'seller' or user.is_superuser %}
                             <!-- Vérifier paiement -->
                             <button class="action-btn verify" 
                                     onclick="updateOrderStatus('{{ order.id }}', 'payment_verified')"
@@ -1368,13 +1376,13 @@
                     </div>
                     <h3 class="empty-title">Aucune commande trouvée</h3>
                     <p class="empty-text">
-                        {% if user.user_type == 'customer' %}
+                        {% if useraccountr_type == 'customer' %}
                         Vous n'avez pas encore passé de commande. Découvrez nos produits et faites votre première commande !
                         {% else %}
                         Aucune commande n'a été passée pour le moment. Les commandes apparaîtront ici lorsqu'elles seront créées.
                         {% endif %}
                     </p>
-                    {% if user.user_type == 'customer' %}
+                    {% if useraccountr_type == 'customer' %}
                     <a href="{% url 'marketplace' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-shopping-cart"></i> Explorer la marketplace
                     </a>
@@ -1486,7 +1494,7 @@
             <button class="btn btn-secondary" onclick="closeModal()">
                 <i class="fas fa-times"></i> Fermer
             </button>
-            {% if user.user_type == 'seller' or user.is_superuser %}
+            {% if useraccountr_type == 'seller' or user.is_superuser %}
             <button class="btn btn-success" id="verifyPaymentBtn" style="display: none;">
                 <i class="fas fa-check-circle"></i> Vérifier paiement
             </button>
@@ -1814,7 +1822,7 @@
         });
         
         // Requête AJAX
-        fetch(`/marketplace/orders/${orderId}/detail/`)
+        fetch(`/marketplace/orders/${orderId}/details/`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Erreur réseau');
